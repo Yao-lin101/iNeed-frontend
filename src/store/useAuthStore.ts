@@ -23,6 +23,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await authService.login({ username: email, password });
       localStorage.setItem('token', response.token);
+      localStorage.setItem('uid', response.uid);
       const user = await authService.getProfile();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
@@ -37,8 +38,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (username: string, email: string, password: string, password2: string, phone?: string) => {
     set({ isLoading: true, error: null });
     try {
-      await authService.register({ username, email, password, password2, phone });
-      await useAuthStore.getState().login(email, password);
+      const response = await authService.register({ username, email, password, password2, phone });
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('uid', response.uid);
+      const user = await authService.getProfile();
+      set({ user, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       set({
         error: error.response?.data?.detail || '注册失败',
@@ -53,6 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authService.logout();
       localStorage.removeItem('token');
+      localStorage.removeItem('uid');
       set({ user: null, isAuthenticated: false, isLoading: false });
     } catch (error: any) {
       set({
@@ -63,7 +68,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   loadUser: async () => {
-    if (!localStorage.getItem('token')) {
+    const token = localStorage.getItem('token');
+    const uid = localStorage.getItem('uid');
+    
+    if (!token || !uid) {
       set({ user: null, isAuthenticated: false });
       return;
     }
@@ -73,12 +81,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await authService.getProfile();
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
-      set({
-        user: null,
-        isAuthenticated: false,
-        error: error.response?.data?.detail || '加载用户信息失败',
+      localStorage.removeItem('token');
+      localStorage.removeItem('uid');
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
         isLoading: false,
+        error: error.response?.data?.detail || error.message || '加载用户信息失败'
       });
+      throw error;
     }
   },
 })); 
