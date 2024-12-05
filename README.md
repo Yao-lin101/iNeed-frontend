@@ -1,50 +1,72 @@
-# React + TypeScript + Vite
+# iNeed Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+基于 React 和 Ant Design 的需求平台前端应用。
 
-Currently, two official plugins are available:
+## 技术栈
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 18
+- TypeScript 5
+- Ant Design 5
+- Vite 5
+- Zustand
+- Axios
+- React Router 6
+- Tailwind CSS
 
-## Expanding the ESLint configuration
+## 功能特性
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- 用户认证（注册、登录、注销）
+- 用户资料管理
+- 响应式设计
+- 状态管理
+- 路由保护
+- 文件上传
 
-- Configure the top-level `parserOptions` property like this:
+## 安装
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. 安装依赖：
+
+```bash
+npm install
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. 配置环境变量：
+创建 .env 文件并设置以下变量：
+```
+VITE_API_URL=http://localhost:8000/api
+```
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## 开发
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+npm run dev
+```
+
+应用将在 http://localhost:3000 运行。
+
+## 构建
+
+```bash
+npm run build
+```
+
+## 页面说明
+
+- `/` - 首页
+- `/login` - 登录页面
+- `/register` - 注册页面
+- `/profile` - 个人资料页面（需要登录）
+
+## 项目结构
+
+```
+src/
+  ├── components/     # 可复用组件
+  ├── pages/         # 页面组件
+  ├── services/      # API 服务
+  ├── store/         # 状态管理
+  ├── utils/         # 工具函数
+  ├── layouts/       # 布局组件
+  ├── assets/        # 静态资源
+  └── hooks/         # 自定义 Hooks
 ```
