@@ -11,25 +11,35 @@ export interface RegisterData {
   password: string;
   password2: string;
   phone?: string;
+  bio?: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user_id: number;
+  uid: string;
+  email: string;
 }
 
 export interface UserProfile {
   id: number;
+  uid: string;
   username: string;
   email: string;
   phone?: string;
+  bio?: string;
   avatar?: string;
   created_at: string;
 }
 
 export const authService = {
   login: async (data: LoginData) => {
-    const response = await api.post('/users/login/', data);
+    const response = await api.post<LoginResponse>('/users/login/', data);
     return response.data;
   },
 
   register: async (data: RegisterData) => {
-    const response = await api.post('/users/register/', data);
+    const response = await api.post<LoginResponse>('/users/register/', data);
     return response.data;
   },
 

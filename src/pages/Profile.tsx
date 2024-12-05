@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Card, message, Upload, Avatar } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, UploadOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, UploadOutlined } from '@ant-design/icons';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../services/auth';
 import type { UploadFile, RcFile } from 'antd/es/upload/interface';
 
+const { TextArea } = Input;
+
 interface ProfileFormData {
   username: string;
   email: string;
+  bio?: string;
   phone?: string;
 }
 
@@ -22,6 +25,7 @@ const Profile: React.FC = () => {
       form.setFieldsValue({
         username: user.username,
         email: user.email,
+        bio: user.bio,
         phone: user.phone,
       });
       if (user.avatar) {
@@ -54,24 +58,23 @@ const Profile: React.FC = () => {
       setLoading(true);
       const formData = new FormData();
       
-      // 添加基本信息
       formData.append('username', values.username);
       formData.append('email', values.email);
+      if (values.bio) {
+        formData.append('bio', values.bio);
+      }
       if (values.phone) {
         formData.append('phone', values.phone);
       }
 
-      // 如果有新的头像文件，添加到 FormData
       if (avatar && 'originFileObj' in avatar && avatar.originFileObj) {
         formData.append('avatar', avatar.originFileObj);
       }
 
-      // 发送请求
       await authService.updateProfile(formData);
-      await loadUser(); // 重新加载用户信息以更新头像
+      await loadUser();
       message.success('个人资料更新成功');
     } catch (error: any) {
-      console.error('Update profile error:', error);
       message.error(error.response?.data?.detail || '更新失败');
     } finally {
       setLoading(false);
@@ -98,7 +101,7 @@ const Profile: React.FC = () => {
                   originFileObj: file 
                 });
               }
-              return false; // 阻止自动上传
+              return false;
             }}
             maxCount={1}
           >
@@ -117,6 +120,20 @@ const Profile: React.FC = () => {
           </Upload>
         </div>
 
+        <div className="mb-6">
+          <div className="text-sm text-gray-600 mb-1">用户ID (UID)</div>
+          <Input
+            value={user?.uid ?? '加载中...'}
+            disabled
+            style={{ 
+              backgroundColor: '#f5f5f5', 
+              cursor: 'default',
+              color: user?.uid ? '#000' : '#999'
+            }}
+            readOnly
+          />
+        </div>
+
         <Form
           form={form}
           layout="vertical"
@@ -124,6 +141,7 @@ const Profile: React.FC = () => {
           initialValues={{
             username: user?.username,
             email: user?.email,
+            bio: user?.bio,
             phone: user?.phone,
           }}
         >
@@ -158,15 +176,17 @@ const Profile: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="phone"
-            label="手机号码"
+            name="bio"
+            label="个人简介"
             rules={[
-              { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号码' }
+              { max: 500, message: '简介最多500个字符' }
             ]}
           >
-            <Input
-              prefix={<PhoneOutlined />}
-              placeholder="手机号码（选填）"
+            <TextArea
+              placeholder="介绍一下你自己吧..."
+              autoSize={{ minRows: 3, maxRows: 6 }}
+              maxLength={500}
+              showCount
             />
           </Form.Item>
 
