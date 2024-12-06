@@ -19,8 +19,8 @@ const Login: React.FC = () => {
       await login(values.email, values.password);
       message.success('登录成功');
       navigate('/');
-    } catch (error: any) {
-      message.error(error.response?.data?.detail || '登录失败');
+    } catch (error) {
+      // 错误消息已经由 useAuthStore 处理
     }
   };
 
