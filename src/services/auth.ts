@@ -10,6 +10,7 @@ export interface RegisterData {
   email: string;
   password: string;
   password2: string;
+  verification_code: string;
   phone?: string;
   bio?: string;
 }
@@ -59,6 +60,18 @@ export const authService = {
     } : undefined;
 
     const response = await api.put<UserProfile>('/users/profile/', data, { headers });
+    return response.data;
+  },
+
+  sendVerificationCode: async (email: string) => {
+    const response = await api.post('/users/send-verification-code/', { email });
+    return response.data;
+  },
+
+  checkUsername: async (username: string) => {
+    const response = await api.get('/users/check-username/', {
+      params: { username }
+    });
     return response.data;
   },
 }; 

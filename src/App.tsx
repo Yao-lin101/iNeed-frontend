@@ -1,9 +1,10 @@
 import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, Spin } from 'antd';
+import { ConfigProvider, Spin, message } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import MainLayout from './layouts/MainLayout';
 import { useAuthStore } from './store/useAuthStore';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // 懒加载页面组件
 const Login = React.lazy(() => import('./pages/Login'));
@@ -20,39 +21,60 @@ const LoadingComponent = () => (
 
 // 路由守卫组件
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
+  
+  if (isLoading) {
+    return <LoadingComponent />;
+  }
+  
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 function App() {
-  const { loadUser } = useAuthStore();
+  const { loadUser, error } = useAuthStore();
 
   useEffect(() => {
-    loadUser();
+    const initializeAuth = async () => {
+      try {
+        await loadUser();
+      } catch (err) {
+        console.error('Failed to load user:', err);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+    }
+  }, [error]);
+
   return (
-    <ConfigProvider locale={zhCN}>
-      <Router>
-        <Suspense fallback={<LoadingComponent />}>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Home />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route
-                path="profile"
-                element={
-                  <PrivateRoute>
-                    <Profile />
-                  </PrivateRoute>
-                }
-              />
-            </Route>
-          </Routes>
-        </Suspense>
-      </Router>
-    </ConfigProvider>
+    <ErrorBoundary>
+      <ConfigProvider locale={zhCN}>
+        <Router>
+          <Suspense fallback={<LoadingComponent />}>
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Home />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route
+                  path="profile"
+                  element={
+                    <PrivateRoute>
+                      <Profile />
+                    </PrivateRoute>
+                  }
+                />
+              </Route>
+            </Routes>
+          </Suspense>
+        </Router>
+      </ConfigProvider>
+    </ErrorBoundary>
   );
 }
 
