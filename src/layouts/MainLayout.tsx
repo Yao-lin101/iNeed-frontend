@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Menu, Avatar, Dropdown } from 'antd';
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import type { MenuProps } from 'antd';
@@ -21,6 +21,11 @@ const MainLayout: React.FC = () => {
       key: 'profile',
       icon: <UserOutlined />,
       label: <Link to="/profile">个人资料</Link>,
+    },
+    {
+      key: 'account',
+      icon: <SettingOutlined />,
+      label: <Link to="/account">账号管理</Link>,
     },
     {
       key: 'logout',

@@ -11,6 +11,7 @@ const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Home = React.lazy(() => import('./pages/Home'));
+const AccountSettings = React.lazy(() => import('./pages/AccountSettings'));
 
 // 加载中组件
 const LoadingComponent = () => (
@@ -66,6 +67,14 @@ function App() {
                   element={
                     <PrivateRoute>
                       <Profile />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="account"
+                  element={
+                    <PrivateRoute>
+                      <AccountSettings />
                     </PrivateRoute>
                   }
                 />
