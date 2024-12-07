@@ -12,6 +12,10 @@ const Register = React.lazy(() => import('./pages/Register'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Home = React.lazy(() => import('./pages/Home'));
 const AccountSettings = React.lazy(() => import('./pages/AccountSettings'));
+const TaskCenter = React.lazy(() => import('./pages/TaskCenter'));
+const TaskForm = React.lazy(() => import('./pages/TaskForm'));
+const TaskDetail = React.lazy(() => import('./pages/TaskDetail'));
+const MyTasks = React.lazy(() => import('./pages/MyTasks'));
 
 // 加载中组件
 const LoadingComponent = () => (
@@ -62,6 +66,16 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
+                <Route path="tasks" element={<TaskCenter />} />
+                <Route path="tasks/:taskId" element={<TaskDetail />} />
+                <Route
+                  path="tasks/create"
+                  element={
+                    <PrivateRoute>
+                      <TaskForm />
+                    </PrivateRoute>
+                  }
+                />
                 <Route
                   path="profile"
                   element={
@@ -78,6 +92,7 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route path="my-tasks" element={<MyTasks />} />
               </Route>
             </Routes>
           </Suspense>
