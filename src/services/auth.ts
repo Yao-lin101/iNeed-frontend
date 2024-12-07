@@ -40,7 +40,26 @@ export const authService = {
   },
 
   register: async (data: RegisterData) => {
-    const response = await api.post<LoginResponse>('/users/register/', data);
+    try {
+      const response = await api.post<LoginResponse>('/users/register/', data);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 409 && error.response?.data?.code === 'user_deleted') {
+        const reactivateResponse = await api.post<LoginResponse>('/users/reactivate/', {
+          email: data.email,
+          verification_code: data.verification_code
+        });
+        return reactivateResponse.data;
+      }
+      throw error;
+    }
+  },
+
+  reactivateAccount: async (email: string, verification_code: string) => {
+    const response = await api.post<LoginResponse>('/users/reactivate/', {
+      email,
+      verification_code
+    });
     return response.data;
   },
 
