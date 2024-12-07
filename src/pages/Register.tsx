@@ -91,7 +91,7 @@ const Register: React.FC = () => {
       message.success('注册成功');
       navigate('/');
     } catch (error: any) {
-      message.error(error.response?.data?.detail || '注册失败');
+      // 错误消息已经由 useAuthStore 处理
     }
   };
 
@@ -214,6 +214,9 @@ const Register: React.FC = () => {
             <Link to="/login" className="ml-2 text-blue-600">
               立即登录
             </Link>
+            <div className="mt-2 text-sm text-gray-500">
+              如果您之前删除过账号，使用相同的邮箱注册将自动重新激活账号
+            </div>
           </div>
         </Form>
       </Card>

@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { taskService, Task, TaskSubmitData } from '../services/taskService';
 import TaskSubmitModal from '../components/TaskSubmitModal';
 import TaskReviewModal from '../components/TaskReviewModal';
+import { getMediaUrl } from '../utils/url';
 
 const { confirm } = Modal;
 
@@ -19,10 +20,10 @@ const TaskDetail: React.FC = () => {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
 
   // 获取当前用户是否是任务创建者或接取者
-  const isCreator = task?.creator.id === user?.id;
-  const isAssignee = task?.assignee?.id === user?.id;
+  const isCreator = task?.creator.uid === user?.uid;
+  const isAssignee = task?.assignee?.uid === user?.uid;
 
-  // 获取状态标签的颜色
+  // 获状态标签的颜色
   const getStatusColor = (status: string) => {
     const colorMap: Record<string, string> = {
       pending: 'default',
@@ -193,13 +194,19 @@ const TaskDetail: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500">
             <div className="flex items-center space-x-2">
-              <Avatar icon={<UserOutlined />} src={task.creator.avatar} />
-              <span>委托人：{task.creator.username}</span>
+              <Avatar 
+                icon={<UserOutlined />} 
+                src={getMediaUrl(task.creator.avatar)}
+              />
+              <span>委托人：{task.creator.uid ? task.creator.username : '已删除用户'}</span>
             </div>
             {task.assignee && (
               <div className="flex items-center space-x-2">
-                <Avatar icon={<UserOutlined />} src={task.assignee.avatar} />
-                <span>接取人：{task.assignee.username}</span>
+                <Avatar 
+                  icon={<UserOutlined />} 
+                  src={getMediaUrl(task.assignee.avatar)}
+                />
+                <span>接取人：{task.assignee.uid ? task.assignee.username : '已删除用户'}</span>
               </div>
             )}
             <div>报酬：<span className="text-primary font-bold">¥{task.reward}</span></div>
@@ -217,7 +224,7 @@ const TaskDetail: React.FC = () => {
           <div className="whitespace-pre-wrap">{task.required_materials}</div>
         </div>
 
-        {task.status === 'submitted' && (
+        {(task.status === 'submitted' || task.status === 'completed') && task.completion_note && (
           <div className="mb-6">
             <h2 className="text-lg font-bold mb-2">完成说明</h2>
             <div className="whitespace-pre-wrap">{task.completion_note}</div>
@@ -225,7 +232,7 @@ const TaskDetail: React.FC = () => {
               <div className="mt-4">
                 <h3 className="text-md font-bold mb-2">提交的附件</h3>
                 <a 
-                  href={task.attachments.startsWith('http') ? task.attachments : `http://127.0.0.1:8000${task.attachments}`}
+                  href={getMediaUrl(task.attachments)}
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="inline-flex items-center text-blue-500 hover:text-blue-700"
@@ -244,7 +251,7 @@ const TaskDetail: React.FC = () => {
           </div>
         )}
 
-        {(task.status === 'completed' || task.status === 'rejected') && (
+        {(task.status === 'completed' || task.status === 'rejected') && task.review_note && (
           <div className="mb-6">
             <h2 className="text-lg font-bold mb-2">审核说明</h2>
             <div className="whitespace-pre-wrap">{task.review_note}</div>

@@ -6,12 +6,16 @@ export interface Task {
   description: string;
   creator: {
     id: number;
+    uid: string;
     username: string;
+    email: string;
     avatar?: string;
   };
   assignee?: {
     id: number;
+    uid: string;
     username: string;
+    email: string;
     avatar?: string;
   };
   status: 'pending' | 'in_progress' | 'submitted' | 'completed' | 'rejected' | 'cancelled';
