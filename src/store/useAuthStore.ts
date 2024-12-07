@@ -95,7 +95,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isAuthenticated: false, isLoading: false });
     } catch (error: any) {
       console.error('Logout error:', error);
-      // 即使注销失���，也清除本地存储和状态
+      // 即使注销失败，也清除本地存储和状态
       localStorage.removeItem('token');
       localStorage.removeItem('uid');
       set({

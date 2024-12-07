@@ -40,6 +40,14 @@ const MainLayout: React.FC = () => {
       key: 'home',
       label: <Link to="/">首页</Link>,
     },
+    {
+      key: 'tasks',
+      label: <Link to="/tasks">任务中心</Link>,
+    },
+    {
+      key: 'my-tasks',
+      label: <Link to="/my-tasks">我的任务</Link>,
+    },
   ];
 
   return (
