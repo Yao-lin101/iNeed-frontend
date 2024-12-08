@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 import ChatContainer from '../components/Chat/ChatContainer';
 
@@ -11,7 +11,7 @@ const Chat: React.FC = () => {
   const state = location.state as LocationState;
 
   return (
-    <div className="h-[calc(100vh-64px)]">
+    <div className="h-screen">
       <ChatContainer initialConversationId={state?.conversationId} />
     </div>
   );

@@ -26,7 +26,7 @@ const TaskDetail: React.FC = () => {
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
 
-  // 获取前用户是否是任务创建者或接取者
+  // 获��前用户是否是任务创建者或接取者
   const isCreator = task?.creator.uid === user?.uid;
   const isAssignee = task?.assignee?.uid === user?.uid;
 
@@ -192,11 +192,11 @@ const TaskDetail: React.FC = () => {
     }
     
     try {
-      const requestData = { participant_uid: task.creator.uid };
+      const requestData = { recipient_uid: task.creator.uid };
       console.log('Creating conversation with data:', requestData);
       
       // 创建或获取与委托人的对话
-      const response = await request.post('/chat/conversations/create-or-get/', requestData);
+      const response = await request.post('/chat/conversations/', requestData);
       
       console.log('Conversation created:', response.data);
       
@@ -214,7 +214,7 @@ const TaskDetail: React.FC = () => {
         response: error.response,
         status: error.response?.status,
         data: error.response?.data,
-        url: '/chat/conversations/create-or-get/'
+        url: '/chat/conversations/'
       });
       message.error(error.response?.data?.error || '创建对话失败');
     }

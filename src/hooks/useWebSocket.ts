@@ -7,67 +7,76 @@ export function useWebSocket(path: string | null) {
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number>();
+  const reconnectCountRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 3;
   const { isAuthenticated } = useAuthStore();
 
   const connect = useCallback(() => {
     if (!path || !isAuthenticated) return;
 
     const token = getToken();
-    if (!token) {
+    if (!token) return;
+
+    // 如果已经有连接，不要创建新的连接
+    if (wsRef.current?.readyState === WebSocket.OPEN || 
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const wsUrl = `${wsProtocol}//${host}${path}?token=${token}`;
-    
-    console.log('Connecting to WebSocket:', wsUrl);
+    try {
+      const ws = new WebSocket(`${path}?token=${token}`);
 
-    const ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        setConnected(true);
+        reconnectCountRef.current = 0;
+      };
 
-    ws.onopen = () => {
-      setConnected(true);
-      console.log('WebSocket 连接成功');
-    };
+      ws.onclose = (event) => {
+        setConnected(false);
 
-    ws.onclose = () => {
-      setConnected(false);
-      // 只有在用户已登录时才尝试重连
-      if (isAuthenticated) {
-        reconnectTimeoutRef.current = window.setTimeout(() => {
-          connect();
-        }, 3000);
-      }
-    };
+        // 只有在非正常关闭且未达到最大重试次数时才尝试重连
+        if (!event.wasClean && isAuthenticated && reconnectCountRef.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectTimeoutRef.current = window.setTimeout(() => {
+            reconnectCountRef.current += 1;
+            connect();
+          }, 3000);
+        } else if (reconnectCountRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          message.error('WebSocket 连接失败，请刷新页面重试');
+        }
+      };
 
-    ws.onerror = (error) => {
-      setConnected(false);
-      console.error('WebSocket 连接错误:', error);
-    };
+      ws.onerror = () => {
+        // 错误处理由 onclose 处理
+      };
 
-    ws.onmessage = (event) => {
-      try {
-        console.log('Raw WebSocket message:', event.data);
-        const data = JSON.parse(event.data);
-        console.log('Parsed WebSocket message:', data);
-        
-        // 直接分发消息对象
-        window.dispatchEvent(
-          new CustomEvent('ws-message', { detail: data })
-        );
-      } catch (error) {
-        console.error('解析 WebSocket 消息失败:', error);
-      }
-    };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          window.dispatchEvent(
+            new CustomEvent('ws-message', { detail: data })
+          );
+        } catch (error) {
+          message.error('消息格式错误');
+        }
+      };
 
-    wsRef.current = ws;
+      wsRef.current = ws;
 
-    return () => {
-      ws.close();
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
+      return () => {
+        if (wsRef.current) {
+          wsRef.current.close(1000, 'Component unmounting');
+          wsRef.current = null;
+        }
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = undefined;
+        }
+        setConnected(false);
+      };
+    } catch (error) {
+      message.error('创建 WebSocket 连接失败');
+      return undefined;
+    }
   }, [path, isAuthenticated]);
 
   useEffect(() => {
@@ -77,24 +86,28 @@ export function useWebSocket(path: string | null) {
     };
   }, [connect]);
 
-  // 监听认证状态变化
   useEffect(() => {
-    if (!isAuthenticated && wsRef.current) {
-      wsRef.current.close();
+    if (!isAuthenticated) {
+      if (wsRef.current) {
+        wsRef.current.close(1000, 'User logged out');
+        wsRef.current = null;
+      }
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = undefined;
       }
       setConnected(false);
+      reconnectCountRef.current = 0;
     }
   }, [isAuthenticated]);
 
   const send = useCallback((data: string) => {
-    if (wsRef.current && connected) {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(data);
     } else {
       message.error('未连接到服务器');
     }
-  }, [connected]);
+  }, []);
 
   return {
     connected,

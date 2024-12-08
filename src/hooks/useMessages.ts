@@ -16,11 +16,9 @@ export function useMessages(conversationId: number | null) {
 
     setLoading(true);
     try {
-      console.log('Fetching messages for conversation:', conversationId);
       const response = await request.get(
         `/chat/conversations/${conversationId}/messages/`
       );
-      console.log('Fetched messages:', response.data);
       
       if (response.data && Array.isArray(response.data.results)) {
         setMessages(response.data.results);
@@ -47,17 +45,16 @@ export function useMessages(conversationId: number | null) {
       try {
         if (connected) {
           // 通过 WebSocket 发送消息
-          console.log('Sending message via WebSocket:', content);
-          send(JSON.stringify({ message: content }));
-          // 不需要立即更新消息列表，等待 WebSocket 的响应
+          send(JSON.stringify({
+            type: 'chat_message',
+            message: content
+          }));
         } else {
           // 作为备选方案，通过 HTTP API 发送消息
-          console.log('Sending message via HTTP:', content);
           const response = await request.post(
             `/chat/conversations/${conversationId}/messages/`,
             { content }
           );
-          console.log('Message sent successfully:', response.data);
           setMessages((prev) => [...prev, response.data]);
         }
       } catch (error) {
@@ -71,34 +68,31 @@ export function useMessages(conversationId: number | null) {
   // 监听 WebSocket 消息
   useEffect(() => {
     const handleWebSocketMessage = (event: CustomEvent) => {
-      const message = event.detail;
-      console.log('Received WebSocket message in useMessages:', message);
+      const data = event.detail;
       
-      // 确保消息属于当前对话
-      if (message && message.conversation === Number(conversationId)) {
-        setMessages((prev) => {
-          // 检查消息是否已经存在
-          const messageExists = prev.some((m) => m.id === message.id);
-          if (messageExists) {
-            console.log('Message already exists:', message);
-            return prev;
-          }
-          console.log('Adding new message to list:', message);
-          return [...prev, message];
-        });
-      } else {
-        console.log('Message belongs to different conversation or invalid format:', message);
+      if (data.type === 'chat_message') {
+        const message = data.message;
+        // 确保消息属于当前对话
+        if (message && message.conversation === Number(conversationId)) {
+          setMessages((prev) => {
+            // 检查消息是否已经存在
+            const messageExists = prev.some((m) => m.id === message.id);
+            if (messageExists) {
+              return prev;
+            }
+            return [...prev, message];
+          });
+        } else {
+        }
       }
     };
 
     if (conversationId) {
-      console.log('Setting up WebSocket message listener for conversation:', conversationId);
       window.addEventListener('ws-message', handleWebSocketMessage as EventListener);
     }
 
     return () => {
       if (conversationId) {
-        console.log('Removing WebSocket message listener for conversation:', conversationId);
         window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
       }
     };
@@ -116,7 +110,7 @@ export function useMessages(conversationId: number | null) {
   // 标记消息为已读
   useEffect(() => {
     if (conversationId) {
-      request.post(`/chat/conversations/${conversationId}/mark_read/`);
+      request.post(`/chat/conversations/${conversationId}/mark_as_read/`);
     }
   }, [conversationId]);
 

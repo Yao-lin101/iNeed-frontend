@@ -39,23 +39,20 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
   ];
 
   return (
-    <Layout className="h-full">
-      <div className="w-full bg-white p-4 border-b border-gray-200">
-        <h2 className="text-lg font-medium m-0">消息中心</h2>
-      </div>
-      <Layout className="bg-white">
-        <Sider 
-          width={300} 
-          theme="light"
-          className="border-r border-gray-200"
-        >
-          <Menu
-            mode="inline"
-            selectedKeys={[currentTab]}
-            items={menuItems}
-            onClick={({ key }) => setCurrentTab(key)}
-            className="border-0"
-          />
+    <Layout className="h-full bg-white">
+      <Sider 
+        width={280} 
+        theme="light"
+        className="border-r border-gray-200 h-full overflow-hidden flex flex-col"
+      >
+        <Menu
+          mode="inline"
+          selectedKeys={[currentTab]}
+          items={menuItems}
+          onClick={({ key }) => setCurrentTab(key)}
+          className="border-0 flex-none"
+        />
+        <div className="flex-1 overflow-hidden">
           {currentTab === 'myMessages' && (
             <ConversationList
               conversations={conversations}
@@ -69,20 +66,20 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
               暂无系统通知
             </div>
           )}
-        </Sider>
-        <Content>
-          {currentTab === 'myMessages' && (
-            <MessageArea
-              conversationId={selectedConversation}
-            />
-          )}
-          {currentTab === 'system' && (
-            <div className="h-full flex items-center justify-center text-gray-500">
-              暂无系统通知
-            </div>
-          )}
-        </Content>
-      </Layout>
+        </div>
+      </Sider>
+      <Content className="h-full">
+        {currentTab === 'myMessages' && (
+          <MessageArea
+            conversationId={selectedConversation}
+          />
+        )}
+        {currentTab === 'system' && (
+          <div className="h-full flex items-center justify-center text-gray-500">
+            暂无系统通知
+          </div>
+        )}
+      </Content>
     </Layout>
   );
 };
