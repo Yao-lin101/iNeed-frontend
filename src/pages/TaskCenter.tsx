@@ -64,7 +64,9 @@ const TaskCenter: React.FC = () => {
       submitted: '待审核',
       completed: '已完成',
       rejected: '已拒绝',
-      cancelled: '已取消'
+      cancelled: '已取消',
+      system_cancelled: '系统取消',
+      expired: '已过期'
     };
     return textMap[status] || status;
   };
@@ -77,7 +79,9 @@ const TaskCenter: React.FC = () => {
       submitted: 'warning',
       completed: 'success',
       rejected: 'error',
-      cancelled: 'error'
+      cancelled: 'error',
+      system_cancelled: 'error',
+      expired: 'error'
     };
     return colorMap[status] || 'default';
   };

@@ -47,7 +47,9 @@ const MyTasks: React.FC = () => {
       submitted: '待审核',
       completed: '已完成',
       rejected: '已拒绝',
-      cancelled: '已取消'
+      cancelled: '已取消',
+      system_cancelled: '系统取消',
+      expired: '已过期'
     };
     return textMap[status] || status;
   };
@@ -61,14 +63,17 @@ const MyTasks: React.FC = () => {
         { value: 'submitted', label: '待审核' },
         { value: 'completed', label: '已完成' },
         { value: 'rejected', label: '已拒绝' },
-        { value: 'cancelled', label: '已取消' }
+        { value: 'cancelled', label: '已取消' },
+        { value: 'system_cancelled', label: '系统取消' },
+        { value: 'expired', label: '已过期' }
       ];
     } else {
       return [
         { value: 'in_progress', label: '进行中' },
         { value: 'submitted', label: '待审核' },
         { value: 'completed', label: '已完成' },
-        { value: 'rejected', label: '已拒绝' }
+        { value: 'rejected', label: '已拒绝' },
+        { value: 'expired', label: '已过期' }
       ];
     }
   };

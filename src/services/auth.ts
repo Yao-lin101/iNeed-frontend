@@ -1,4 +1,5 @@
 import api from './api';
+import { User } from './userService';
 
 export interface LoginData {
   username: string;
@@ -69,7 +70,7 @@ export const authService = {
   },
 
   getProfile: async () => {
-    const response = await api.get<UserProfile>('/users/profile/');
+    const response = await api.get<User>('/users/profile/');
     return response.data;
   },
 
@@ -78,7 +79,7 @@ export const authService = {
       'Content-Type': 'multipart/form-data',
     } : undefined;
 
-    const response = await api.put<UserProfile>('/users/profile/', data, { headers });
+    const response = await api.put<User>('/users/profile/', data, { headers });
     return response.data;
   },
 

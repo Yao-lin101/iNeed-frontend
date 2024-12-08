@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Card, Button, Modal, message, Alert, List } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Modal, message, Alert, List, Switch } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { deleteAccount, cancelPendingTasks, checkAccountStatus } from '../services/userService';
+import { userService } from '../services/userService';
 import ThankYouModal from '../components/ThankYouModal';
 
 interface TaskStatus {
@@ -25,11 +25,12 @@ interface TaskStatus {
 
 const AccountSettings: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [taskError, setTaskError] = useState<{
     detail: string;
     reason: string;
@@ -37,8 +38,30 @@ const AccountSettings: React.FC = () => {
     task_status: TaskStatus;
   } | null>(null);
 
-  const showDeleteConfirm = () => {
-    setIsModalVisible(true);
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const userData = await userService.getCurrentUser();
+        updateUser(userData);
+      } catch (error: any) {
+        message.error('获取用户信息失败');
+      }
+    };
+    fetchUserProfile();
+  }, [updateUser]);
+
+  const showDeleteConfirm = async () => {
+    try {
+      await userService.checkAccountStatus();
+      setIsModalVisible(true);
+    } catch (error: any) {
+      if (error.response?.data?.active_tasks) {
+        setTaskError(error.response.data);
+        setIsModalVisible(true);
+      } else {
+        message.error('检查账号状态失败');
+      }
+    }
   };
 
   const handleCancel = () => {
@@ -49,12 +72,12 @@ const AccountSettings: React.FC = () => {
   const handleCancelPendingTasks = async () => {
     try {
       setIsCancelling(true);
-      const result = await cancelPendingTasks();
+      const result = await userService.cancelPendingTasks();
       message.success(`已取消 ${result.task_results?.cancelled_tasks} 个待接取的任务`);
       
       // 重新检查任务状态
       try {
-        await checkAccountStatus();
+        await userService.checkAccountStatus();
         // 如果检查成功，说明没有活跃任务了
         setTaskError(null);
       } catch (error: any) {
@@ -73,7 +96,7 @@ const AccountSettings: React.FC = () => {
   const handleDeleteAccount = async () => {
     try {
       setIsDeleting(true);
-      await deleteAccount();
+      await userService.deleteAccount();
       setIsModalVisible(false);
       setShowThankYou(true);
     } catch (error: any) {
@@ -90,6 +113,21 @@ const AccountSettings: React.FC = () => {
     setShowThankYou(false);
     logout();
     navigate('/login');
+  };
+
+  const handleNotificationChange = async (checked: boolean) => {
+    setIsUpdating(true);
+    try {
+      const updatedUser = await userService.updateProfile({
+        email_notification_enabled: checked
+      });
+      updateUser(updatedUser);
+      message.success('通知设置已更新');
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '更新设置失败');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const renderTaskList = () => {
@@ -142,6 +180,23 @@ const AccountSettings: React.FC = () => {
       <Card title="账号设置" className="max-w-2xl mx-auto">
         <div className="space-y-6">
           <div>
+            <h3 className="text-lg font-medium mb-4">通知设置</h3>
+            <div className="flex items-center justify-between">
+              <span>任务过期提醒</span>
+              <Switch
+                checked={user?.email_notification_enabled}
+                onChange={handleNotificationChange}
+                loading={isUpdating}
+                checkedChildren="开启"
+                unCheckedChildren="关闭"
+              />
+            </div>
+            <p className="text-gray-500 text-sm mt-2">
+              开启后，将在任务即将过期和已过期时通过邮件通知您
+            </p>
+          </div>
+
+          <div className="border-t pt-6">
             <h3 className="text-lg font-medium text-red-600 mb-2">危险操作</h3>
             <Button
               danger
