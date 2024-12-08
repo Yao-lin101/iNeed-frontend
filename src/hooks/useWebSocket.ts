@@ -17,8 +17,11 @@ export function useWebSocket(path: string | null) {
       return;
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}${path}?token=${token}`;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    const wsUrl = `${wsProtocol}//${host}${path}?token=${token}`;
+    
+    console.log('Connecting to WebSocket:', wsUrl);
 
     const ws = new WebSocket(wsUrl);
 
@@ -37,14 +40,18 @@ export function useWebSocket(path: string | null) {
       }
     };
 
-    ws.onerror = () => {
+    ws.onerror = (error) => {
       setConnected(false);
-      console.error('WebSocket 连接错误');
+      console.error('WebSocket 连接错误:', error);
     };
 
     ws.onmessage = (event) => {
       try {
+        console.log('Raw WebSocket message:', event.data);
         const data = JSON.parse(event.data);
+        console.log('Parsed WebSocket message:', data);
+        
+        // 直接分发消息对象
         window.dispatchEvent(
           new CustomEvent('ws-message', { detail: data })
         );

@@ -5,6 +5,7 @@ import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Message } from '@/types/chat';
 import { useAuth } from '@/hooks/useAuth';
+import { getMediaUrl } from '@/utils/url';
 
 // 配置 dayjs
 dayjs.extend(relativeTime);
@@ -46,6 +47,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
     <div className="space-y-4">
       {messages.map((message) => {
         const isSelf = message.sender.id === user?.id;
+        const avatarUrl = message.sender.avatar_url || getMediaUrl(message.sender.avatar);
 
         return (
           <div
@@ -54,7 +56,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
               isSelf ? 'flex-row-reverse' : ''
             }`}
           >
-            <Avatar src={message.sender.avatar_url}>
+            <Avatar src={avatarUrl} size="large">
               {message.sender.username[0]}
             </Avatar>
             <div

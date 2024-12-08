@@ -19,6 +19,7 @@ export interface Message {
 export interface Conversation {
   id: number;
   participants: User[];
+  other_participant: User;
   created_at: string;
   updated_at: string;
   last_message: Message | null;

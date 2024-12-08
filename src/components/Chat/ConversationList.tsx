@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Conversation } from '@/types/chat';
+import { getMediaUrl } from '@/utils/url';
 
 // 配置 dayjs
 dayjs.extend(relativeTime);
@@ -31,6 +32,14 @@ const ConversationList: React.FC<ConversationListProps> = ({
       renderItem={(conversation) => {
         const lastMessage = conversation.last_message;
         const unreadCount = conversation.unread_count || 0;
+        const otherParticipant = conversation.other_participant;
+        
+        if (!otherParticipant) {
+          console.warn('No other participant found for conversation:', conversation);
+          return null;
+        }
+
+        const avatarUrl = otherParticipant.avatar_url || getMediaUrl(otherParticipant.avatar);
 
         return (
           <List.Item
@@ -43,18 +52,18 @@ const ConversationList: React.FC<ConversationListProps> = ({
               avatar={
                 <Badge count={unreadCount} offset={[-5, 5]}>
                   <Avatar 
-                    src={conversation.participants[0].avatar_url}
+                    src={avatarUrl}
                     size="large"
                     className="border border-gray-200"
                   >
-                    {conversation.participants[0].username[0]}
+                    {otherParticipant.username[0]}
                   </Avatar>
                 </Badge>
               }
               title={
                 <div className="flex justify-between items-center">
                   <span className="font-medium">
-                    {conversation.participants[0].username}
+                    {otherParticipant.username}
                   </span>
                   {lastMessage && (
                     <span className="text-xs text-gray-400">

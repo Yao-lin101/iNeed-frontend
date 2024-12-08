@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu } from 'antd';
 import {
   MessageOutlined,
@@ -10,10 +10,20 @@ import { useConversations } from '@/hooks/useConversations';
 
 const { Sider, Content } = Layout;
 
-const ChatContainer: React.FC = () => {
-  const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
+interface ChatContainerProps {
+  initialConversationId?: number;
+}
+
+const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) => {
+  const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState('myMessages');
   const { conversations, loading } = useConversations();
+
+  useEffect(() => {
+    if (initialConversationId) {
+      setSelectedConversation(initialConversationId);
+    }
+  }, [initialConversationId]);
 
   const menuItems = [
     {
