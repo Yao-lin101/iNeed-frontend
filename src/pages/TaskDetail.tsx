@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, message, Spin, Empty, Modal, Tag, Avatar } from 'antd';
-import { DownloadOutlined, ExclamationCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { 
+  DownloadOutlined, 
+  ExclamationCircleOutlined, 
+  UserOutlined,
+  MessageOutlined 
+} from '@ant-design/icons';
 import { useAuthStore } from '../store/useAuthStore';
 import { taskService, Task, TaskSubmitData } from '../services/taskService';
+import { request } from '../utils/request';
 import TaskSubmitModal from '../components/TaskSubmitModal';
 import TaskReviewModal from '../components/TaskReviewModal';
 import { getMediaUrl } from '../utils/url';
@@ -20,7 +26,7 @@ const TaskDetail: React.FC = () => {
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
 
-  // 获取当前用户是否是任务创建者或接取者
+  // 获取前用户是否是任务创建者或接取者
   const isCreator = task?.creator.uid === user?.uid;
   const isAssignee = task?.assignee?.uid === user?.uid;
 
@@ -177,6 +183,43 @@ const TaskDetail: React.FC = () => {
     }
   };
 
+  // 处理联系委托人
+  const handleContactCreator = async () => {
+    if (!task || !task.creator.uid) {
+      console.log('Task creator data:', task?.creator);
+      message.error('无法获取委托人信息');
+      return;
+    }
+    
+    try {
+      const requestData = { participant_uid: task.creator.uid };
+      console.log('Creating conversation with data:', requestData);
+      
+      // 创建或获取与委托人的对话
+      const response = await request.post('/chat/conversations/create-or-get/', requestData);
+      
+      console.log('Conversation created:', response.data);
+      
+      if (!response.data.id) {
+        console.error('Invalid response data:', response.data);
+        message.error('创建对话失败：无效的响应数据');
+        return;
+      }
+      
+      // 跳转到聊天页面
+      navigate('/chat', { state: { conversationId: response.data.id } });
+    } catch (error: any) {
+      console.error('创建对话失败:', {
+        error,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: '/chat/conversations/create-or-get/'
+      });
+      message.error(error.response?.data?.error || '创建对话失败');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -203,7 +246,16 @@ const TaskDetail: React.FC = () => {
                 icon={<UserOutlined />} 
                 src={getMediaUrl(task.creator.avatar)}
               />
-              <span>委托人：{task.creator.uid ? task.creator.username : '已删除用户'}</span>
+              <span>委托人：{task.creator.username}</span>
+              {!isCreator && task.creator.uid && (
+                <Button 
+                  type="link" 
+                  icon={<MessageOutlined />}
+                  onClick={handleContactCreator}
+                >
+                  联系委托人
+                </Button>
+              )}
             </div>
             {task.assignee && (
               <div className="flex items-center space-x-2">
