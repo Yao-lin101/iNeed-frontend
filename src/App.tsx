@@ -16,6 +16,7 @@ const TaskCenter = React.lazy(() => import('./pages/TaskCenter'));
 const TaskForm = React.lazy(() => import('./pages/TaskForm'));
 const TaskDetail = React.lazy(() => import('./pages/TaskDetail'));
 const MyTasks = React.lazy(() => import('./pages/MyTasks'));
+const Chat = React.lazy(() => import('./pages/Chat'));
 
 // 加载中组件
 const LoadingComponent = () => (
@@ -93,6 +94,14 @@ function App() {
                   }
                 />
                 <Route path="my-tasks" element={<MyTasks />} />
+                <Route
+                  path="chat"
+                  element={
+                    <PrivateRoute>
+                      <Chat />
+                    </PrivateRoute>
+                  }
+                />
               </Route>
             </Routes>
           </Suspense>

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Layout, Menu, Avatar, Dropdown } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
+import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import type { MenuProps } from 'antd';
@@ -59,14 +59,20 @@ const MainLayout: React.FC = () => {
           </Link>
           <Menu mode="horizontal" defaultSelectedKeys={['home']} items={navItems} />
         </div>
-        <div>
+        <div className="flex items-center gap-4">
           {isAuthenticated ? (
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-              <div className="cursor-pointer flex items-center">
-                <Avatar src={user?.avatar} icon={<UserOutlined />} />
-                <span className="ml-2">{user?.username}</span>
-              </div>
-            </Dropdown>
+            <>
+              <Link to="/chat" className="text-gray-600 hover:text-gray-900">
+                <Badge dot>
+                  <MessageOutlined style={{ fontSize: '20px' }} />
+                </Badge>
+              </Link>
+              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                <div className="cursor-pointer">
+                  <Avatar src={user?.avatar} icon={<UserOutlined />} />
+                </div>
+              </Dropdown>
+            </>
           ) : (
             <div>
               <Link to="/login" className="mr-4">
