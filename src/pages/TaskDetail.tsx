@@ -7,6 +7,7 @@ import { taskService, Task, TaskSubmitData } from '../services/taskService';
 import TaskSubmitModal from '../components/TaskSubmitModal';
 import TaskReviewModal from '../components/TaskReviewModal';
 import { getMediaUrl } from '../utils/url';
+import { formatDeadline } from '../utils/date';
 
 const { confirm } = Modal;
 
@@ -31,7 +32,9 @@ const TaskDetail: React.FC = () => {
       submitted: 'warning',
       completed: 'success',
       rejected: 'error',
-      cancelled: 'error'
+      cancelled: 'error',
+      system_cancelled: 'error',
+      expired: 'error'
     };
     return colorMap[status] || 'default';
   };
@@ -44,7 +47,9 @@ const TaskDetail: React.FC = () => {
       submitted: '待审核',
       completed: '已完成',
       rejected: '已拒绝',
-      cancelled: '已取消'
+      cancelled: '已取消',
+      system_cancelled: '系统取消',
+      expired: '已过期'
     };
     return textMap[status] || status;
   };
@@ -210,7 +215,7 @@ const TaskDetail: React.FC = () => {
               </div>
             )}
             <div>报酬：<span className="text-primary font-bold">¥{task.reward}</span></div>
-            <div>截止日期：{task.deadline}</div>
+            <div>截止日期：{formatDeadline(task.deadline)}</div>
           </div>
         </div>
 
@@ -255,6 +260,15 @@ const TaskDetail: React.FC = () => {
           <div className="mb-6">
             <h2 className="text-lg font-bold mb-2">审核说明</h2>
             <div className="whitespace-pre-wrap">{task.review_note}</div>
+          </div>
+        )}
+
+        {task.status === 'expired' && task.expired_at && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold mb-2">过期信息</h2>
+            <div className="text-red-500">
+              该任务已于 {new Date(task.expired_at).toLocaleString()} 过期
+            </div>
           </div>
         )}
 

@@ -18,7 +18,7 @@ export interface Task {
     email: string;
     avatar?: string;
   };
-  status: 'pending' | 'in_progress' | 'submitted' | 'completed' | 'rejected' | 'cancelled';
+  status: 'pending' | 'in_progress' | 'submitted' | 'completed' | 'rejected' | 'cancelled' | 'system_cancelled' | 'expired';
   required_materials: string;
   deadline: string;
   reward: number;
@@ -27,6 +27,8 @@ export interface Task {
   attachments?: string;
   submitted_at?: string;
   reviewed_at?: string;
+  expired_at?: string;
+  notification_sent?: boolean;
   created_at: string;
   updated_at: string;
 }

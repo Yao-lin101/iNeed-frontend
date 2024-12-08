@@ -1,7 +1,9 @@
-import React from 'react';
-import { Form, Input, InputNumber, DatePicker, Button, Card, message } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, InputNumber, DatePicker, Select, Button, Card, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { taskService } from '../services/taskService';
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
 
 const { TextArea } = Input;
 
@@ -9,26 +11,60 @@ interface TaskFormData {
   title: string;
   description: string;
   reward: number;
-  deadline: Date;
+  deadline_date: Dayjs;
+  deadline_hour: number;
   required_materials: string;
 }
 
 const TaskForm: React.FC = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
+
+  const disabledDate = (current: Dayjs) => {
+    // 不能选择今天之前的日期
+    return current && current.startOf('day').valueOf() < dayjs().startOf('day').valueOf();
+  };
+
+  const getHourOptions = () => {
+    const options = [];
+    const now = dayjs();
+    const isToday = selectedDate && selectedDate.format('YYYY-MM-DD') === now.format('YYYY-MM-DD');
+    const startHour = isToday ? now.hour() + 1 : 0;
+
+    for (let i = startHour; i <= 23; i++) {
+      options.push({
+        value: i,
+        label: `${i}:00`
+      });
+    }
+    return options;
+  };
 
   const onFinish = async (values: TaskFormData) => {
     try {
+      // 合并日期和小时
+      const deadline = values.deadline_date
+        .hour(values.deadline_hour)
+        .minute(0)
+        .second(0);
+
       await taskService.createTask({
         ...values,
-        deadline: values.deadline.toISOString(),
-        status: 'pending', // 设置为待接取状态
+        deadline: deadline.format('YYYY-MM-DD HH:mm:ss'),
+        status: 'pending',
       });
       message.success('任务发布成功');
-      navigate('/tasks'); // 返回任务列表
+      navigate('/tasks');
     } catch (error: any) {
       message.error(error.response?.data?.detail || '发布任务失败');
     }
+  };
+
+  // 当日期改变时更新小时选项
+  const handleDateChange = (date: Dayjs | null) => {
+    setSelectedDate(date);
+    form.setFieldValue('deadline_hour', undefined);
   };
 
   return (
@@ -84,21 +120,36 @@ const TaskForm: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item
-            label="截止日期"
-            name="deadline"
-            rules={[{ required: true, message: '请选择截止日期' }]}
-          >
-            <DatePicker
-              showTime
-              placeholder="选择截止日期和时间"
+          <div className="flex space-x-4">
+            <Form.Item
+              label="截止日期"
+              name="deadline_date"
+              rules={[{ required: true, message: '请选择截止日期' }]}
               style={{ width: '200px' }}
-              disabledDate={(current) => {
-                // 不能选择过去的日期
-                return current && current.valueOf() < Date.now();
-              }}
-            />
-          </Form.Item>
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                placeholder="选择日期"
+                disabledDate={disabledDate}
+                onChange={handleDateChange}
+                defaultPickerValue={dayjs()}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="截止时间"
+              name="deadline_hour"
+              rules={[{ required: true, message: '请选择截止时间' }]}
+              style={{ width: '120px' }}
+              dependencies={['deadline_date']}
+            >
+              <Select
+                placeholder="选择时间"
+                options={getHourOptions()}
+                disabled={!selectedDate}
+              />
+            </Form.Item>
+          </div>
 
           <Form.Item
             label="需要提交的材料"

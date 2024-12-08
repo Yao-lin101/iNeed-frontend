@@ -1,16 +1,21 @@
 import { create } from 'zustand';
-import { authService, UserProfile } from '../services/auth';
+import { authService } from '../services/auth';
+import { User } from '../services/userService';
 
 interface AuthState {
-  user: UserProfile | null;
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string, password2: string, verification_code: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   clearError: () => void;
+  setUser: (user: User | null) => void;
+  setToken: (token: string | null) => void;
+  updateUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -18,8 +23,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: !!localStorage.getItem('token'),
   isLoading: false,
   error: null,
+  token: localStorage.getItem('token'),
 
   clearError: () => set({ error: null }),
+
+  setUser: (user) => set({ user }),
+
+  setToken: (token) => {
+    if (token) {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
+    set({ token });
+  },
+
+  updateUser: (user) => set({ user }),
 
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
@@ -35,7 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await authService.getProfile();
       console.log('User profile loaded:', user);
       
-      set({ user, isAuthenticated: true, isLoading: false });
+      set({ user, isAuthenticated: true, isLoading: false, token: response.token });
     } catch (error: any) {
       console.error('Login error:', error);
       localStorage.removeItem('token');
@@ -45,6 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: false,
         error: error.response?.data?.detail || '登录失败',
         isLoading: false,
+        token: null,
       });
       throw error;
     }
@@ -70,7 +90,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await authService.getProfile();
       console.log('User profile loaded:', user);
       
-      set({ user, isAuthenticated: true, isLoading: false });
+      set({ user, isAuthenticated: true, isLoading: false, token: response.token });
     } catch (error: any) {
       console.error('Registration error:', error);
       localStorage.removeItem('token');
@@ -80,6 +100,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: false,
         error: error.response?.data?.detail || '注册失败',
         isLoading: false,
+        token: null,
       });
       throw error;
     }
@@ -92,7 +113,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await authService.logout();
       localStorage.removeItem('token');
       localStorage.removeItem('uid');
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isLoading: false, token: null });
     } catch (error: any) {
       console.error('Logout error:', error);
       // 即使注销失败，也清除本地存储和状态
@@ -103,6 +124,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: false,
         error: error.response?.data?.detail || '注销失败',
         isLoading: false,
+        token: null,
       });
     }
   },
@@ -115,7 +137,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log('No token or UID found, clearing auth state');
       localStorage.removeItem('token');
       localStorage.removeItem('uid');
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, token: null });
       return;
     }
 
@@ -133,6 +155,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: null, 
         isAuthenticated: false, 
         isLoading: false,
+        token: null,
         error: error.response?.data?.detail || error.message || '加载用户信息失败'
       });
       throw error;
