@@ -97,7 +97,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             >
               <CloseOutlined className="text-gray-400 text-sm hover:text-gray-600" />
             </div>
-            <div className="flex items-start w-full gap-3 pl-8 pr-4 py-3">
+            <div className="flex items-start w-full py-3 px-8">
               <Badge 
                 count={unreadCount} 
                 offset={[-5, 5]}
@@ -111,13 +111,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
                   {otherParticipant.username[0]}
                 </Avatar>
               </Badge>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 ml-4">
                 <div className="flex justify-between items-center mb-1">
-                  <span className={`font-medium text-sm truncate ${unreadCount > 0 ? 'text-blue-600' : ''}`}>
+                  <span className={`font-medium text-sm truncate max-w-[70%] ${unreadCount > 0 ? 'text-blue-600' : ''}`}>
                     {otherParticipant.username}
                   </span>
                   {lastMessage && (
-                    <span className="text-xs text-gray-400 flex-shrink-0">
+                    <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
                       {dayjs(lastMessage.created_at).fromNow()}
                     </span>
                   )}
