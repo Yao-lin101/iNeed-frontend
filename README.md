@@ -144,11 +144,13 @@ npm run build
 src/
   ├── components/     # 可复用组件
   │   ├── ErrorBoundary/  # 错误边界组件
+  │   ├── Chat/          # 聊天系统组件
   │   └── ...
   ├── pages/         # 页面组件
   │   ├── Login/     # 登录页面
   │   ├── Register/  # 注册页面
   │   ├── Profile/   # 个人资料页面
+  │   ├── Chat/      # 聊天页面
   │   └── Account/   # 账号管理页面
   ├── services/      # API 服务
   │   ├── api.ts     # API 配置
@@ -156,6 +158,13 @@ src/
   │   └── user.ts    # 用户服务
   ├── store/         # 状态管理
   │   └── useAuthStore.ts  # 认证状态管理
+  ├── styles/        # 样式文件
+  │   ├── base/           # 基础样式
+  │   │   └── variables.css  # CSS 变量
+  │   ├── components/     # 组件样式
+  │   │   └── chat/      # 聊天组件样式
+  │   ├── animations.css  # 动画样式
+  │   └── index.css      # 全局样式入口
   ├── utils/         # 工具函数
   │   ├── date.ts    # 日期时间工具
   │   └── ...
@@ -169,7 +178,12 @@ src/
 - 使用 TypeScript 进行类型检查
 - 遵循 ESLint 和 Prettier 配置
 - 组件使用函数式组件和 Hooks
-- 使用 Tailwind CSS 进行样式管理
+- CSS 架构规范
+  - 使用 CSS 变量管理主题和样式配置
+  - 组件样式模块化管理
+  - 动画效果统一管理
+  - 基于 Tailwind CSS 的原子类
+  - 遵循 BEM 命名规范
 - 遵循 Ant Design 设计规范
 - 日期时间处理规范
   - 使用 Day.js 处理时间

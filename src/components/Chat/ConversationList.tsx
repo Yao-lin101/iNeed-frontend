@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { List, Avatar, Badge, Skeleton } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -6,6 +6,8 @@ import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Conversation } from '@/types/chat';
 import { getMediaUrl } from '@/utils/url';
+import { useAuthStore } from '@/store/useAuthStore';
+import '@/styles/components/chat/conversation-list.css';
 
 // 配置 dayjs
 dayjs.extend(relativeTime);
@@ -24,6 +26,44 @@ const ConversationList: React.FC<ConversationListProps> = ({
   selectedId,
   onSelect,
 }) => {
+  const { user } = useAuthStore();
+  const prevConversationsRef = useRef<Conversation[]>([]);
+  const listItemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+
+  // 检查会话是否有新消息
+  const hasNewMessage = (conversation: Conversation, prevConversations: Conversation[]) => {
+    const prevConversation = prevConversations.find(c => c.id === conversation.id);
+    if (!prevConversation) return false;
+    
+    const currentLastMessage = conversation.last_message;
+    const prevLastMessage = prevConversation.last_message;
+    
+    return currentLastMessage && prevLastMessage && 
+           currentLastMessage.id !== prevLastMessage.id;
+  };
+
+  // 监听会话列表变化
+  useEffect(() => {
+    conversations.forEach(conversation => {
+      if (hasNewMessage(conversation, prevConversationsRef.current)) {
+        // 如果不是当前选中的会话，且发送者不是当前用户，添加高亮动画
+        const isSelected = conversation.id === selectedId;
+        const lastMessage = conversation.last_message;
+        const isSelfMessage = lastMessage?.sender.uid === user?.uid;
+        
+        if (!isSelected && !isSelfMessage && listItemRefs.current[conversation.id]) {
+          const element = listItemRefs.current[conversation.id];
+          element?.classList.add('new-message-highlight');
+          setTimeout(() => {
+            element?.classList.remove('new-message-highlight');
+          }, 2000);
+        }
+      }
+    });
+    
+    prevConversationsRef.current = conversations;
+  }, [conversations, selectedId, user?.uid]);
+
   return (
     <List
       className="conversation-list h-full overflow-y-auto"
@@ -40,16 +80,16 @@ const ConversationList: React.FC<ConversationListProps> = ({
         }
 
         const avatarUrl = otherParticipant.avatar_url || getMediaUrl(otherParticipant.avatar);
+        const isSelected = selectedId === conversation.id;
 
         return (
           <List.Item
-            className={`group cursor-pointer hover:bg-gray-50 transition-colors duration-200 relative ${
-              selectedId === conversation.id ? 'bg-blue-50' : ''
-            }`}
+            ref={el => listItemRefs.current[conversation.id] = el}
+            className={`conversation-item ${isSelected ? 'selected' : ''} ${unreadCount > 0 ? 'unread' : ''}`}
             onClick={() => onSelect(conversation.id)}
           >
             <div 
-              className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center transform -translate-x-8 group-hover:translate-x-0 transition-transform duration-200"
+              className="delete-button"
               onClick={(e) => {
                 e.stopPropagation();
                 // 删除功能待实现
@@ -58,7 +98,11 @@ const ConversationList: React.FC<ConversationListProps> = ({
               <CloseOutlined className="text-gray-400 text-sm hover:text-gray-600" />
             </div>
             <div className="flex items-start w-full gap-3 pl-8 pr-4 py-3">
-              <Badge count={unreadCount} offset={[-5, 5]}>
+              <Badge 
+                count={unreadCount} 
+                offset={[-5, 5]}
+                className={unreadCount > 0 ? 'badge-bounce' : ''}
+              >
                 <Avatar 
                   src={avatarUrl}
                   size={40}
@@ -69,7 +113,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
               </Badge>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-medium text-sm truncate">
+                  <span className={`font-medium text-sm truncate ${unreadCount > 0 ? 'text-blue-600' : ''}`}>
                     {otherParticipant.username}
                   </span>
                   {lastMessage && (
@@ -81,7 +125,9 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 {loading ? (
                   <Skeleton.Input style={{ width: '100%' }} size="small" />
                 ) : (
-                  <div className="text-gray-500 text-xs truncate">
+                  <div className={`text-xs truncate ${
+                    unreadCount > 0 ? 'text-gray-900' : 'text-gray-500'
+                  }`}>
                     {lastMessage?.content || '暂无消息'}
                   </div>
                 )}

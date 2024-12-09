@@ -1,0 +1,41 @@
+@import '../../animations.css';
+
+/* 会话列表项样式 */
+.conversation-item {
+  @apply cursor-pointer transition-all duration-200 relative;
+  background-color: var(--bg-primary);
+}
+
+.conversation-item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.conversation-item.selected {
+  background-color: var(--bg-highlight);
+}
+
+.conversation-item.unread {
+  background-color: var(--bg-secondary);
+}
+
+/* 新消息高亮效果 */
+.new-message-highlight {
+  animation: highlightNew 2s ease-out;
+}
+
+/* 未读消息徽章动画 */
+.badge-bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+/* 删除按钮滑入效果 */
+.delete-button {
+  @apply absolute left-0 top-0 bottom-0 flex items-center justify-center;
+  width: var(--spacing-xl);
+  transform: translateX(-100%);
+  transition: transform var(--transition-fast);
+}
+
+.conversation-item:hover .delete-button {
+  transform: translateX(0);
+} 
