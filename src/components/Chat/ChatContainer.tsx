@@ -3,10 +3,12 @@ import {  Menu } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import ConversationList from './ConversationList';
 import MessageArea from './MessageArea';
 import { useConversations } from '@/hooks/useConversations';
+import { Empty } from 'antd';
 
 
 interface ChatContainerProps {
@@ -84,8 +86,19 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
             </>
           )}
           {currentTab === 'system' && (
-            <div className="h-full flex items-center justify-center text-gray-500 bg-white">
-              暂无系统通知
+            <div className="flex-1 flex flex-col bg-gray-50">
+              <div className="py-[0.2rem] px-4 border-b border-gray-200 flex-none bg-white">
+                <h2 className="text-sm">系统通知</h2>
+              </div>
+              <div className="flex-1 flex items-center justify-center">
+                <Empty
+                  image={<InboxOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />}
+                  imageStyle={{ marginBottom: '16px' }}
+                  description={
+                    <span className="text-gray-400 text-base">暂无系统通知</span>
+                  }
+                />
+              </div>
             </div>
           )}
         </div>

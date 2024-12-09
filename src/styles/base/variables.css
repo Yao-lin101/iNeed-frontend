@@ -8,7 +8,9 @@
   /* Background Colors */
   --bg-primary: #ffffff;
   --bg-secondary: #f0f2f5;
-  --bg-highlight: rgba(59, 130, 246, 0.1);
+  --bg-secondary-hover: #e6e8eb;
+  --bg-highlight: #e6f4ff;
+  --bg-highlight-hover: #bae0ff;
   
   /* Text Colors */
   --text-primary: #213547;
