@@ -18,6 +18,24 @@ export function useConversations() {
     }
   };
 
+  // 监听 WebSocket 消息以更新对话列表
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const data = event.detail;
+      if (data.type === 'chat_message') {
+        // 收到新消息时更新对话列表
+        fetchConversations();
+      }
+    };
+
+    window.addEventListener('ws-message', handleWebSocketMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
+    };
+  }, []);
+
+  // 初始加载
   useEffect(() => {
     fetchConversations();
   }, []);
