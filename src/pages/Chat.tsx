@@ -1,19 +1,16 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import ChatContainer from '../components/Chat/ChatContainer';
 
-interface LocationState {
-  conversationId?: number;
-}
-
 const Chat: React.FC = () => {
-  const location = useLocation();
-  const state = location.state as LocationState;
+  const [searchParams] = useSearchParams();
+  const conversationId = searchParams.get('conversation');
+  const initialConversationId = conversationId ? parseInt(conversationId, 10) : undefined;
 
   return (
     <div className="h-[calc(100vh-64px)] flex justify-center bg-gray-100">
       <div className="w-[1100px] min-w-[1100px]">
-        <ChatContainer initialConversationId={state?.conversationId} />
+        <ChatContainer initialConversationId={initialConversationId} />
       </div>
     </div>
   );

@@ -3,12 +3,14 @@ import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
 import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import type { MenuProps } from 'antd';
 
 const { Header, Content, Footer } = Layout;
 
 const MainLayout: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
+  const { totalUnread } = useUnreadMessages();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -67,7 +69,7 @@ const MainLayout: React.FC = () => {
           {isAuthenticated ? (
             <>
               <Link to="/chat" className="text-gray-600 hover:text-gray-900">
-                <Badge dot>
+                <Badge count={totalUnread} offset={[0, 0]}>
                   <MessageOutlined style={{ fontSize: '20px' }} />
                 </Badge>
               </Link>
