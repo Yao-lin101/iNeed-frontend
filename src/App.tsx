@@ -5,6 +5,7 @@ import zhCN from 'antd/locale/zh_CN';
 import MainLayout from './layouts/MainLayout';
 import { useAuthStore } from './store/useAuthStore';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useUserWebSocket } from './hooks/useUserWebSocket';
 
 // 懒加载页面组件
 const Login = React.lazy(() => import('./pages/Login'));
@@ -38,6 +39,9 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const { loadUser, error } = useAuthStore();
+  
+  // 初始化全局 WebSocket 连接
+  useUserWebSocket();
 
   useEffect(() => {
     const initializeAuth = async () => {
