@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {  Menu } from 'antd';
+import { Menu } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
@@ -9,7 +9,7 @@ import ConversationList from './ConversationList';
 import MessageArea from './MessageArea';
 import { useConversations } from '@/hooks/useConversations';
 import { Empty } from 'antd';
-
+import { chatService } from '@/services/chatService';
 
 interface ChatContainerProps {
   initialConversationId?: number;
@@ -18,13 +18,59 @@ interface ChatContainerProps {
 const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState('myMessages');
-  const { conversations, loading, refetch: refetchConversations } = useConversations();
+  const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
 
   useEffect(() => {
     if (initialConversationId) {
       setSelectedConversation(initialConversationId);
     }
   }, [initialConversationId]);
+
+  // 处理会话选择
+  const handleConversationSelect = async (conversationId: number | null) => {
+    if (conversationId === null) {
+      setSelectedConversation(null);
+      return;
+    }
+    
+    // 找到选中的会话
+    const selectedConv = conversations.find(conv => conv.id === conversationId);
+    if (!selectedConv) return;
+
+    // 获取当前未读计数
+    const currentUnreadCount = selectedConv.unread_count || 0;
+    
+    // 更新选中状态
+    setSelectedConversation(conversationId);
+    
+    // 如果有未读消息，先更新未读计数
+    if (currentUnreadCount > 0) {
+      // 立即更新本地未读计数
+      updateUnreadCount(conversationId, 0);
+      
+      // 调用API标记为已读
+      try {
+        const response = await chatService.markAsRead(conversationId);
+
+        // 发送WebSocket消息通知其他客户端
+        window.dispatchEvent(new CustomEvent('ws-message', {
+          detail: {
+            type: 'chat_message',
+            message: {
+              type: 'messages_read',
+              conversation_id: conversationId,
+              unread_count: currentUnreadCount,
+              reader: response.reader
+            }
+          }
+        }));
+      } catch (error) {
+        console.error('Failed to mark messages as read:', error);
+        // 如果API调用失败，恢复未读计数
+        updateUnreadCount(conversationId, currentUnreadCount);
+      }
+    }
+  };
 
   const handleDelete = async () => {
     await refetchConversations();
@@ -78,7 +124,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
                     conversations={conversations}
                     loading={loading}
                     selectedId={selectedConversation}
-                    onSelect={setSelectedConversation}
+                    onSelect={handleConversationSelect}
                     onDelete={handleDelete}
                   />
                 </div>

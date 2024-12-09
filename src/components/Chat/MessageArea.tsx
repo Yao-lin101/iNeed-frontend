@@ -34,9 +34,12 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
 
   // 检查并清理历史消息
   const checkAndCleanMessages = async (oldConversationId: number) => {
+    console.log('[MessageArea] Checking messages for conversation:', oldConversationId);
     try {
       const hasNew = await chatService.hasNewMessages(oldConversationId);
+      console.log('[MessageArea] Has new messages:', hasNew);
       if (hasNew) {
+        console.log('[MessageArea] Cleaning messages for conversation:', oldConversationId);
         await chatService.cleanMessages(oldConversationId);
       }
     } catch (error) {
@@ -46,6 +49,10 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
 
   // 当会话ID变化时
   useEffect(() => {
+    console.log('[MessageArea] Conversation changed:', { 
+      prev: prevConversationIdRef.current, 
+      current: conversationId 
+    });
     // 如果之前有选中的会话，检查并清理消息
     if (prevConversationIdRef.current && prevConversationIdRef.current !== conversationId) {
       checkAndCleanMessages(prevConversationIdRef.current);
@@ -55,6 +62,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
 
     // 等待消息加载完成后滚动到底部
     if (conversationId && !loading && messages.length > 0) {
+      console.log('[MessageArea] Scrolling to bottom, messages:', messages.length);
       scrollToBottom();
     }
   }, [conversationId, loading, messages.length]);

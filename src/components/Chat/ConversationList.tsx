@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { List, Avatar, Badge, Skeleton, Modal, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -18,7 +19,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   loading: boolean;
   selectedId: number | null;
-  onSelect: (id: number) => void;
+  onSelect: (id: number | null) => void | Promise<void>;
   onDelete?: (id: number) => void;
 }
 
@@ -30,8 +31,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
   onDelete,
 }) => {
   const { user } = useAuthStore();
+  const [, setSearchParams] = useSearchParams();
   const prevConversationsRef = useRef<Conversation[]>([]);
   const listItemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const animationTimeoutsRef = useRef<{ [key: number]: number }>({});
 
   // 检查会话是否有新消息
   const hasNewMessage = (conversation: Conversation, prevConversations: Conversation[]) => {
@@ -45,6 +48,12 @@ const ConversationList: React.FC<ConversationListProps> = ({
            currentLastMessage.id !== prevLastMessage.id;
   };
 
+  // 处理会话选择
+  const handleSelect = (conversationId: number) => {
+    onSelect(conversationId);
+    setSearchParams({ conversation: conversationId.toString() });
+  };
+
   // 处理删除会话
   const handleDelete = async (conversationId: number) => {
     Modal.confirm({
@@ -56,11 +65,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
         try {
           await chatService.deleteConversation(conversationId);
           message.success('会话已删除');
-          // 如果是当前选中的会话，取消选中
           if (selectedId === conversationId) {
-            onSelect(0);
+            onSelect(null);
+            setSearchParams({});
           }
-          // 通知父组件更新列表
           onDelete?.(conversationId);
         } catch (error) {
           message.error('删除会话失败');
@@ -69,20 +77,34 @@ const ConversationList: React.FC<ConversationListProps> = ({
     });
   };
 
+  // 清理动画超时
+  useEffect(() => {
+    return () => {
+      Object.values(animationTimeoutsRef.current).forEach(timeoutId => {
+        window.clearTimeout(timeoutId);
+      });
+    };
+  }, []);
+
   // 监听会话列表变化
   useEffect(() => {
     conversations.forEach(conversation => {
       if (hasNewMessage(conversation, prevConversationsRef.current)) {
-        // 如果不是当前选中的会话，且发送者不是当前用户，添加高亮动画
         const isSelected = conversation.id === selectedId;
         const lastMessage = conversation.last_message;
         const isSelfMessage = lastMessage?.sender.uid === user?.uid;
+        const element = listItemRefs.current[conversation.id];
         
-        if (!isSelected && !isSelfMessage && listItemRefs.current[conversation.id]) {
-          const element = listItemRefs.current[conversation.id];
-          element?.classList.add('new-message-highlight');
-          setTimeout(() => {
-            element?.classList.remove('new-message-highlight');
+        if (!isSelected && !isSelfMessage && element) {
+          // 清理之前的动画超时
+          if (animationTimeoutsRef.current[conversation.id]) {
+            window.clearTimeout(animationTimeoutsRef.current[conversation.id]);
+          }
+
+          element.classList.add('new-message-highlight');
+          animationTimeoutsRef.current[conversation.id] = window.setTimeout(() => {
+            element.classList.remove('new-message-highlight');
+            delete animationTimeoutsRef.current[conversation.id];
           }, 2000);
         }
       }
@@ -113,7 +135,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
           <List.Item
             ref={el => listItemRefs.current[conversation.id] = el}
             className={`conversation-item ${isSelected ? 'selected' : ''} ${unreadCount > 0 ? 'unread' : ''}`}
-            onClick={() => onSelect(conversation.id)}
+            onClick={() => handleSelect(conversation.id)}
           >
             <div 
               className="delete-button"
