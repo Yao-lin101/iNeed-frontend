@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { List, Avatar, Badge, Skeleton } from 'antd';
+import { List, Avatar, Badge, Skeleton, Modal, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
@@ -7,6 +7,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Conversation } from '@/types/chat';
 import { getMediaUrl } from '@/utils/url';
 import { useAuthStore } from '@/store/useAuthStore';
+import { chatService } from '@/services/chatService';
 import '@/styles/components/chat/conversation-list.css';
 
 // 配置 dayjs
@@ -18,6 +19,7 @@ interface ConversationListProps {
   loading: boolean;
   selectedId: number | null;
   onSelect: (id: number) => void;
+  onDelete?: (id: number) => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -25,6 +27,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   loading,
   selectedId,
   onSelect,
+  onDelete,
 }) => {
   const { user } = useAuthStore();
   const prevConversationsRef = useRef<Conversation[]>([]);
@@ -40,6 +43,30 @@ const ConversationList: React.FC<ConversationListProps> = ({
     
     return currentLastMessage && prevLastMessage && 
            currentLastMessage.id !== prevLastMessage.id;
+  };
+
+  // 处理删除会话
+  const handleDelete = async (conversationId: number) => {
+    Modal.confirm({
+      title: '删除会话',
+      content: '确定要删除这个会话吗？删除后将只能看到新消息。',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await chatService.deleteConversation(conversationId);
+          message.success('会话已删除');
+          // 如果是当前选中的会话，取消选中
+          if (selectedId === conversationId) {
+            onSelect(0);
+          }
+          // 通知父组件更新列表
+          onDelete?.(conversationId);
+        } catch (error) {
+          message.error('删除会话失败');
+        }
+      },
+    });
   };
 
   // 监听会话列表变化
@@ -92,7 +119,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
               className="delete-button"
               onClick={(e) => {
                 e.stopPropagation();
-                // 删除功能待实现
+                handleDelete(conversation.id);
               }}
             >
               <CloseOutlined className="text-gray-400 text-sm hover:text-gray-600" />

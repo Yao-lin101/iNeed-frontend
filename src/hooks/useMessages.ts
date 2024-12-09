@@ -122,7 +122,7 @@ export function useMessages(conversationId: number | null) {
     };
   }, [conversationId, markAsRead]);
 
-  // 监听 conversationId 变化，加载消息历史
+  // 初始加载消息
   useEffect(() => {
     if (conversationId) {
       fetchMessages();
@@ -135,6 +135,6 @@ export function useMessages(conversationId: number | null) {
     messages,
     loading,
     sendMessage,
-    refetch: fetchMessages,
+    connected,
   };
 } 

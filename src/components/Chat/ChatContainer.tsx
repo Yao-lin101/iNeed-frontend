@@ -18,13 +18,17 @@ interface ChatContainerProps {
 const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState('myMessages');
-  const { conversations, loading } = useConversations();
+  const { conversations, loading, refetch: refetchConversations } = useConversations();
 
   useEffect(() => {
     if (initialConversationId) {
       setSelectedConversation(initialConversationId);
     }
   }, [initialConversationId]);
+
+  const handleDelete = async () => {
+    await refetchConversations();
+  };
 
   const menuItems = [
     {
@@ -75,6 +79,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
                     loading={loading}
                     selectedId={selectedConversation}
                     onSelect={setSelectedConversation}
+                    onDelete={handleDelete}
                   />
                 </div>
               </div>

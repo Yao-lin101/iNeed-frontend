@@ -4,6 +4,7 @@ import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
+import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
 
 interface MessageAreaProps {
@@ -16,6 +17,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
   const messageAreaRef = useRef<HTMLDivElement>(null);
   const { messages, loading, sendMessage } = useMessages(conversationId);
   const { conversations, refetch: refetchConversations } = useConversations();
+  const prevConversationIdRef = useRef<number | null>(null);
 
   const currentConversation = conversations.find(c => c.id === conversationId);
   const recipientName = currentConversation?.other_participant?.username;
@@ -30,8 +32,28 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
     }
   };
 
-  // 当会话ID变化时，等待消息加载完成后滚动到底部
+  // 检查并清理历史消息
+  const checkAndCleanMessages = async (oldConversationId: number) => {
+    try {
+      const hasNew = await chatService.hasNewMessages(oldConversationId);
+      if (hasNew) {
+        await chatService.cleanMessages(oldConversationId);
+      }
+    } catch (error) {
+      console.error('Failed to clean messages:', error);
+    }
+  };
+
+  // 当会话ID变化时
   useEffect(() => {
+    // 如果之前有选中的会话，检查并清理消息
+    if (prevConversationIdRef.current && prevConversationIdRef.current !== conversationId) {
+      checkAndCleanMessages(prevConversationIdRef.current);
+    }
+    // 更新前一个会话ID
+    prevConversationIdRef.current = conversationId;
+
+    // 等待消息加载完成后滚动到底部
     if (conversationId && !loading && messages.length > 0) {
       scrollToBottom();
     }
@@ -50,55 +72,54 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
+  // 组件卸载时也检查清理
   useEffect(() => {
-    if (conversationId && inputRef.current?.input) {
-      inputRef.current.input.focus();
-    }
-  }, [conversationId]);
+    return () => {
+      if (prevConversationIdRef.current) {
+        checkAndCleanMessages(prevConversationIdRef.current);
+      }
+    };
+  }, []);
 
   if (!conversationId) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <Empty description="选择一个对话开始聊天" />
+      <div className="h-full flex items-center justify-center bg-gray-50">
+        <Empty
+          description={
+            <span className="text-gray-400">
+              选择一个会话开始聊天
+            </span>
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col" ref={messageAreaRef}>
-      <div className="py-[0.2rem] px-4 border-b border-gray-200 flex-none text-center">
-        <h2 className="text-sm">{recipientName || '聊天'}</h2>
+    <div ref={messageAreaRef} className="flex flex-col h-full">
+      <div className="py-[0.2rem] px-4 border-b border-gray-200 flex-none">
+        <h2 className="text-sm">{recipientName}</h2>
       </div>
-      <div className="flex-1 overflow-hidden bg-gray-50">
+      <div className="flex-1 min-h-0">
         <MessageList messages={messages} loading={loading} />
       </div>
-      <div className="flex-none p-4 bg-white border-t border-gray-200">
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
-            placeholder="输入消息..."
-            onKeyPress={handleKeyPress}
-            autoComplete="off"
-            size="large"
-          />
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            onClick={handleSend}
-            size="large"
-          >
-            发送
-          </Button>
-        </div>
+      <div className="flex p-4 border-t border-gray-200">
+        <Input
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onPressEnter={handleSend}
+          placeholder="输入消息..."
+          autoComplete="off"
+        />
+        <Button
+          type="primary"
+          icon={<SendOutlined />}
+          onClick={handleSend}
+          className="ml-2"
+        >
+          发送
+        </Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { message } from 'antd';
 import { getToken } from '../utils/auth';
 import { useAuthStore } from '../store/useAuthStore';
+import { getWebSocketUrl } from '../utils/url';
 
 export function useWebSocket(path: string | null) {
   const [connected, setConnected] = useState(false);
@@ -24,7 +25,7 @@ export function useWebSocket(path: string | null) {
     }
 
     try {
-      const ws = new WebSocket(`${path}?token=${token}`);
+      const ws = new WebSocket(getWebSocketUrl(`${path}?token=${token}`));
 
       ws.onopen = () => {
         setConnected(true);

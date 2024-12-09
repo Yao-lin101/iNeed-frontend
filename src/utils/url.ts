@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8000';
+const WS_BASE_URL = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://');
 
 /**
  * 处理媒体文件 URL
@@ -15,4 +16,16 @@ export const getMediaUrl = (url: string | null | undefined): string | undefined 
   }
   
   return `${API_BASE_URL}${url}`;
+};
+
+/**
+ * 获取 WebSocket URL
+ * @param path 相对路径
+ * @returns 完整的 WebSocket URL
+ */
+export const getWebSocketUrl = (path: string): string => {
+  if (path.startsWith('ws://') || path.startsWith('wss://')) {
+    return path;
+  }
+  return `${WS_BASE_URL}${path}`;
 }; 

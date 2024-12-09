@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { message } from 'antd';
 import { getToken } from '../utils/auth';
 import { useAuthStore } from '../store/useAuthStore';
+import { getWebSocketUrl } from '../utils/url';
 
 export function useUserWebSocket() {
   const [connected, setConnected] = useState(false);
@@ -24,7 +25,7 @@ export function useUserWebSocket() {
     }
 
     try {
-      const ws = new WebSocket(`/ws/user/${user.uid}/?token=${token}`);
+      const ws = new WebSocket(getWebSocketUrl(`/ws/user/${user.uid}/?token=${token}`));
 
       ws.onopen = () => {
         setConnected(true);
@@ -34,7 +35,7 @@ export function useUserWebSocket() {
       ws.onclose = (event) => {
         setConnected(false);
 
-        // 只有在非正常关闭且未达���最大重试次数时才尝试重连
+        // 只有在非正常关闭且未达到最大重试次数时才尝试重连
         if (!event.wasClean && isAuthenticated && reconnectCountRef.current < MAX_RECONNECT_ATTEMPTS) {
           reconnectTimeoutRef.current = window.setTimeout(() => {
             reconnectCountRef.current += 1;
