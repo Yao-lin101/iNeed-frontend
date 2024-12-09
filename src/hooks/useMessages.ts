@@ -11,6 +11,18 @@ export function useMessages(conversationId: number | null) {
     conversationId ? `/ws/chat/${conversationId}/` : null
   );
 
+  // 标记消息为已读
+  const markAsRead = useCallback(async () => {
+    if (!conversationId) return;
+
+    try {
+      await request.post(`/chat/conversations/${conversationId}/mark_as_read/`);
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+    }
+  }, [conversationId]);
+
+  // 获取消息历史
   const fetchMessages = useCallback(async () => {
     if (!conversationId) return;
 
@@ -22,6 +34,8 @@ export function useMessages(conversationId: number | null) {
       
       if (response.data && Array.isArray(response.data.results)) {
         setMessages(response.data.results);
+        // 获取消息后立即标记为已读
+        await markAsRead();
       } else {
         console.error('Invalid messages data format:', response.data);
         message.error('获取消息历史失败：数据格式错误');
@@ -36,7 +50,7 @@ export function useMessages(conversationId: number | null) {
     } finally {
       setLoading(false);
     }
-  }, [conversationId]);
+  }, [conversationId, markAsRead]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -80,10 +94,20 @@ export function useMessages(conversationId: number | null) {
             if (messageExists) {
               return prev;
             }
+            // 如果是新消息，立即标记为已读
+            markAsRead();
             return [...prev, message];
           });
-        } else {
         }
+      } else if (data.type === 'messages_read') {
+        // 更新消息状态为已读
+        setMessages((prev) =>
+          prev.map((msg) => ({
+            ...msg,
+            status: 'read',
+            read_at: new Date().toISOString()
+          }))
+        );
       }
     };
 
@@ -96,7 +120,7 @@ export function useMessages(conversationId: number | null) {
         window.removeEventListener('ws-message', handleWebSocketMessage as EventListener);
       }
     };
-  }, [conversationId]);
+  }, [conversationId, markAsRead]);
 
   // 监听 conversationId 变化，加载消息历史
   useEffect(() => {
@@ -106,13 +130,6 @@ export function useMessages(conversationId: number | null) {
       setMessages([]);
     }
   }, [conversationId, fetchMessages]);
-
-  // 标记消息为已读
-  useEffect(() => {
-    if (conversationId) {
-      request.post(`/chat/conversations/${conversationId}/mark_as_read/`);
-    }
-  }, [conversationId]);
 
   return {
     messages,

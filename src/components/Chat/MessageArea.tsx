@@ -13,11 +13,29 @@ interface MessageAreaProps {
 const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<InputRef>(null);
+  const messageAreaRef = useRef<HTMLDivElement>(null);
   const { messages, loading, sendMessage } = useMessages(conversationId);
   const { conversations, refetch: refetchConversations } = useConversations();
 
   const currentConversation = conversations.find(c => c.id === conversationId);
   const recipientName = currentConversation?.other_participant?.username;
+
+  // 滚动到底部
+  const scrollToBottom = () => {
+    if (messageAreaRef.current) {
+      const messageList = messageAreaRef.current.querySelector('.message-list');
+      if (messageList) {
+        messageList.scrollTop = messageList.scrollHeight;
+      }
+    }
+  };
+
+  // 当会话ID变化时，等待消息加载完成后滚动到底部
+  useEffect(() => {
+    if (conversationId && !loading && messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [conversationId, loading, messages.length]);
 
   const handleSend = async () => {
     const content = inputValue.trim();
@@ -54,11 +72,11 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" ref={messageAreaRef}>
       <div className="py-[0.2rem] px-4 border-b border-gray-200 flex-none text-center">
         <h2 className="text-sm">{recipientName || '聊天'}</h2>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div className="flex-1 overflow-hidden bg-gray-50">
         <MessageList messages={messages} loading={loading} />
       </div>
       <div className="flex-none p-4 bg-white border-t border-gray-200">
