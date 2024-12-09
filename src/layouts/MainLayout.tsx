@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
 import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import type { MenuProps } from 'antd';
 
@@ -10,6 +10,7 @@ const { Header, Content, Footer } = Layout;
 const MainLayout: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
@@ -50,6 +51,9 @@ const MainLayout: React.FC = () => {
     },
   ];
 
+  // 判断是否显示页脚
+  const shouldShowFooter = location.pathname !== '/chat';
+
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center justify-between bg-white">
@@ -83,12 +87,14 @@ const MainLayout: React.FC = () => {
           )}
         </div>
       </Header>
-      <Content className="p-6">
-        <div className="bg-white p-6 min-h-[280px]">
+      <Content className={location.pathname === '/chat' ? '' : 'p-6'}>
+        <div className={location.pathname === '/chat' ? '' : 'bg-white p-6 min-h-[280px]'}>
           <Outlet />
         </div>
       </Content>
-      <Footer className="text-center">iNeed ©2024</Footer>
+      {shouldShowFooter && (
+        <Footer className="text-center">iNeed ©2024</Footer>
+      )}
     </Layout>
   );
 };

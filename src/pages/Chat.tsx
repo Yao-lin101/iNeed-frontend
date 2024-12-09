@@ -11,8 +11,10 @@ const Chat: React.FC = () => {
   const state = location.state as LocationState;
 
   return (
-    <div className="h-screen">
-      <ChatContainer initialConversationId={state?.conversationId} />
+    <div className="h-[calc(100vh-64px)] flex justify-center bg-gray-100">
+      <div className="w-[1100px] min-w-[1100px]">
+        <ChatContainer initialConversationId={state?.conversationId} />
+      </div>
     </div>
   );
 };
