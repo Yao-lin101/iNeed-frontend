@@ -66,16 +66,21 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
                 isSelf ? 'items-end' : 'items-start'
               }`}>
                 <div className="text-xs text-gray-500 mb-1">
-                  {message.sender.username} · {dayjs(message.created_at).fromNow()}
+                  {message.sender.username}
                 </div>
-                <div
-                  className={`rounded-lg p-3 ${
-                    isSelf
-                      ? 'bg-blue-500 text-white rounded-br-none'
-                      : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                  }`}
-                >
-                  {message.content}
+                <div className={`group flex items-center gap-2 ${isSelf ? 'flex-row-reverse' : ''}`}>
+                  <div
+                    className={`rounded-lg p-3 break-all whitespace-pre-wrap ${
+                      isSelf
+                        ? 'bg-blue-500 text-white rounded-br-none'
+                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                  <div className={`opacity-0 transition-opacity group-hover:opacity-100 text-xs text-gray-400 flex-shrink-0`}>
+                    {dayjs(message.created_at).fromNow()}
+                  </div>
                 </div>
               </div>
             </div>
