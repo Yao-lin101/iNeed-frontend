@@ -14,8 +14,8 @@ export const chatService = {
   },
 
   /** 创建新对话 */
-  createConversation: async (userId: number) => {
-    const response = await request.post('/chat/conversations/', { user_id: userId });
+  createConversation: async (recipientUid: string) => {
+    const response = await request.post('/chat/conversations/', { recipient_uid: recipientUid });
     return response.data;
   },
 

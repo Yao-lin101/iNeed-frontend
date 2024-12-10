@@ -28,15 +28,15 @@ export function useUnreadMessages() {
 
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
-    const { message, isInMessageCenter, activeConversationId } = context;
+    const { message, activeConversationId } = context;
 
     // 只处理其他用户发送的消息
     if (message.sender.uid === user?.uid) {
       return;
     }
 
-    // 如果不在消息中心，或者在消息中心但不是当前活跃对话
-    if (!isInMessageCenter || message.conversation !== activeConversationId) {
+    // 如果不是当前活跃对话，增加未读计数
+    if (message.conversation !== activeConversationId) {
       setTotalUnread(prev => prev + 1);
     }
   }, [user?.uid]);

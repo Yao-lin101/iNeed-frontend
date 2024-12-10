@@ -54,7 +54,7 @@ const MainLayout: React.FC = () => {
   ];
 
   // 判断是否显示页脚
-  const shouldShowFooter = location.pathname !== '/chat';
+  const shouldShowFooter = !location.pathname.startsWith('/mc');
 
   return (
     <Layout className="min-h-screen">
@@ -68,7 +68,7 @@ const MainLayout: React.FC = () => {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link to="/chat" className="text-gray-600 hover:text-gray-900">
+              <Link to="/mc/chat" className="text-gray-600 hover:text-gray-900">
                 <Badge count={totalUnread} offset={[0, 0]}>
                   <MessageOutlined style={{ fontSize: '20px' }} />
                 </Badge>
@@ -89,8 +89,8 @@ const MainLayout: React.FC = () => {
           )}
         </div>
       </Header>
-      <Content className={location.pathname === '/chat' ? '' : 'p-6'}>
-        <div className={location.pathname === '/chat' ? '' : 'bg-white p-6 min-h-[280px]'}>
+      <Content className={location.pathname.startsWith('/mc') ? '' : 'p-6'}>
+        <div className={location.pathname.startsWith('/mc') ? '' : 'bg-white p-6 min-h-[280px]'}>
           <Outlet />
         </div>
       </Content>

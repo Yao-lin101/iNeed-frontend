@@ -30,7 +30,6 @@ request.interceptors.response.use(
       switch (status) {
         case 401:
           message.error('请先登录');
-          // 可以在这里处理登出逻辑
           break;
         case 403:
           message.error('没有权限');

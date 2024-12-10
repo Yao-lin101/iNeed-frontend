@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { message as antMessage } from 'antd';
 import { Message } from '@/types/chat';
 import { request } from '@/utils/request';
@@ -9,55 +9,107 @@ import { useAuthStore } from '@/store/useAuthStore';
 export function useMessages(conversationId: number | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const { connected, send } = useWebSocket(
-    conversationId ? `/ws/chat/${conversationId}/` : null
-  );
+  const mountedRef = useRef(true);
+  const wsInitializedRef = useRef(false);
+  const fetchingRef = useRef(false);
+  const lastFetchRef = useRef<number>(0);
   const { user } = useAuthStore();
+
+  // 设置初始挂载状态
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // 延迟初始化 WebSocket 连接
+  const { connected, send } = useWebSocket(
+    mountedRef.current && wsInitializedRef.current && conversationId 
+      ? `/ws/chat/${conversationId}/` 
+      : null
+  );
+
+  // 初始化 WebSocket 连��
+  useEffect(() => {
+    if (conversationId && mountedRef.current) {
+      wsInitializedRef.current = true;
+    }
+    return () => {
+      wsInitializedRef.current = false;
+    };
+  }, [conversationId]);
 
   // 获取消息历史
   const fetchMessages = useCallback(async () => {
-    if (!conversationId) return;
+    const now = Date.now();
+    if (!conversationId || !mountedRef.current || fetchingRef.current || now - lastFetchRef.current < 2000) {
+      return;
+    }
 
+    fetchingRef.current = true;
+    lastFetchRef.current = now;
     setLoading(true);
+
     try {
       const response = await request.get(
         `/chat/conversations/${conversationId}/messages/`
       );
       
-      if (response.data && Array.isArray(response.data.results)) {
-        setMessages(response.data.results);
-      } else {
-        console.error('Invalid messages data format:', response.data);
-        antMessage.error('获取消息历史失败：数据格式错误');
+      if (mountedRef.current) {
+        if (response.data && typeof response.data === 'object') {
+          const results = response.data.results || [];
+          if (Array.isArray(results)) {
+            setMessages(results);
+          } else {
+            antMessage.error('获取消息历史失败：数据格式错误');
+          }
+        } else {
+          antMessage.error('获取消息历史失败：响应格式错误');
+        }
       }
     } catch (error: any) {
-      console.error('Failed to fetch messages:', error);
-      if (error.response?.status === 404) {
-        antMessage.error('无权访问该对话');
-      } else {
-        antMessage.error('获取消息历史失败');
+      if (mountedRef.current) {
+        if (error.response?.status === 404) {
+          antMessage.error('无权访问该对话');
+        } else {
+          antMessage.error('获取消息历史失败');
+        }
       }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+      fetchingRef.current = false;
     }
   }, [conversationId]);
 
+  // 初始加载消息
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+
+    fetchMessages();
+  }, [conversationId, fetchMessages]);
+
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!conversationId || !user) return;
+      if (!conversationId || !user || !mountedRef.current) return;
+
+      let tempId = Date.now();
+      const tempMessage: Message = {
+        id: tempId,
+        conversation: conversationId,
+        content: content,
+        sender: user,
+        created_at: new Date().toISOString(),
+        status: 'sent',
+        read_at: null
+      };
 
       try {
-        // 创建临时消息
-        const tempMessage: Message = {
-          id: Date.now(),
-          conversation: conversationId,
-          content: content,
-          sender: user,
-          created_at: new Date().toISOString(),
-          status: 'sent',
-          read_at: null
-        };
-
         // 立即添加临时消息到本地状态
         setMessages(prev => [...prev, tempMessage]);
 
@@ -74,15 +126,19 @@ export function useMessages(conversationId: number | null) {
             { content }
           );
           // 用服务器返回的消息替换临时消息
-          setMessages((prev) => prev.map(msg => 
-            (msg.id === tempMessage.id) ? response.data : msg
-          ));
+          if (mountedRef.current) {
+            setMessages((prev) => prev.map(msg => 
+              msg.id === tempId ? response.data : msg
+            ));
+          }
         }
       } catch (error) {
         console.error('Failed to send message:', error);
-        antMessage.error('发送消息失败');
-        // 发送失败时移除临时消息
-        setMessages(prev => prev.filter(msg => msg.id !== Date.now()));
+        if (mountedRef.current) {
+          antMessage.error('发送消息失败');
+          // 发送失败时移除临时消息
+          setMessages(prev => prev.filter(msg => msg.id !== tempId));
+        }
       }
     },
     [conversationId, connected, send, user]
@@ -90,6 +146,8 @@ export function useMessages(conversationId: number | null) {
 
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
+    if (!mountedRef.current) return;
+    
     const { message } = context;
     
     // 确保消息属于当前对话
@@ -119,6 +177,8 @@ export function useMessages(conversationId: number | null) {
 
   // 处理消息已读状态
   const handleMessagesRead = useCallback((data: MessagesReadData) => {
+    if (!mountedRef.current) return;
+    
     const { conversation_id } = data;
     if (conversation_id !== conversationId) return;
 
@@ -138,19 +198,20 @@ export function useMessages(conversationId: number | null) {
     handleMessagesRead,
   });
 
-  // 初始加载消息
+  // 组件卸载时的清理
   useEffect(() => {
-    if (conversationId) {
-      fetchMessages();
-    } else {
-      setMessages([]);
-    }
-  }, [conversationId, fetchMessages]);
+    return () => {
+      mountedRef.current = false;
+      wsInitializedRef.current = false;
+      fetchingRef.current = false;
+    };
+  }, []);
 
   return {
     messages,
     loading,
     sendMessage,
     connected,
+    refetch: fetchMessages,
   };
 } 

@@ -10,32 +10,70 @@ import MessageArea from './MessageArea';
 import { useConversations } from '@/hooks/useConversations';
 import { Empty } from 'antd';
 import { chatService } from '@/services/chatService';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatContainerProps {
   initialConversationId?: number;
+  initialTab?: 'myMessages' | 'system';
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) => {
+const ChatContainer: React.FC<ChatContainerProps> = ({ 
+  initialConversationId,
+  initialTab = 'myMessages'
+}) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
-  const [currentTab, setCurrentTab] = useState('myMessages');
+  const [currentTab, setCurrentTab] = useState(initialTab);
   const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
+  const navigate = useNavigate();
 
+  // 监听初始标签页
+  useEffect(() => {
+    setCurrentTab(initialTab);
+    // 根据初始标签页设置URL
+    if (initialTab === 'system') {
+      navigate('/mc/sm', { replace: true });
+    } else {
+      navigate('/mc/chat', { replace: true });
+    }
+  }, [initialTab, navigate]);
+
+  // 监听初始会话ID
   useEffect(() => {
     if (initialConversationId) {
       setSelectedConversation(initialConversationId);
+      // 如果有初始会话ID，确保在消息标签页
+      setCurrentTab('myMessages');
+      navigate(`/mc/chat?conversation=${initialConversationId}`, { replace: true });
     }
-  }, [initialConversationId]);
+  }, [initialConversationId, navigate]);
+
+  // 处理标签页切换
+  const handleTabChange = (key: 'myMessages' | 'system') => {
+    setCurrentTab(key);
+    if (key === 'system') {
+      // 切换到系统通知时，清除选中的会话并导航到系统消息页面
+      setSelectedConversation(null);
+      navigate('/mc/sm', { replace: true });
+    } else {
+      // 切换到我的消息时，导航到消息中心
+      navigate('/mc/chat', { replace: true });
+    }
+  };
 
   // 处理会话选择
   const handleConversationSelect = async (conversationId: number | null) => {
     if (conversationId === null) {
       setSelectedConversation(null);
+      navigate('/mc/chat', { replace: true });
       return;
     }
     
     // 找到选中的会话
     const selectedConv = conversations.find(conv => conv.id === conversationId);
     if (!selectedConv) return;
+
+    // 更新URL
+    navigate(`/mc/chat?conversation=${conversationId}`, { replace: true });
 
     // 获取当前未读计数
     const currentUnreadCount = selectedConv.unread_count || 0;
@@ -99,7 +137,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
           mode="inline"
           selectedKeys={[currentTab]}
           items={menuItems}
-          onClick={({ key }) => setCurrentTab(key)}
+          onClick={({ key }) => handleTabChange(key as 'myMessages' | 'system')}
           className="border-0"
         />
       </div>
@@ -138,9 +176,6 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ initialConversationId }) 
           )}
           {currentTab === 'system' && (
             <div className="flex-1 flex flex-col bg-gray-50">
-              <div className="py-[0.2rem] px-4 border-b border-gray-200 flex-none bg-white">
-                <h2 className="text-sm">系统通知</h2>
-              </div>
               <div className="flex-1 flex items-center justify-center">
                 <Empty
                   image={<InboxOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />}

@@ -99,10 +99,26 @@ function App() {
                 />
                 <Route path="my-tasks" element={<MyTasks />} />
                 <Route
-                  path="chat"
+                  path="mc"
+                  element={
+                    <PrivateRoute>
+                      <Navigate to="/mc/chat" replace />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="mc/chat"
                   element={
                     <PrivateRoute>
                       <Chat />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="mc/sm"
+                  element={
+                    <PrivateRoute>
+                      <Chat initialTab="system" />
                     </PrivateRoute>
                   }
                 />

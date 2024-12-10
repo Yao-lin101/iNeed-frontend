@@ -14,6 +14,8 @@ import TaskSubmitModal from '../components/TaskSubmitModal';
 import TaskReviewModal from '../components/TaskReviewModal';
 import { getMediaUrl } from '../utils/url';
 import { formatDeadline } from '../utils/date';
+import ChatModal from '@/components/Chat/ChatModal';
+import { chatService } from '../services/chatService';
 
 const { confirm } = Modal;
 
@@ -25,8 +27,10 @@ const TaskDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [chatModalVisible, setChatModalVisible] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
 
-  // 获��前用户是否是任务创建者或接取者
+  // 获前用户是否是任务创建者或接取者
   const isCreator = task?.creator.uid === user?.uid;
   const isAssignee = task?.assignee?.uid === user?.uid;
 
@@ -66,6 +70,14 @@ const TaskDetail: React.FC = () => {
       setLoading(true);
       const data = await taskService.getTask(Number(taskId));
       setTask(data);
+
+      // 检查URL中是否有会话ID
+      const searchParams = new URLSearchParams(window.location.search);
+      const conversationId = searchParams.get('conversation');
+      if (conversationId) {
+        setCurrentConversationId(parseInt(conversationId, 10));
+        setChatModalVisible(true);
+      }
     } catch (error) {
       message.error('加载任务详情失败');
       navigate('/tasks');
@@ -84,7 +96,7 @@ const TaskDetail: React.FC = () => {
     confirm({
       title: '确认接取任务',
       icon: <ExclamationCircleOutlined />,
-      content: '接取任务后，您需要在截止日期前完成任务。确定要接取这个任务吗？',
+      content: '接取任务后，您需要在截止日期前完成任务。确定要接取这个任务？',
       okText: '确认接取',
       cancelText: '取消',
       async onOk() {
@@ -186,38 +198,62 @@ const TaskDetail: React.FC = () => {
   // 处理联系委托人
   const handleContactCreator = async () => {
     if (!task || !task.creator.uid) {
-      console.log('Task creator data:', task?.creator);
       message.error('无法获取委托人信息');
       return;
     }
     
     try {
       const requestData = { recipient_uid: task.creator.uid };
-      console.log('Creating conversation with data:', requestData);
       
       // 创建或获取与委托人的对话
       const response = await request.post('/chat/conversations/', requestData);
       
-      console.log('Conversation created:', response.data);
-      
       if (!response.data.id) {
-        console.error('Invalid response data:', response.data);
         message.error('创建对话失败：无效的响应数据');
         return;
       }
       
-      // 跳转到聊天页面
-      navigate('/chat', { state: { conversationId: response.data.id } });
+      // 设置当前会话ID并显示聊天弹窗
+      const conversationId = response.data.id;
+      setCurrentConversationId(conversationId);
+      setChatModalVisible(true);
+
+      // 标记消息为已读
+      try {
+        await chatService.markAsRead(conversationId);
+      } catch (error) {
+        console.error('标记已读失败:', error);
+      }
+
+      // 更新URL，添加conversation参数
+      const searchParams = new URLSearchParams(window.location.search);
+      searchParams.set('conversation', conversationId.toString());
+      navigate(`${window.location.pathname}?${searchParams.toString()}`, { replace: true });
     } catch (error: any) {
-      console.error('创建对话失败:', {
-        error,
-        response: error.response,
-        status: error.response?.status,
-        data: error.response?.data,
-        url: '/chat/conversations/'
-      });
       message.error(error.response?.data?.error || '创建对话失败');
     }
+  };
+
+  // 监听聊天窗口状态变化
+  useEffect(() => {
+    if (currentConversationId && chatModalVisible) {
+      chatService.markAsRead(currentConversationId);
+    }
+  }, [currentConversationId, chatModalVisible]);
+
+  // 处理关闭聊天窗口
+  const handleCloseChat = () => {
+    setChatModalVisible(false);
+    
+    // 从URL中移除conversation参数
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.delete('conversation');
+    navigate(`${window.location.pathname}?${searchParams.toString()}`, { replace: true });
+    
+    // 延迟清除会话ID，确保组件完全卸载
+    setTimeout(() => {
+      setCurrentConversationId(null);
+    }, 300);
   };
 
   if (loading) {
@@ -373,6 +409,13 @@ const TaskDetail: React.FC = () => {
         open={reviewModalVisible}
         onCancel={() => setReviewModalVisible(false)}
         onSubmit={handleReviewTask}
+      />
+
+      <ChatModal
+        open={chatModalVisible}
+        onClose={handleCloseChat}
+        conversationId={currentConversationId}
+        recipientName={task?.creator.username || '委托人'}
       />
     </div>
   );

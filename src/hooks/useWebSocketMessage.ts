@@ -73,54 +73,58 @@ export type WebSocketMessageData = {
 
 export function useWebSocketMessage(handler: MessageHandler) {
   const location = useLocation();
-  const processedMessages = useRef(new Set<number>());
+  const processedMessages = useRef(new Set<string>());
 
   // 判断当前页面状态
   const isInMessageCenter = useCallback(() => {
-    const result = location.pathname === '/chat';
-    console.log('isInMessageCenter check:', {
-      pathname: location.pathname,
-      result
-    });
+    const result = location.pathname.startsWith('/mc/chat');
     return result;
   }, [location.pathname]);
 
   // 获取当前活跃的聊天窗口ID
   const getActiveConversationId = useCallback(() => {
-    if (!isInMessageCenter()) return null;
-    
     // 从 URL 参数中获取会话 ID
     const searchParams = new URLSearchParams(location.search);
     const conversationId = searchParams.get('conversation');
-    const result = conversationId ? parseInt(conversationId, 10) : null;
-    
-    // 如果URL中没有conversationId，尝试从pathname中获取
-    if (!result && location.pathname.startsWith('/chat/')) {
-      const matches = location.pathname.match(/\/chat\/(\d+)/);
-      if (matches) {
-        return parseInt(matches[1], 10);
-      }
+    if (conversationId) {
+      return parseInt(conversationId, 10);
     }
     
-    console.log('getActiveConversationId:', {
-      pathname: location.pathname,
-      search: location.search,
-      conversationId: result
-    });
+    // 从pathname中获取会话ID
+    const matches = location.pathname.match(/conversation[=/](\d+)/);
+    if (matches) {
+      return parseInt(matches[1], 10);
+    }
     
-    return result;
-  }, [location.pathname, location.search, isInMessageCenter]);
+    return null;
+  }, [location.pathname, location.search]);
 
-  // 检查消息是否已处理
-  const isMessageProcessed = useCallback((messageId: number) => {
-    if (processedMessages.current.has(messageId)) {
+  // 检查会话是否处于活跃状态
+  const isConversationActive = useCallback((conversationId: number) => {
+    // 检查URL参数
+    const searchParams = new URLSearchParams(location.search);
+    const urlConversationId = searchParams.get('conversation');
+    if (urlConversationId === conversationId.toString()) {
       return true;
     }
-    processedMessages.current.add(messageId);
+    
+    // 检查URL路径中是否包含会话ID
+    return location.pathname.includes(`conversation/${conversationId}`) || 
+           location.pathname.includes(`conversation=${conversationId}`);
+  }, [location.pathname, location.search]);
+
+  // 检查消息是否已处理
+  const isMessageProcessed = useCallback((messageKey: string | number) => {
+    const key = messageKey.toString();
+    if (processedMessages.current.has(key)) {
+      return true;
+    }
+    processedMessages.current.add(key);
     
     // 如果处理的消息太多，清理旧的
     if (processedMessages.current.size > 1000) {
-      processedMessages.current.clear();
+      const oldestMessages = Array.from(processedMessages.current).slice(0, 500);
+      processedMessages.current = new Set(oldestMessages);
     }
     
     return false;
@@ -133,25 +137,17 @@ export function useWebSocketMessage(handler: MessageHandler) {
     // 处理普通聊天消息
     if ('id' in data.message) {
       const message = data.message;
-      if (isMessageProcessed(message.id)) {
+      const messageKey = `${message.id}-${data.source}`;
+      if (isMessageProcessed(messageKey)) {
         return;
       }
 
       // 检查消息来源，避免重复处理
       if (data.source === 'chat-websocket' && message.conversation) {
-        const activeId = getActiveConversationId();
-        if (message.conversation === activeId) {
+        if (isConversationActive(message.conversation)) {
           return; // 已经由聊天WebSocket处理了
         }
       }
-
-      console.log('Processing chat message:', {
-        messageId: message.id,
-        isInMessageCenter: isInMessageCenter(),
-        activeConversationId: getActiveConversationId(),
-        conversationId: message.conversation,
-        source: data.source
-      });
 
       handler.handleChatMessage({
         message,
@@ -178,7 +174,7 @@ export function useWebSocketMessage(handler: MessageHandler) {
         });
       }
     }
-  }, [handler.handleChatMessage, handler.handleMessagesRead, isInMessageCenter, getActiveConversationId, isMessageProcessed]);
+  }, [handler.handleChatMessage, handler.handleMessagesRead, isInMessageCenter, getActiveConversationId, isMessageProcessed, isConversationActive]);
 
   // 处理会话更新
   const handleConversationUpdated = useCallback((data: WebSocketMessageData) => {
