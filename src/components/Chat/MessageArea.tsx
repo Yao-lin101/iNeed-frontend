@@ -36,13 +36,24 @@ const MessageArea: React.FC<MessageAreaProps> = ({ conversationId }) => {
   const checkAndCleanMessages = async (oldConversationId: number) => {
     console.log('[MessageArea] Checking messages for conversation:', oldConversationId);
     try {
+      // 检查对话是否还存在
+      const conversation = conversations.find(c => c.id === oldConversationId);
+      if (!conversation) {
+        console.log('[MessageArea] Conversation no longer exists:', oldConversationId);
+        return;
+      }
+
       const hasNew = await chatService.hasNewMessages(oldConversationId);
       console.log('[MessageArea] Has new messages:', hasNew);
       if (hasNew) {
         console.log('[MessageArea] Cleaning messages for conversation:', oldConversationId);
         await chatService.cleanMessages(oldConversationId);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.log('[MessageArea] Conversation was deleted:', oldConversationId);
+        return;
+      }
       console.error('Failed to clean messages:', error);
     }
   };
