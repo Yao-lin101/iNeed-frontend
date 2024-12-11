@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Button, Card, message, Upload, Avatar } from 'antd';
-import { UserOutlined, MailOutlined, UploadOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, message } from 'antd';
+import { UserOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../services/auth';
-import type { UploadFile, RcFile } from 'antd/es/upload/interface';
+import AvatarUpload from '@/components/AvatarUpload';
+import { getMediaUrl } from '@/utils/url';
 
 const { TextArea } = Input;
 
@@ -12,13 +13,13 @@ interface ProfileFormData {
   email: string;
   bio?: string;
   phone?: string;
+  avatar?: File | string;
 }
 
 const Profile: React.FC = () => {
   const { user, loadUser } = useAuthStore();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState<UploadFile | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -27,37 +28,22 @@ const Profile: React.FC = () => {
         email: user.email,
         bio: user.bio,
         phone: user.phone,
+        avatar: user.avatar ? getMediaUrl(user.avatar) : undefined
       });
-      if (user.avatar) {
-        setAvatar({
-          uid: '-1',
-          name: 'avatar',
-          status: 'done',
-          url: user.avatar,
-        });
-      }
     }
   }, [user, form]);
-
-  const beforeUpload = (file: RcFile) => {
-    const isImage = file.type.startsWith('image/');
-    if (!isImage) {
-      message.error('只能上传图片文件！');
-      return false;
-    }
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-      message.error('图片必须小于 2MB！');
-      return false;
-    }
-    return true;
-  };
 
   const onFinish = async (values: ProfileFormData) => {
     try {
       setLoading(true);
       const formData = new FormData();
       
+      // 处理头像文件
+      if (values.avatar && values.avatar instanceof File) {
+        formData.append('avatar', values.avatar);
+      }
+      
+      // 添加其他字段
       formData.append('username', values.username);
       formData.append('email', values.email);
       if (values.bio) {
@@ -67,84 +53,65 @@ const Profile: React.FC = () => {
         formData.append('phone', values.phone);
       }
 
-      if (avatar && 'originFileObj' in avatar && avatar.originFileObj) {
-        formData.append('avatar', avatar.originFileObj);
-      }
-
       await authService.updateProfile(formData);
       await loadUser();
       message.success('个人资料更新成功');
     } catch (error: any) {
-      message.error(error.response?.data?.detail || '更新失败');
+      if (error.response?.status === 400) {
+        const errors = error.response.data;
+        Object.keys(errors).forEach(key => {
+          form.setFields([{
+            name: key,
+            errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]]
+          }]);
+        });
+      } else {
+        message.error(error.response?.data?.detail || '更新失败');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  if (!user) return null;
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto py-8 px-4">
       <Card title="个人资料" className="shadow-md">
-        <div className="flex justify-center mb-8">
-          <Upload
-            name="avatar"
-            listType="picture-circle"
-            className="avatar-uploader"
-            showUploadList={false}
-            beforeUpload={(file) => {
-              const isValid = beforeUpload(file);
-              if (isValid) {
-                setAvatar({ 
-                  uid: '-1',
-                  name: file.name,
-                  status: 'done',
-                  url: URL.createObjectURL(file),
-                  originFileObj: file 
-                });
-              }
-              return false;
-            }}
-            maxCount={1}
-          >
-            {avatar ? (
-              <Avatar
-                src={avatar.url}
-                size={100}
-                alt="avatar"
-              />
-            ) : (
-              <div>
-                <UploadOutlined />
-                <div style={{ marginTop: 8 }}>上传头像</div>
-              </div>
-            )}
-          </Upload>
-        </div>
-
-        <div className="mb-6">
-          <div className="text-sm text-gray-600 mb-1">用户ID (UID)</div>
-          <Input
-            value={user?.uid ?? '加载中...'}
-            disabled
-            style={{ 
-              backgroundColor: '#f5f5f5', 
-              cursor: 'default',
-              color: user?.uid ? '#000' : '#999'
-            }}
-            readOnly
-          />
-        </div>
-
         <Form
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          initialValues={{
-            username: user?.username,
-            email: user?.email,
-            bio: user?.bio,
-            phone: user?.phone,
-          }}
         >
+          <div className="flex justify-center mb-8">
+            <Form.Item
+              name="avatar"
+              valuePropName="value"
+              getValueFromEvent={(e) => {
+                if (e?.file instanceof File) {
+                  return e.file;
+                }
+                return e;
+              }}
+            >
+              <AvatarUpload />
+            </Form.Item>
+          </div>
+
+          <div className="mb-6">
+            <div className="text-sm text-gray-600 mb-1">用户ID (UID)</div>
+            <Input
+              value={user?.uid ?? '加载中...'}
+              disabled
+              style={{ 
+                backgroundColor: '#f5f5f5', 
+                cursor: 'default',
+                color: user?.uid ? '#000' : '#999'
+              }}
+              readOnly
+            />
+          </div>
+
           <Form.Item
             name="username"
             label="用户名"
