@@ -1,39 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Input, Card, Row, Col, Pagination, Button, Spin, Empty } from 'antd';
+import React, { useEffect } from 'react';
+import { Input, Row, Col, Pagination, Button, Spin, Empty } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { taskService, Task } from '../services/taskService';
-import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskCard from '@/components/Task/TaskCard';
+import TaskDetailModal from '@/components/Task/TaskDetailModal';
+import { useTaskStore } from '@/models/TaskModel';
 
 const { Search } = Input;
 
 const TaskCenter: React.FC = () => {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchValue, setSearchValue] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-
-  // 加载任务列表
-  const loadTasks = async (page: number = 1, search: string = '') => {
-    setLoading(true);
-    try {
-      const response = await taskService.getTasks({
-        page,
-        search,
-      });
-      setTasks(response.results);
-      setTotal(response.count);
-    } catch (error) {
-      console.error('Failed to load tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    tasks,
+    total,
+    loading,
+    currentPage,
+    searchValue,
+    loadTasks,
+    setCurrentPage,
+    setSearchValue
+  } = useTaskStore();
 
   useEffect(() => {
     loadTasks(currentPage, searchValue);
@@ -50,27 +36,9 @@ const TaskCenter: React.FC = () => {
     setCurrentPage(page);
   };
 
-  // 处理任务点击
-  const handleTaskClick = (taskId: number) => {
-    setSelectedTaskId(taskId);
-    setModalVisible(true);
-  };
-
   // 处理发布任务
   const handleCreateTask = () => {
     navigate('/tasks/create');
-  };
-
-  // 添加关闭modal的处理函数
-  const handleCloseModal = () => {
-    setModalVisible(false);
-    setSelectedTaskId(null);
-  };
-
-  // 添加任务状态变化的处理函数
-  const handleTaskStatusChange = () => {
-    // 重新加载当前页的任务列表
-    loadTasks(currentPage, searchValue);
   };
 
   return (
@@ -103,7 +71,7 @@ const TaskCenter: React.FC = () => {
           <Row gutter={[16, 16]}>
             {tasks.map((task) => (
               <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
-                <TaskCard task={task} onClick={handleTaskClick} />
+                <TaskCard task={task} />
               </Col>
             ))}
           </Row>
@@ -120,12 +88,7 @@ const TaskCenter: React.FC = () => {
         <Empty description="暂无任务" />
       )}
 
-      <TaskDetailModal
-        open={modalVisible}
-        taskId={selectedTaskId}
-        onClose={handleCloseModal}
-        onStatusChange={handleTaskStatusChange}
-      />
+      <TaskDetailModal />
     </div>
   );
 };

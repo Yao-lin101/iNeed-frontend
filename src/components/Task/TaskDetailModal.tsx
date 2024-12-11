@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, Card, Button, message, Spin, Tag, Avatar } from 'antd';
 import { 
   DownloadOutlined, 
@@ -7,33 +7,29 @@ import {
   MessageOutlined 
 } from '@ant-design/icons';
 import { useAuthStore } from '@/store/useAuthStore';
-import { taskService, Task, TaskSubmitData } from '@/services/taskService';
+import { taskService, TaskSubmitData } from '@/services/taskService';
 import { chatService } from '@/services/chatService';
 import { request } from '@/utils/request';
+import { useTaskStore } from '@/models/TaskModel';
 import TaskSubmitModal from '../TaskSubmitModal';
 import TaskReviewModal from '../TaskReviewModal';
 import ChatModal from '@/components/Chat/ChatModal';
 import { getMediaUrl } from '@/utils/url';
 import { formatDeadline } from '@/utils/date';
 
-interface TaskDetailModalProps {
-  open: boolean;
-  taskId: number | null;
-  onClose: () => void;
-  onStatusChange?: () => void; // 可选的回调函数，用于通知父组件任务状态变化
-}
-
 const { confirm } = Modal;
 
-const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
-  open,
-  taskId,
-  onClose,
-  onStatusChange
-}) => {
+const TaskDetailModal: React.FC = () => {
   const { user } = useAuthStore();
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { 
+    selectedTask: task,
+    detailLoading: loading,
+    modalVisible: open,
+    resetState,
+    loadTaskDetail,
+    loadTasks
+  } = useTaskStore();
+
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [chatModalVisible, setChatModalVisible] = useState(false);
@@ -72,27 +68,6 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     return textMap[status] || status;
   };
 
-  // 加载任务详情
-  const loadTask = async () => {
-    if (!taskId) return;
-    
-    try {
-      setLoading(true);
-      const data = await taskService.getTask(taskId);
-      setTask(data);
-    } catch (error) {
-      message.error('加载任务详情失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (open && taskId) {
-      loadTask();
-    }
-  }, [open, taskId]);
-
   // 处理接取任务
   const handleTakeTask = async () => {
     if (!task) return;
@@ -106,8 +81,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         try {
           await taskService.takeTask(task.id);
           message.success('任务接取成功');
-          loadTask();
-          onStatusChange?.();
+          await loadTaskDetail(task.id);
+          await loadTasks();
         } catch (error) {
           message.error('任务接取失败');
         }
@@ -122,8 +97,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       await taskService.submitTask(task.id, data);
       message.success('任务提交成功');
       setSubmitModalVisible(false);
-      loadTask();
-      onStatusChange?.();
+      await loadTaskDetail(task.id);
+      await loadTasks();
     } catch (error) {
       message.error('任务提交失败');
     }
@@ -136,8 +111,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       await taskService.reviewTask(task.id, status, review_note);
       message.success('审核完成');
       setReviewModalVisible(false);
-      loadTask();
-      onStatusChange?.();
+      await loadTaskDetail(task.id);
+      await loadTasks();
     } catch (error: any) {
       console.error('审核失败:', error);
       message.error(error.response?.data?.detail || '审核失败');
@@ -158,8 +133,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         try {
           await taskService.cancelTask(task.id);
           message.success('任务已取消');
-          loadTask();
-          onStatusChange?.();
+          await loadTaskDetail(task.id);
+          await loadTasks();
         } catch (error) {
           message.error('取消任务失败');
         }
@@ -181,8 +156,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         try {
           await taskService.abandonTask(task.id);
           message.success('已放弃任务');
-          loadTask();
-          onStatusChange?.();
+          await loadTaskDetail(task.id);
+          await loadTasks();
         } catch (error) {
           message.error('放弃任务失败');
         }
@@ -196,9 +171,9 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     try {
       await taskService.retryTask(task.id);
       message.success('可以重新提交任务了');
-      loadTask();
+      await loadTaskDetail(task.id);
       setSubmitModalVisible(true);
-      onStatusChange?.();
+      await loadTasks();
     } catch (error) {
       message.error('操作失败');
     }
@@ -265,10 +240,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   };
 
   const handleCloseModal = () => {
-    setTask(null);
-    setChatModalVisible(false);
-    setCurrentConversationId(null);
-    onClose();
+    resetState();
   };
 
   const modalContent = (

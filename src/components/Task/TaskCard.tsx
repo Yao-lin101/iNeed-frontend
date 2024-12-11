@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Tag, Button, Avatar, message } from 'antd';
 import { UserOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
 import { Task } from '@/services/taskService';
@@ -7,11 +7,11 @@ import { request } from '@/utils/request';
 import { formatDeadline } from '@/utils/date';
 import { getMediaUrl } from '@/utils/url';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useTaskStore } from '@/models/TaskModel';
 import ChatModal from '@/components/Chat/ChatModal';
 
 interface TaskCardProps {
   task: Task;
-  onClick: (taskId: number) => void;
 }
 
 // 获取状态的中文描述
@@ -53,30 +53,57 @@ const getRewardLevel = (reward: number) => {
   return 5;
 };
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { user } = useAuthStore();
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const { 
+    setSelectedTaskId, 
+    setModalVisible, 
+    loadTaskDetail,
+    selectedTaskId,
+    modalVisible
+  } = useTaskStore();
 
   // 计算报酬等级
   const rewardLevel = useMemo(() => getRewardLevel(task.reward), [task.reward]);
 
+  // 判断当前任务是否被选中
+  const isSelected = selectedTaskId === task.id && modalVisible;
+
+  // 监听模态框状态，当关闭时将卡片翻转回正面
+  useEffect(() => {
+    if (!modalVisible && isFlipped) {
+      setIsFlipped(false);
+    }
+  }, [modalVisible]);
+
   const handleMouseEnter = () => {
-    setIsFlipped(true);
+    if (!isSelected) {
+      setIsFlipped(true);
+    }
   };
 
   const handleMouseLeave = () => {
-    setIsFlipped(false);
+    if (!isSelected) {
+      setIsFlipped(false);
+    }
   };
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     // 如果点击的是按钮，阻止卡片的点击事件
     if ((e.target as HTMLElement).tagName === 'BUTTON') {
       e.stopPropagation();
       return;
     }
-    onClick(task.id);
+    
+    // 设置选中的任务ID并显示模态框
+    setSelectedTaskId(task.id);
+    setModalVisible(true);
+    
+    // 加载任务详情
+    await loadTaskDetail(task.id);
   };
 
   // 获取要显示的用户信息
@@ -158,10 +185,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     }
   };
 
+  const cardStyle = {
+    transition: 'all 0.3s ease-in-out',
+    opacity: isSelected ? 0 : 1,
+    transform: isSelected ? 'scale(0.9)' : 'scale(1)',
+    pointerEvents: isSelected ? 'none' as const : 'auto' as const,
+    height: '280px',
+  };
+
   return (
     <>
       <div
-        className="h-[280px] perspective-1000 cursor-pointer"
+        className="perspective-1000 cursor-pointer"
+        style={cardStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -169,12 +205,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
-          onClick={handleClick}
         >
           {/* 卡片正面 */}
           <Card
             className={`absolute w-full h-full backface-hidden flex flex-col items-center justify-between reward-level-${rewardLevel}`}
             bordered
+            onClick={handleClick}
           >
             <div className="flex flex-col items-center justify-center flex-grow">
               <span className={`text-4xl font-bold mb-4 reward-text-${rewardLevel}`}>
@@ -198,6 +234,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           <Card
             className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
             bordered
+            onClick={handleClick}
           >
             <div className="flex flex-col items-center justify-center gap-6 w-full p-4">
               <div className="flex flex-col items-center">

@@ -1,47 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Tabs, Card, Row, Col, Button, Input, Space, Select, Empty, Spin, Pagination } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { taskService, Task } from '../services/taskService';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskCard from '@/components/Task/TaskCard';
+import { useTaskStore } from '@/models/TaskModel';
 
 const { TabPane } = Tabs;
 const { Search } = Input;
 
 const MyTasks: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'created' | 'assigned'>('created');
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<string>('');
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-
-  // 加载任务列表
-  const loadTasks = async (page: number = 1) => {
-    setLoading(true);
-    try {
-      const response = await taskService.getMyTasks({
-        page,
-        search,
-        status,
-        type: activeTab,
-      });
-      setTasks(response.results);
-      setTotal(response.count);
-    } catch (error) {
-      console.error('Failed to load tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadTasks(currentPage);
-  }, [activeTab, search, status, currentPage]);
+  const { 
+    tasks,
+    total,
+    loading,
+    currentPage,
+    activeTab,
+    status,
+    setCurrentPage,
+    setSearchValue,
+    setActiveTab,
+    setStatus,
+    loadMyTasks
+  } = useTaskStore();
 
   // 获取可选的状态过滤选项
   const getStatusOptions = () => {
@@ -67,23 +48,6 @@ const MyTasks: React.FC = () => {
     }
   };
 
-  // 处理查看详情
-  const handleViewTask = (taskId: number) => {
-    setSelectedTaskId(taskId);
-    setModalVisible(true);
-  };
-
-  // 处理关闭弹窗
-  const handleCloseModal = () => {
-    setModalVisible(false);
-    setSelectedTaskId(null);
-  };
-
-  // 处理任务状态变化
-  const handleTaskStatusChange = () => {
-    loadTasks(currentPage);
-  };
-
   const renderTaskCards = () => {
     if (loading) {
       return (
@@ -102,7 +66,7 @@ const MyTasks: React.FC = () => {
         <Row gutter={[16, 16]}>
           {tasks.map((task) => (
             <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
-              <TaskCard task={task} onClick={handleViewTask} />
+              <TaskCard task={task} />
             </Col>
           ))}
         </Row>
@@ -127,6 +91,7 @@ const MyTasks: React.FC = () => {
             setActiveTab(key as 'created' | 'assigned');
             setStatus('');
             setCurrentPage(1);
+            loadMyTasks(1);
           }}
         >
           <TabPane tab="我发布的任务" key="created">
@@ -136,18 +101,21 @@ const MyTasks: React.FC = () => {
                   placeholder="搜索任务标题或描述"
                   allowClear
                   onSearch={(value) => {
-                    setSearch(value);
+                    setSearchValue(value);
                     setCurrentPage(1);
+                    loadMyTasks(1);
                   }}
                   style={{ width: 200 }}
                 />
                 <Select
                   placeholder="选择状态"
                   allowClear
+                  value={status}
                   options={getStatusOptions()}
                   onChange={(value) => {
                     setStatus(value || '');
                     setCurrentPage(1);
+                    loadMyTasks(1);
                   }}
                   style={{ width: 120 }}
                 />
@@ -165,18 +133,21 @@ const MyTasks: React.FC = () => {
                   placeholder="搜索任务标题或描述"
                   allowClear
                   onSearch={(value) => {
-                    setSearch(value);
+                    setSearchValue(value);
                     setCurrentPage(1);
+                    loadMyTasks(1);
                   }}
                   style={{ width: 200 }}
                 />
                 <Select
                   placeholder="选择状态"
                   allowClear
+                  value={status}
                   options={getStatusOptions()}
                   onChange={(value) => {
                     setStatus(value || '');
                     setCurrentPage(1);
+                    loadMyTasks(1);
                   }}
                   style={{ width: 120 }}
                 />
@@ -187,12 +158,7 @@ const MyTasks: React.FC = () => {
         </Tabs>
       </Card>
 
-      <TaskDetailModal
-        open={modalVisible}
-        taskId={selectedTaskId}
-        onClose={handleCloseModal}
-        onStatusChange={handleTaskStatusChange}
-      />
+      <TaskDetailModal />
     </div>
   );
 };
