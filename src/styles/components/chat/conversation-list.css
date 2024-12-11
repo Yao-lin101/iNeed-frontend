@@ -1,0 +1,62 @@
+@import '../../animations.css';
+
+.conversation-list {
+  @apply h-full overflow-y-auto;
+}
+
+/* 会话列表项样式 */
+.conversation-list .conversation-item {
+  @apply cursor-pointer relative;
+  background-color: var(--bg-primary);
+  padding: 0;
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.2s ease-in-out;
+  height: 64px;
+}
+
+.conversation-list .conversation-item:hover {
+  background-color: var(--bg-secondary-hover);
+}
+
+.conversation-list .conversation-item.selected {
+  background-color: var(--bg-highlight) !important;
+  border-left: 3px solid var(--primary-color);
+}
+
+.conversation-list .conversation-item.selected:hover {
+  background-color: var(--bg-highlight-hover) !important;
+}
+
+.conversation-list .conversation-item.unread {
+  background-color: var(--bg-secondary);
+}
+
+.conversation-list .conversation-item.unread:hover {
+  background-color: var(--bg-secondary-hover);
+}
+
+/* 新消息高亮效果 */
+.new-message-highlight {
+  animation: highlightNew 2s ease-out;
+}
+
+/* 未读消息徽章动画 */
+.badge-bounce {
+  animation: 
+    pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+    wiggle 2s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
+  border-radius: 50%;
+  transform-origin: center center;
+}
+
+/* 删除按钮滑入效果 */
+.delete-button {
+  @apply absolute top-0 bottom-0 left-0 flex items-center justify-center;
+  width: 2rem;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease-in-out;
+}
+
+.conversation-item:hover .delete-button {
+  transform: translateX(0);
+} 

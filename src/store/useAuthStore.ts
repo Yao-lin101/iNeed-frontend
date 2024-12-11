@@ -45,7 +45,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       console.log('Attempting login for:', email);
       const response = await authService.login({ username: email, password });
-      console.log('Login response:', response);
       
       localStorage.setItem('token', response.token);
       localStorage.setItem('uid', response.uid);
@@ -81,7 +80,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         password2,
         verification_code
       });
-      console.log('Registration response:', response);
       
       localStorage.setItem('token', response.token);
       localStorage.setItem('uid', response.uid);
@@ -143,9 +141,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     set({ isLoading: true, error: null });
     try {
-      console.log('Loading user profile');
       const user = await authService.getProfile();
-      console.log('User profile loaded:', user);
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error: any) {
       console.error('Load user error:', error);

@@ -1,15 +1,18 @@
 import React from 'react';
-import { Layout, Menu, Avatar, Dropdown } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
+import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import type { MenuProps } from 'antd';
 
 const { Header, Content, Footer } = Layout;
 
 const MainLayout: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
+  const { totalUnread } = useUnreadMessages();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
@@ -50,6 +53,9 @@ const MainLayout: React.FC = () => {
     },
   ];
 
+  // 判断是否显示页脚
+  const shouldShowFooter = !location.pathname.startsWith('/mc');
+
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center justify-between bg-white">
@@ -59,14 +65,20 @@ const MainLayout: React.FC = () => {
           </Link>
           <Menu mode="horizontal" defaultSelectedKeys={['home']} items={navItems} />
         </div>
-        <div>
+        <div className="flex items-center gap-4">
           {isAuthenticated ? (
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-              <div className="cursor-pointer flex items-center">
-                <Avatar src={user?.avatar} icon={<UserOutlined />} />
-                <span className="ml-2">{user?.username}</span>
-              </div>
-            </Dropdown>
+            <>
+              <Link to="/mc/chat" className="text-gray-600 hover:text-gray-900">
+                <Badge count={totalUnread} offset={[0, 0]}>
+                  <MessageOutlined style={{ fontSize: '20px' }} />
+                </Badge>
+              </Link>
+              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+                <div className="cursor-pointer">
+                  <Avatar src={user?.avatar} icon={<UserOutlined />} />
+                </div>
+              </Dropdown>
+            </>
           ) : (
             <div>
               <Link to="/login" className="mr-4">
@@ -77,12 +89,14 @@ const MainLayout: React.FC = () => {
           )}
         </div>
       </Header>
-      <Content className="p-6">
-        <div className="bg-white p-6 min-h-[280px]">
+      <Content className={location.pathname.startsWith('/mc') ? '' : 'p-6'}>
+        <div className={location.pathname.startsWith('/mc') ? '' : 'bg-white p-6 min-h-[280px]'}>
           <Outlet />
         </div>
       </Content>
-      <Footer className="text-center">iNeed ©2024</Footer>
+      {shouldShowFooter && (
+        <Footer className="text-center">iNeed ©2024</Footer>
+      )}
     </Layout>
   );
 };

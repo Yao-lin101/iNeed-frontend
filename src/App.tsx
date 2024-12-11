@@ -5,6 +5,7 @@ import zhCN from 'antd/locale/zh_CN';
 import MainLayout from './layouts/MainLayout';
 import { useAuthStore } from './store/useAuthStore';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useUserWebSocket } from './hooks/useUserWebSocket';
 
 // 懒加载页面组件
 const Login = React.lazy(() => import('./pages/Login'));
@@ -14,8 +15,8 @@ const Home = React.lazy(() => import('./pages/Home'));
 const AccountSettings = React.lazy(() => import('./pages/AccountSettings'));
 const TaskCenter = React.lazy(() => import('./pages/TaskCenter'));
 const TaskForm = React.lazy(() => import('./pages/TaskForm'));
-const TaskDetail = React.lazy(() => import('./pages/TaskDetail'));
 const MyTasks = React.lazy(() => import('./pages/MyTasks'));
+const Chat = React.lazy(() => import('./pages/Chat'));
 
 // 加载中组件
 const LoadingComponent = () => (
@@ -37,6 +38,9 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const { loadUser, error } = useAuthStore();
+  
+  // 初始化全局 WebSocket 连接
+  useUserWebSocket();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -67,7 +71,6 @@ function App() {
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route path="tasks" element={<TaskCenter />} />
-                <Route path="tasks/:taskId" element={<TaskDetail />} />
                 <Route
                   path="tasks/create"
                   element={
@@ -93,6 +96,30 @@ function App() {
                   }
                 />
                 <Route path="my-tasks" element={<MyTasks />} />
+                <Route
+                  path="mc"
+                  element={
+                    <PrivateRoute>
+                      <Navigate to="/mc/chat" replace />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="mc/chat"
+                  element={
+                    <PrivateRoute>
+                      <Chat />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="mc/sm"
+                  element={
+                    <PrivateRoute>
+                      <Chat initialTab="system" />
+                    </PrivateRoute>
+                  }
+                />
               </Route>
             </Routes>
           </Suspense>
