@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Input, Card, Row, Col, Pagination, Button, Spin, Empty, Tag } from 'antd';
-import { SearchOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
+import { Input, Card, Row, Col, Pagination, Button, Spin, Empty } from 'antd';
+import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { taskService, Task } from '../services/taskService';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
+import TaskCard from '@/components/Task/TaskCard';
 
 const { Search } = Input;
 
@@ -60,36 +61,6 @@ const TaskCenter: React.FC = () => {
     navigate('/tasks/create');
   };
 
-  // 获取状态的中文描述
-  const getStatusText = (status: string) => {
-    const textMap: Record<string, string> = {
-      pending: '待接取',
-      in_progress: '进行中',
-      submitted: '待审核',
-      completed: '已完成',
-      rejected: '已拒绝',
-      cancelled: '已取消',
-      system_cancelled: '系统取消',
-      expired: '已过期'
-    };
-    return textMap[status] || status;
-  };
-
-  // 获取状态标签的颜色
-  const getStatusColor = (status: string) => {
-    const colorMap: Record<string, string> = {
-      pending: 'default',
-      in_progress: 'processing',
-      submitted: 'warning',
-      completed: 'success',
-      rejected: 'error',
-      cancelled: 'error',
-      system_cancelled: 'error',
-      expired: 'error'
-    };
-    return colorMap[status] || 'default';
-  };
-
   // 添加关闭modal的处理函数
   const handleCloseModal = () => {
     setModalVisible(false);
@@ -132,30 +103,7 @@ const TaskCenter: React.FC = () => {
           <Row gutter={[16, 16]}>
             {tasks.map((task) => (
               <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
-                <Card
-                  hoverable
-                  className="h-[280px] flex flex-col justify-between cursor-pointer"
-                  onClick={() => handleTaskClick(task.id)}
-                >
-                  <div>
-                    <h3 className="text-lg font-medium mb-2 line-clamp-2">{task.title}</h3>
-                    <p className="text-gray-500 text-sm line-clamp-3">{task.description}</p>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div className="flex items-center justify-between border-t pt-3">
-                      <Tag color={getStatusColor(task.status)}>{getStatusText(task.status)}</Tag>
-                      <span className="text-xl font-bold text-primary">
-                        ¥{task.reward}
-                      </span>
-                    </div>
-                    {task.assignee && (
-                      <div className="flex items-center text-gray-500 text-sm">
-                        <UserOutlined className="mr-1" />
-                        <span>接取人：{task.assignee.username}</span>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+                <TaskCard task={task} onClick={handleTaskClick} />
               </Col>
             ))}
           </Row>

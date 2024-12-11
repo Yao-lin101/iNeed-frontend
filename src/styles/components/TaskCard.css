@@ -1,0 +1,63 @@
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* 确保卡片在翻转时保持其他元素的层级 */
+.task-card {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 添加阴影效果 */
+.ant-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 头像样式 */
+.ant-avatar {
+  border: 2px solid #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.ant-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* 标题样式 */
+.line-clamp-2 {
+  min-height: 3em;
+}
+
+/* 按钮样式 */
+.ant-btn-lg {
+  height: 40px;
+  padding: 6.4px 24px;
+  font-size: 16px;
+  border-radius: 6px;
+}
+
+/* 标签样式 */
+.ant-tag {
+  font-size: 14px;
+  padding: 2px 10px;
+  border-radius: 4px;
+} 

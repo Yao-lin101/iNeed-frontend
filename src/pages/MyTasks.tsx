@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Card, List, Button, Input, Space, Select, Empty } from 'antd';
+import { Tabs, Card, Row, Col, Button, Input, Space, Select, Empty, Spin, Pagination } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { taskService, Task } from '../services/taskService';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
+import TaskCard from '@/components/Task/TaskCard';
 
 const { TabPane } = Tabs;
+const { Search } = Input;
 
 const MyTasks: React.FC = () => {
   const navigate = useNavigate();
@@ -40,21 +42,6 @@ const MyTasks: React.FC = () => {
   useEffect(() => {
     loadTasks(currentPage);
   }, [activeTab, search, status, currentPage]);
-
-  // 获取状态的中文描述
-  const getStatusText = (status: string) => {
-    const textMap: Record<string, string> = {
-      pending: '待接取',
-      in_progress: '进行中',
-      submitted: '待审核',
-      completed: '已完成',
-      rejected: '已拒绝',
-      cancelled: '已取消',
-      system_cancelled: '系统取消',
-      expired: '已过期'
-    };
-    return textMap[status] || status;
-  };
 
   // 获取可选的状态过滤选项
   const getStatusOptions = () => {
@@ -97,43 +84,37 @@ const MyTasks: React.FC = () => {
     loadTasks(currentPage);
   };
 
-  const renderTaskItem = (task: Task) => {
+  const renderTaskCards = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <Spin size="large" />
+        </div>
+      );
+    }
+
+    if (tasks.length === 0) {
+      return <Empty description="暂无任务" />;
+    }
+
     return (
-      <List.Item
-        key={task.id}
-        actions={[
-          <Button
-            key="view"
-            type="link"
-            onClick={() => handleViewTask(task.id)}
-          >
-            查看详情
-          </Button>,
-        ]}
-      >
-        <List.Item.Meta
-          title={
-            <div className="flex justify-between">
-              <span>{task.title}</span>
-              <span className="text-primary">¥{task.reward}</span>
-            </div>
-          }
-          description={
-            <div>
-              <p className="line-clamp-2">{task.description}</p>
-              <div className="flex justify-between text-gray-500 mt-2">
-                <div className="space-x-4">
-                  <span>状态：{getStatusText(task.status)}</span>
-                  {task.assignee && (
-                    <span>接取人：{task.assignee.username}</span>
-                  )}
-                </div>
-                <span>截止日期：{task.deadline}</span>
-              </div>
-            </div>
-          }
-        />
-      </List.Item>
+      <>
+        <Row gutter={[16, 16]}>
+          {tasks.map((task) => (
+            <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
+              <TaskCard task={task} onClick={handleViewTask} />
+            </Col>
+          ))}
+        </Row>
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            current={currentPage}
+            total={total}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+          />
+        </div>
+      </>
     );
   };
 
@@ -149,9 +130,9 @@ const MyTasks: React.FC = () => {
           }}
         >
           <TabPane tab="我发布的任务" key="created">
-            <div className="mb-4 flex justify-between items-center">
+            <div className="mb-6 flex justify-between items-center">
               <Space>
-                <Input.Search
+                <Search
                   placeholder="搜索任务标题或描述"
                   allowClear
                   onSearch={(value) => {
@@ -175,11 +156,12 @@ const MyTasks: React.FC = () => {
                 发布任务
               </Button>
             </div>
+            {renderTaskCards()}
           </TabPane>
           <TabPane tab="我接取的任务" key="assigned">
-            <div className="mb-4">
+            <div className="mb-6">
               <Space>
-                <Input.Search
+                <Search
                   placeholder="搜索任务标题或描述"
                   allowClear
                   onSearch={(value) => {
@@ -200,23 +182,9 @@ const MyTasks: React.FC = () => {
                 />
               </Space>
             </div>
+            {renderTaskCards()}
           </TabPane>
         </Tabs>
-
-        <List
-          loading={loading}
-          dataSource={tasks}
-          renderItem={renderTaskItem}
-          pagination={{
-            current: currentPage,
-            pageSize: 10,
-            total: total,
-            onChange: (page) => setCurrentPage(page),
-          }}
-          locale={{
-            emptyText: <Empty description="暂无任务" />,
-          }}
-        />
       </Card>
 
       <TaskDetailModal

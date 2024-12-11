@@ -1,55 +1,31 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-/* Base styles */
-@import './base/variables.css';
+@import './components/TaskCard.css';
 
-/* Animations */
-@import './animations.css';
-
-/* Global styles */
-body {
-  margin: 0;
-  font-family: var(--font-family);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+/* 全局样式 */
+.text-primary {
+  color: #1890ff;
 }
 
-#root {
-  min-height: 100vh;
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Reset styles */
-a {
-  color: var(--primary-color);
-  text-decoration: none;
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-a:hover {
-  text-decoration: underline;
-}
-
-button {
-  border-radius: var(--border-radius);
-  border: 1px solid transparent;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--bg-primary);
-  cursor: pointer;
-  transition: border-color var(--transition-fast);
-}
-
-button:hover {
-  border-color: var(--primary-color);
-}
-
-button:focus,
-button:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 } 
