@@ -12,8 +12,8 @@ import { taskService, TaskSubmitData } from '@/services/taskService';
 import { chatService } from '@/services/chatService';
 import { request } from '@/utils/request';
 import { useTaskStore } from '@/models/TaskModel';
-import TaskSubmitModal from '../TaskSubmitModal';
-import TaskReviewModal from '../TaskReviewModal';
+import TaskSubmitModal from './TaskSubmitModal';
+import TaskReviewModal from './TaskReviewModal';
 import ChatModal from '@/components/Chat/ChatModal';
 import { getMediaUrl } from '@/utils/url';
 import { formatDeadline } from '@/utils/date';
@@ -291,11 +291,10 @@ const TaskDetailModal: React.FC = () => {
         ) : task ? (
           <div className="px-6">
             {/* 任务标题和状态 */}
-            <div className="relative flex flex-col items-center pt-6 mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">{task.title}</h1>
+            <div className="relative flex flex-col items-center pt-4 mb-6">
+              <h1 className="text-2xl font-bold text-gray-600 mb-2">{task.title}</h1>
               <span className={classNames(
                 'task-tag',
-                'absolute right-4 top-6',
                 getStatusClassName(task.status),
                 `reward-level-${rewardLevel}`
               )}>
@@ -352,24 +351,24 @@ const TaskDetailModal: React.FC = () => {
 
             {/* 任务描述 */}
             <div className="mb-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-2">任务描述</h2>
+              <h2 className="text-lg font-bold text-gray-600 mb-2">任务描述</h2>
               <div className="whitespace-pre-wrap">{task.description}</div>
             </div>
 
             {/* 需要提交的材料 */}
             <div className="mb-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-2">需要提交的材料</h2>
+              <h2 className="text-lg font-bold text-gray-600 mb-2">需要提交的材料</h2>
               <div className="whitespace-pre-wrap">{task.required_materials}</div>
             </div>
 
             {/* 完成说明（如果已提交或完成） */}
             {(task.status === 'submitted' || task.status === 'completed') && task.completion_note && (
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-2">完成说明</h2>
+                <h2 className="text-lg font-bold text-gray-600 mb-2">完成说明</h2>
                 <div className="whitespace-pre-wrap">{task.completion_note}</div>
                 {task.attachments && (
                   <div className="mt-4">
-                    <h3 className="text-md font-bold text-gray-900 mb-2">提交的附件</h3>
+                    <h3 className="text-md font-bold text-gray-600 mb-2">提交的附件</h3>
                     <a 
                       href={getMediaUrl(task.attachments)}
                       target="_blank" 
@@ -387,7 +386,7 @@ const TaskDetailModal: React.FC = () => {
             {/* 审核说明（如果已完成或被拒绝） */}
             {(task.status === 'completed' || task.status === 'rejected') && task.review_note && (
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-2">审核说明</h2>
+                <h2 className="text-lg font-bold text-gray-600 mb-2">审核说明</h2>
                 <div className="whitespace-pre-wrap">{task.review_note}</div>
               </div>
             )}
@@ -395,7 +394,7 @@ const TaskDetailModal: React.FC = () => {
             {/* 过期信息（如果已过期） */}
             {task.status === 'expired' && task.expired_at && (
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-2">过期信息</h2>
+                <h2 className="text-lg font-bold text-gray-600 mb-2">过期信息</h2>
                 <div className="text-red-500">
                   该任务已于 {new Date(task.expired_at).toLocaleString()} 过期
                 </div>

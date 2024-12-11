@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Upload, message, Button } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import type { TaskSubmitData } from '../services/taskService';
+import type { TaskSubmitData } from '../../services/taskService';
 
 const { TextArea } = Input;
 

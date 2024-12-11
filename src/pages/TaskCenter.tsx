@@ -1,15 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Input, Row, Col, Pagination, Button, Spin, Empty } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import TaskCard from '@/components/Task/TaskCard';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
+import TaskFormModal from '@/components/Task/TaskFormModal';
 import { useTaskStore } from '@/models/TaskModel';
+import '../styles/components/TaskCenter.css';
 
 const { Search } = Input;
 
 const TaskCenter: React.FC = () => {
-  const navigate = useNavigate();
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const { 
     tasks,
     total,
@@ -36,27 +37,24 @@ const TaskCenter: React.FC = () => {
     setCurrentPage(page);
   };
 
-  // 处理发布任务
-  const handleCreateTask = () => {
-    navigate('/tasks/create');
-  };
-
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <Search
-          placeholder="搜索任务标题或描述"
-          allowClear
-          enterButton={<SearchOutlined />}
-          size="large"
-          className="max-w-md"
-          onSearch={handleSearch}
-        />
+      <div className="flex justify-center items-center gap-4 mb-6">
+        <div className="w-full max-w-2xl">
+          <Search
+            placeholder="搜索任务标题或描述"
+            allowClear
+            enterButton={<SearchOutlined className="text-white" />}
+            size="large"
+            className="task-search"
+            onSearch={handleSearch}
+          />
+        </div>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          size="large"
-          onClick={handleCreateTask}
+          onClick={() => setIsFormModalOpen(true)}
+          className="publish-task-btn flex-shrink-0"
         >
           发布任务
         </Button>
@@ -89,8 +87,15 @@ const TaskCenter: React.FC = () => {
       )}
 
       <TaskDetailModal />
+      <TaskFormModal
+        open={isFormModalOpen}
+        onCancel={() => setIsFormModalOpen(false)}
+        onSuccess={() => {
+          loadTasks(currentPage, searchValue);
+        }}
+      />
     </div>
   );
 };
 
-export default TaskCenter; 
+export default TaskCenter;

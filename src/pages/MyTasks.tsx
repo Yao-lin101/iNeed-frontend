@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, Card, Row, Col, Button, Input, Space, Select, Empty, Spin, Pagination } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
+import TaskFormModal from '@/components/Task/TaskFormModal';
 import TaskCard from '@/components/Task/TaskCard';
 import { useTaskStore } from '@/models/TaskModel';
 
@@ -9,7 +9,7 @@ const { TabPane } = Tabs;
 const { Search } = Input;
 
 const MyTasks: React.FC = () => {
-  const navigate = useNavigate();
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const { 
     tasks,
     total,
@@ -120,7 +120,7 @@ const MyTasks: React.FC = () => {
                   style={{ width: 120 }}
                 />
               </Space>
-              <Button type="primary" onClick={() => navigate('/tasks/create')}>
+              <Button type="primary" onClick={() => setIsFormModalOpen(true)}>
                 发布任务
               </Button>
             </div>
@@ -159,6 +159,13 @@ const MyTasks: React.FC = () => {
       </Card>
 
       <TaskDetailModal />
+      <TaskFormModal
+        open={isFormModalOpen}
+        onCancel={() => setIsFormModalOpen(false)}
+        onSuccess={() => {
+          loadMyTasks(currentPage);
+        }}
+      />
     </div>
   );
 };
