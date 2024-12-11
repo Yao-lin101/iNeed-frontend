@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, Tag, Button, Avatar, message } from 'antd';
 import { UserOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
 import { Task } from '@/services/taskService';
@@ -44,11 +44,23 @@ const getStatusColor = (status: string) => {
   return colorMap[status] || 'default';
 };
 
+// 获取报酬等级
+const getRewardLevel = (reward: number) => {
+  if (reward < 100) return 1;
+  if (reward < 500) return 2;
+  if (reward < 1000) return 3;
+  if (reward < 5000) return 4;
+  return 5;
+};
+
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { user } = useAuthStore();
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+
+  // 计算报酬等级
+  const rewardLevel = useMemo(() => getRewardLevel(task.reward), [task.reward]);
 
   const handleMouseEnter = () => {
     setIsFlipped(true);
@@ -161,11 +173,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         >
           {/* 卡片正面 */}
           <Card
-            className="absolute w-full h-full backface-hidden flex flex-col items-center justify-between"
+            className={`absolute w-full h-full backface-hidden flex flex-col items-center justify-between reward-level-${rewardLevel}`}
             bordered
           >
             <div className="flex flex-col items-center justify-center flex-grow">
-              <span className="text-3xl font-bold text-primary mb-4">
+              <span className={`text-4xl font-bold mb-4 reward-text-${rewardLevel}`}>
                 ¥{task.reward}
               </span>
               <p className="text-gray-500 text-sm line-clamp-3 text-center max-w-[90%]">
@@ -184,7 +196,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
           {/* 卡片背面 */}
           <Card
-            className="absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between"
+            className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
             bordered
           >
             <div className="flex flex-col items-center justify-center gap-6 w-full p-4">
@@ -234,4 +246,4 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   );
 };
 
-export default TaskCard; 
+export default TaskCard;
