@@ -44,9 +44,9 @@
 .badge-bounce {
   animation: 
     pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite,
-    wiggle 2s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
-  border-radius: 50%;
+    heartbeat 2s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
   transform-origin: center center;
+  border-radius: 50%;
 }
 
 /* 删除按钮滑入效果 */
