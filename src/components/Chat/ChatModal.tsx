@@ -8,13 +8,15 @@ interface ChatModalProps {
   onClose: () => void;
   conversationId: number | null;
   recipientName: string;
+  zIndex?: number;
 }
 
 const ChatModal: React.FC<ChatModalProps> = ({
   open,
   onClose,
   conversationId,
-  recipientName
+  recipientName,
+  zIndex
 }) => {
   const mountedRef = useRef(true);
   const lastRefreshRef = useRef<number>(0);
@@ -56,6 +58,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
       open={open}
       onCancel={onClose}
       footer={null}
+      zIndex={zIndex}
       width={600}
       styles={{
         body: {

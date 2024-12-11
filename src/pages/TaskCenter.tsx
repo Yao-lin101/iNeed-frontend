@@ -3,6 +3,7 @@ import { Input, Card, Row, Col, Pagination, Button, Spin, Empty, Tag } from 'ant
 import { SearchOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { taskService, Task } from '../services/taskService';
+import TaskDetailModal from '@/components/Task/TaskDetailModal';
 
 const { Search } = Input;
 
@@ -13,6 +14,8 @@ const TaskCenter: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchValue, setSearchValue] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   // 加载任务列表
   const loadTasks = async (page: number = 1, search: string = '') => {
@@ -48,7 +51,8 @@ const TaskCenter: React.FC = () => {
 
   // 处理任务点击
   const handleTaskClick = (taskId: number) => {
-    navigate(`/tasks/${taskId}`);
+    setSelectedTaskId(taskId);
+    setModalVisible(true);
   };
 
   // 处理发布任务
@@ -84,6 +88,18 @@ const TaskCenter: React.FC = () => {
       expired: 'error'
     };
     return colorMap[status] || 'default';
+  };
+
+  // 添加关闭modal的处理函数
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedTaskId(null);
+  };
+
+  // 添加任务状态变化的处理函数
+  const handleTaskStatusChange = () => {
+    // 重新加载当前页的任务列表
+    loadTasks(currentPage, searchValue);
   };
 
   return (
@@ -155,6 +171,13 @@ const TaskCenter: React.FC = () => {
       ) : (
         <Empty description="暂无任务" />
       )}
+
+      <TaskDetailModal
+        open={modalVisible}
+        taskId={selectedTaskId}
+        onClose={handleCloseModal}
+        onStatusChange={handleTaskStatusChange}
+      />
     </div>
   );
 };

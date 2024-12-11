@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, Card, List, Button, Input, Space, Select, Empty } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { taskService, Task } from '../services/taskService';
+import TaskDetailModal from '@/components/Task/TaskDetailModal';
 
 const { TabPane } = Tabs;
 
@@ -14,6 +15,8 @@ const MyTasks: React.FC = () => {
   const [status, setStatus] = useState<string>('');
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   // 加载任务列表
   const loadTasks = async (page: number = 1) => {
@@ -37,7 +40,6 @@ const MyTasks: React.FC = () => {
   useEffect(() => {
     loadTasks(currentPage);
   }, [activeTab, search, status, currentPage]);
-
 
   // 获取状态的中文描述
   const getStatusText = (status: string) => {
@@ -78,6 +80,23 @@ const MyTasks: React.FC = () => {
     }
   };
 
+  // 处理查看详情
+  const handleViewTask = (taskId: number) => {
+    setSelectedTaskId(taskId);
+    setModalVisible(true);
+  };
+
+  // 处理关闭弹窗
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedTaskId(null);
+  };
+
+  // 处理任务状态变化
+  const handleTaskStatusChange = () => {
+    loadTasks(currentPage);
+  };
+
   const renderTaskItem = (task: Task) => {
     return (
       <List.Item
@@ -86,7 +105,7 @@ const MyTasks: React.FC = () => {
           <Button
             key="view"
             type="link"
-            onClick={() => navigate(`/tasks/${task.id}`)}
+            onClick={() => handleViewTask(task.id)}
           >
             查看详情
           </Button>,
@@ -199,6 +218,13 @@ const MyTasks: React.FC = () => {
           }}
         />
       </Card>
+
+      <TaskDetailModal
+        open={modalVisible}
+        taskId={selectedTaskId}
+        onClose={handleCloseModal}
+        onStatusChange={handleTaskStatusChange}
+      />
     </div>
   );
 };

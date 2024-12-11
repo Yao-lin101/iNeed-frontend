@@ -7,12 +7,14 @@ interface TaskReviewModalProps {
   open: boolean;
   onCancel: () => void;
   onSubmit: (status: 'completed' | 'rejected', review_note: string) => Promise<void>;
+  zIndex?: number;
 }
 
 const TaskReviewModal: React.FC<TaskReviewModalProps> = ({
   open,
   onCancel,
   onSubmit,
+  zIndex
 }) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
@@ -48,6 +50,7 @@ const TaskReviewModal: React.FC<TaskReviewModalProps> = ({
       okText="确认"
       cancelText="取消"
       confirmLoading={submitting}
+      zIndex={zIndex}
     >
       <Form 
         form={form} 

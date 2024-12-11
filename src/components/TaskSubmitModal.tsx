@@ -10,12 +10,14 @@ interface TaskSubmitModalProps {
   open: boolean;
   onCancel: () => void;
   onSubmit: (data: TaskSubmitData) => Promise<void>;
+  zIndex?: number;
 }
 
 const TaskSubmitModal: React.FC<TaskSubmitModalProps> = ({
   open,
   onCancel,
   onSubmit,
+  zIndex
 }) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
@@ -48,6 +50,7 @@ const TaskSubmitModal: React.FC<TaskSubmitModalProps> = ({
       okText="提交"
       cancelText="取消"
       confirmLoading={submitting}
+      zIndex={zIndex}
     >
       <Form form={form} layout="vertical">
         <Form.Item
