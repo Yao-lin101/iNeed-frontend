@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Card, Tag, Button, Avatar, message } from 'antd';
+import { Card, Button, Avatar, message } from 'antd';
 import { UserOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
 import { Task } from '@/services/taskService';
 import { chatService } from '@/services/chatService';
@@ -9,6 +9,7 @@ import { getMediaUrl } from '@/utils/url';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTaskStore } from '@/models/TaskModel';
 import ChatModal from '@/components/Chat/ChatModal';
+import classNames from 'classnames';
 
 interface TaskCardProps {
   task: Task;
@@ -29,19 +30,9 @@ const getStatusText = (status: string) => {
   return textMap[status] || status;
 };
 
-// 获取状态标签的颜色
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    pending: 'default',
-    in_progress: 'processing',
-    submitted: 'warning',
-    completed: 'success',
-    rejected: 'error',
-    cancelled: 'error',
-    system_cancelled: 'error',
-    expired: 'error'
-  };
-  return colorMap[status] || 'default';
+// 获取状态的类名
+const getStatusClassName = (status: string) => {
+  return status.replace('_', '-');
 };
 
 // 获取报酬等级
@@ -221,10 +212,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
               </p>
             </div>
             <div className="w-full mt-4 flex flex-col items-center border-t pt-3">
-              <Tag color={getStatusColor(task.status)} className="mb-2">
-                {getStatusText(task.status)}
-              </Tag>
-              <h3 className="text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2">
+              <span className={classNames(
+                'task-tag',
+                'mb-2',
+                getStatusClassName(task.status)
+              )}>
+                <span className={`reward-text-${rewardLevel}`}>{getStatusText(task.status)}</span>
+              </span>
+              <h3 className={classNames(
+                'text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2',
+                `reward-text-${rewardLevel}`
+              )}>
                 {task.title}
               </h3>
             </div>
@@ -250,13 +248,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
               </div>
               {contactButton.show && (
                 <Button
-                  type="primary"
+                  type="link"
                   icon={<MessageOutlined />}
-                  size="large"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleContact();
                   }}
+                  className="contact-btn"
                 >
                   {contactButton.text}
                 </Button>
