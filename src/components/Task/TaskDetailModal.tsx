@@ -312,14 +312,15 @@ const TaskDetailModal: React.FC = () => {
           content: {
             padding: 0,
             overflow: 'hidden',
-            maxHeight: '90vh',
+            height: '80vh',
+            maxHeight: '800px',
             background: '#fff',
             borderRadius: '16px'
           },
           body: {
             padding: 0,
-            maxHeight: '90vh',
-            overflow: 'auto'
+            height: '100%',
+            overflow: 'hidden'
           },
           mask: {
             backdropFilter: 'blur(4px)',
@@ -333,181 +334,201 @@ const TaskDetailModal: React.FC = () => {
         )}
       >
         {loading ? (
-          <div className="flex justify-center items-center h-64">
+          <div className="flex justify-center items-center h-full">
             <Spin size="large" />
           </div>
         ) : task ? (
-          <div className={classNames('px-6', { 'py-6': isEditing })}>
-            {isEditing ? (
-              <TaskForm
-                mode="edit"
-                initialValues={getInitialValues()}
-                onSubmit={handleEditSubmit}
-                onCancel={() => setIsEditing(false)}
-                submitting={submitting}
-              />
-            ) : (
-              <>
-                {/* 任务标题和状态 */}
-                <div className="relative flex flex-col items-center pt-4 mb-6">
-                  <h1 className="text-2xl font-bold text-gray-600 mb-2">{task.title}</h1>
-                  <span className={classNames(
-                    'task-tag',
-                    getStatusClassName(task.status),
-                    `reward-level-${rewardLevel}`
-                  )}>
-                    <span className={`reward-text-${rewardLevel}`}>{getStatusText(task.status)}</span>
-                  </span>
-                </div>
-
-                {/* 任务基本信息 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500 mb-6">
-                  <div className="flex items-center gap-2">
-                    <Avatar 
-                      icon={<UserOutlined />} 
-                      src={getMediaUrl(task.creator.avatar)}
+          <div className="h-full flex flex-col">
+            <div className="relative h-full">
+              {/* 编辑模式 */}
+              <div className={classNames(
+                'absolute w-full h-full transition-all duration-300 transform',
+                isEditing 
+                  ? 'opacity-100 translate-x-0 z-10' 
+                  : 'opacity-0 translate-x-full pointer-events-none'
+              )}>
+                <div className="h-full flex flex-col">
+                  <div className="flex-1 overflow-auto p-6">
+                    <TaskForm
+                      mode="edit"
+                      initialValues={getInitialValues()}
+                      onSubmit={handleEditSubmit}
+                      onCancel={() => setIsEditing(false)}
+                      submitting={submitting}
                     />
-                    <span>委托人：{task.creator.username}</span>
-                    {!isCreator && task.creator.uid && (
-                      <Button 
-                        type="link" 
-                        icon={<MessageOutlined />}
-                        onClick={handleContactCreator}
-                        className="contact-btn"
-                      >
-                        联系委托人
-                      </Button>
-                    )}
                   </div>
-                  {task.assignee && (
-                    <div className="flex items-center gap-2">
-                      <Avatar 
-                        icon={<UserOutlined />} 
-                        src={getMediaUrl(task.assignee.avatar)}
-                      />
-                      <span>接取人：{task.assignee.username}</span>
-                      {isCreator && task.assignee.uid && (
-                        <Button 
-                          type="link" 
-                          icon={<MessageOutlined />}
-                          onClick={handleContactAssignee}
-                          className="contact-btn"
-                        >
-                          联系接取人
-                        </Button>
+                </div>
+              </div>
+
+              {/* 详情模式 */}
+              <div className={classNames(
+                'absolute w-full h-full transition-all duration-300 transform',
+                isEditing 
+                  ? 'opacity-0 -translate-x-full pointer-events-none' 
+                  : 'opacity-100 translate-x-0 z-10'
+              )}>
+                <div className="h-full flex flex-col">
+                  <div className="flex-none p-6">
+                    <div className="relative flex flex-col items-center mb-6">
+                      <h1 className="text-2xl font-bold text-gray-600 mb-2">{task.title}</h1>
+                      <span className={classNames(
+                        'task-tag',
+                        getStatusClassName(task.status),
+                        `reward-level-${rewardLevel}`
+                      )}>
+                        <span className={`reward-text-${rewardLevel}`}>{getStatusText(task.status)}</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-500 mb-6">
+                      <div className="flex items-center gap-2">
+                        <Avatar 
+                          icon={<UserOutlined />} 
+                          src={getMediaUrl(task.creator.avatar)}
+                        />
+                        <span>委托人：{task.creator.username}</span>
+                        {!isCreator && task.creator.uid && (
+                          <Button 
+                            type="link" 
+                            icon={<MessageOutlined />}
+                            onClick={handleContactCreator}
+                            className="contact-btn"
+                          >
+                            联系委托人
+                          </Button>
+                        )}
+                      </div>
+                      {task.assignee && (
+                        <div className="flex items-center gap-2">
+                          <Avatar 
+                            icon={<UserOutlined />} 
+                            src={getMediaUrl(task.assignee.avatar)}
+                          />
+                          <span>接取人：{task.assignee.username}</span>
+                          {isCreator && task.assignee.uid && (
+                            <Button 
+                              type="link" 
+                              icon={<MessageOutlined />}
+                              onClick={handleContactAssignee}
+                              className="contact-btn"
+                            >
+                              联系接取人
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      <div>
+                        报酬：
+                        <span className={`font-bold reward-text-${rewardLevel}`}>
+                          ¥{task.reward}
+                        </span>
+                      </div>
+                      <div>截止日期：{formatDeadline(task.deadline)}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-auto px-6">
+                    <div className="py-4">
+                      <div className="mb-6">
+                        <h2 className="text-lg font-bold text-gray-600 mb-2">任务描述</h2>
+                        <div className="whitespace-pre-wrap">{task.description}</div>
+                      </div>
+
+                      <div className="mb-6">
+                        <h2 className="text-lg font-bold text-gray-600 mb-2">需要提交的材料</h2>
+                        <div className="whitespace-pre-wrap">{task.required_materials}</div>
+                      </div>
+
+                      {(task.status === 'submitted' || task.status === 'completed') && task.completion_note && (
+                        <div className="mb-6">
+                          <h2 className="text-lg font-bold text-gray-600 mb-2">完成说明</h2>
+                          <div className="whitespace-pre-wrap">{task.completion_note}</div>
+                          {task.attachments && (
+                            <div className="mt-4">
+                              <h3 className="text-md font-bold text-gray-600 mb-2">提交的附件</h3>
+                              <a 
+                                href={getMediaUrl(task.attachments)}
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="inline-flex items-center text-blue-500 hover:text-blue-700"
+                              >
+                                <DownloadOutlined className="mr-1" />
+                                下载附件
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {(task.status === 'completed' || task.status === 'rejected') && task.review_note && (
+                        <div className="mb-6">
+                          <h2 className="text-lg font-bold text-gray-600 mb-2">审核说明</h2>
+                          <div className="whitespace-pre-wrap">{task.review_note}</div>
+                        </div>
+                      )}
+
+                      {task.status === 'expired' && task.expired_at && (
+                        <div className="mb-6">
+                          <h2 className="text-lg font-bold text-gray-600 mb-2">过期信息</h2>
+                          <div className="text-red-500">
+                            该任务已于 {new Date(task.expired_at).toLocaleString()} 过期
+                          </div>
+                        </div>
                       )}
                     </div>
-                  )}
-                  <div>
-                    报酬：
-                    <span className={`font-bold reward-text-${rewardLevel}`}>
-                      ¥{task.reward}
-                    </span>
                   </div>
-                  <div>截止日期：{formatDeadline(task.deadline)}</div>
-                </div>
 
-                {/* 任务描述 */}
-                <div className="mb-6">
-                  <h2 className="text-lg font-bold text-gray-600 mb-2">任务描述</h2>
-                  <div className="whitespace-pre-wrap">{task.description}</div>
-                </div>
-
-                {/* 需要提交的材料 */}
-                <div className="mb-6">
-                  <h2 className="text-lg font-bold text-gray-600 mb-2">需要提交的材料</h2>
-                  <div className="whitespace-pre-wrap">{task.required_materials}</div>
-                </div>
-
-                {/* 完成说明（如果已提交或完成） */}
-                {(task.status === 'submitted' || task.status === 'completed') && task.completion_note && (
-                  <div className="mb-6">
-                    <h2 className="text-lg font-bold text-gray-600 mb-2">完成说明</h2>
-                    <div className="whitespace-pre-wrap">{task.completion_note}</div>
-                    {task.attachments && (
-                      <div className="mt-4">
-                        <h3 className="text-md font-bold text-gray-600 mb-2">提交的附件</h3>
-                        <a 
-                          href={getMediaUrl(task.attachments)}
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="inline-flex items-center text-blue-500 hover:text-blue-700"
-                        >
-                          <DownloadOutlined className="mr-1" />
-                          下载附件
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 审核说明（如果已完成或被拒绝） */}
-                {(task.status === 'completed' || task.status === 'rejected') && task.review_note && (
-                  <div className="mb-6">
-                    <h2 className="text-lg font-bold text-gray-600 mb-2">审核说明</h2>
-                    <div className="whitespace-pre-wrap">{task.review_note}</div>
-                  </div>
-                )}
-
-                {/* 过期信息（如果已过期） */}
-                {task.status === 'expired' && task.expired_at && (
-                  <div className="mb-6">
-                    <h2 className="text-lg font-bold text-gray-600 mb-2">过期信息</h2>
-                    <div className="text-red-500">
-                      该任务已于 {new Date(task.expired_at).toLocaleString()} 过期
+                  <div className="flex-none border-t bg-white">
+                    <div className="px-6 py-4 flex justify-end gap-4">
+                      {task.status === 'pending' && !isCreator && !isAssignee && (
+                        <Button type="primary" onClick={handleTakeTask}>
+                          接取任务
+                        </Button>
+                      )}
+                      {isCreator && task.status === 'pending' && (
+                        <>
+                          <Button
+                            type="default"
+                            onClick={() => setIsEditing(true)}
+                            icon={<EditOutlined />}
+                          >
+                            编辑
+                          </Button>
+                          <Button danger onClick={handleCancelTask}>
+                            取消任务
+                          </Button>
+                        </>
+                      )}
+                      {isAssignee && task.status === 'in_progress' && (
+                        <>
+                          <Button type="primary" onClick={() => setSubmitModalVisible(true)}>
+                            提交任务
+                          </Button>
+                          <Button danger onClick={handleAbandonTask}>
+                            放弃任务
+                          </Button>
+                        </>
+                      )}
+                      {isCreator && task.status === 'submitted' && (
+                        <Button type="primary" onClick={() => setReviewModalVisible(true)}>
+                          审核任务
+                        </Button>
+                      )}
+                      {isAssignee && task.status === 'rejected' && (
+                        <>
+                          <Button onClick={handleRetryTask} type="primary">
+                            重新提交
+                          </Button>
+                          <Button danger onClick={handleAbandonTask}>
+                            放弃任务
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
-                )}
-
-                {/* 操作按钮 */}
-                <div className="flex justify-end gap-4 pb-6">
-                  {task.status === 'pending' && !isCreator && !isAssignee && (
-                    <Button type="primary" onClick={handleTakeTask}>
-                      接取任务
-                    </Button>
-                  )}
-                  {isCreator && task.status === 'pending' && (
-                    <>
-                      <Button
-                        type="default"
-                        onClick={() => setIsEditing(true)}
-                        icon={<EditOutlined />}
-                      >
-                        编辑
-                      </Button>
-                      <Button danger onClick={handleCancelTask}>
-                        取消任务
-                      </Button>
-                    </>
-                  )}
-                  {isAssignee && task.status === 'in_progress' && (
-                    <>
-                      <Button type="primary" onClick={() => setSubmitModalVisible(true)}>
-                        提交任务
-                      </Button>
-                      <Button danger onClick={handleAbandonTask}>
-                        放弃任务
-                      </Button>
-                    </>
-                  )}
-                  {isCreator && task.status === 'submitted' && (
-                    <Button type="primary" onClick={() => setReviewModalVisible(true)}>
-                      审核任务
-                    </Button>
-                  )}
-                  {isAssignee && task.status === 'rejected' && (
-                    <>
-                      <Button onClick={handleRetryTask} type="primary">
-                        重新提交
-                      </Button>
-                      <Button danger onClick={handleAbandonTask}>
-                        放弃任务
-                      </Button>
-                    </>
-                  )}
                 </div>
-              </>
-            )}
+              </div>
+            </div>
           </div>
         ) : null}
       </Modal>

@@ -113,40 +113,41 @@ const TaskForm: React.FC<TaskFormProps> = ({
           prefix="¥"
           min={0.01}
           precision={2}
-          style={{ width: '200px' }}
         />
       </Form.Item>
 
-      <div className="flex space-x-4">
-        <Form.Item
-          label="截止日期"
-          name="deadline_date"
-          rules={[{ required: true, message: '请选择截止日期' }]}
-          style={{ width: '200px' }}
-        >
-          <DatePicker
-            format="YYYY-MM-DD"
-            placeholder="选择日期"
-            disabledDate={disabledDate}
-            onChange={handleDateChange}
-            defaultPickerValue={dayjs()}
-          />
-        </Form.Item>
+      <Form.Item label="截止时间" required>
+        <div className="flex items-center space-x-4">
+          <Form.Item
+            name="deadline_date"
+            rules={[{ required: true, message: '请选择截止日期' }]}
+            noStyle
+          >
+            <DatePicker
+              format="YYYY-MM-DD"
+              placeholder="选择日期"
+              disabledDate={disabledDate}
+              onChange={handleDateChange}
+              defaultPickerValue={dayjs()}
+              style={{ width: '160px' }}
+            />
+          </Form.Item>
 
-        <Form.Item
-          label="截止时间"
-          name="deadline_hour"
-          rules={[{ required: true, message: '请选择截止时间' }]}
-          style={{ width: '120px' }}
-          dependencies={['deadline_date']}
-        >
-          <Select
-            placeholder="选择时间"
-            options={getHourOptions()}
-            disabled={!selectedDate}
-          />
-        </Form.Item>
-      </div>
+          <Form.Item
+            name="deadline_hour"
+            rules={[{ required: true, message: '请选择截止时间' }]}
+            dependencies={['deadline_date']}
+            noStyle
+          >
+            <Select
+              placeholder="选择时间"
+              options={getHourOptions()}
+              disabled={!selectedDate}
+              style={{ width: '100px' }}
+            />
+          </Form.Item>
+        </div>
+      </Form.Item>
 
       <Form.Item
         label="需要提交的材料"

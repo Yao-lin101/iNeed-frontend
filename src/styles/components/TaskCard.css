@@ -275,4 +275,284 @@
 .ant-btn-link.contact-btn:hover {
   color: rgba(0, 0, 0, 0.65);
   background: rgba(0, 0, 0, 0.04);
-} 
+}
+
+/* 添加新的样式 */
+.task-detail-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 设置最小高度确保短内容时也能美观展示 */
+.task-detail-modal .flex-none {
+  min-height: fit-content;
+}
+
+/* 修改可滚动区域的样式 */
+.task-detail-modal .flex-1 {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+/* 当内容较少时，确保有一定的最小高度 */
+.task-detail-modal .flex-1 > div {
+  padding: 1.5rem 0;
+  min-height: 200px;
+}
+
+/* 优化滚动条样式 */
+.task-detail-modal .flex-1::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-detail-modal .flex-1::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0; /* 添加一些边距 */
+}
+
+.task-detail-modal .flex-1::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* 内容区块样式 */
+.task-detail-modal h2 {
+  position: relative;
+  padding-left: 12px;
+  margin-bottom: 16px;
+}
+
+.task-detail-modal h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background: currentColor;
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+/* 调整内容区块之间的间距 */
+.task-detail-modal .flex-1 > div > div.mb-6 {
+  margin-bottom: 32px;
+}
+
+/* 当内容较少时，增加任务描述和提交材料之间的间距 */
+.task-detail-modal .flex-1 > div > div:first-child {
+  margin-bottom: 100px;
+}
+
+/* 内容区域的文字样式 */
+.task-detail-modal .whitespace-pre-wrap {
+  color: #666;
+  line-height: 1.8;
+  font-size: 14px;
+  padding: 0 2px;
+}
+
+/* 编辑模式的样式 */
+.task-detail-modal .ant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  height: 100%;
+}
+
+.task-detail-modal .ant-form-item {
+  margin-bottom: 0;
+}
+
+.task-detail-modal .ant-form-item-label {
+  padding-bottom: 8px;
+}
+
+.task-detail-modal .ant-form-item-label > label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 调整输入框和文本域的样式 */
+.task-detail-modal .ant-input,
+.task-detail-modal .ant-input-number,
+.task-detail-modal .ant-picker,
+.task-detail-modal .ant-select-selector {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-color: #d9d9d9;
+}
+
+.task-detail-modal .ant-input-number,
+.task-detail-modal .ant-picker,
+.task-detail-modal .ant-select-selector {
+  height: 36px !important;
+}
+
+.task-detail-modal .ant-input-number-input,
+.task-detail-modal .ant-picker-input > input {
+  height: 34px !important;
+}
+
+/* 文本域样式 */
+.task-detail-modal .ant-input.ant-input-textarea {
+  padding: 12px;
+  min-height: 120px;
+}
+
+/* 表单底部按钮区域 */
+.task-detail-modal .ant-form .ant-form-item:last-child {
+  margin-top: auto;
+  padding-top: 42px;
+  margin-bottom: 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* 确保滚动区域有合适的内边距 */
+.task-detail-modal .flex-1.overflow-auto {
+  padding: 24px;
+}
+
+/* 调整日期和时间选择器的布局 */
+.task-detail-modal .ant-space {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.task-detail-modal .ant-space-item {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 输入框激活状态的样式 */
+.task-detail-modal .ant-input:focus,
+.task-detail-modal .ant-input-number:focus,
+.task-detail-modal .ant-picker-focused,
+.task-detail-modal .ant-select-focused .ant-select-selector {
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 优化过渡动画样式 */
+.task-detail-modal .transition-all {
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 400ms;
+}
+
+/* 添加transform类，确保GPU加速 */
+.task-detail-modal .transform {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* 优化绝对定位元素的堆叠顺序和过渡效果 */
+.task-detail-modal .absolute {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 确保绝对定位的容器正确叠放 */
+.task-detail-modal .relative {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 滑动和淡入淡出组合效果 */
+.task-detail-modal .absolute.translate-x-full {
+  transform: translateX(30%);
+  opacity: 0;
+}
+
+.task-detail-modal .absolute.-translate-x-full {
+  transform: translateX(-30%);
+  opacity: 0;
+}
+
+.task-detail-modal .absolute.translate-x-0 {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 进入状态的过渡效果 */
+.task-detail-modal .absolute.opacity-100 {
+  opacity: 1;
+}
+
+/* 离开状态的过渡效果 */
+.task-detail-modal .absolute.opacity-0 {
+  opacity: 0;
+}
+
+/* 优化滚动容器在动画过程中的表现 */
+.task-detail-modal .overflow-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 调整任务报酬输入框的样式 */
+.task-detail-modal .ant-input-number {
+  width: 200px !important;
+}
+
+.task-detail-modal .ant-input-number-input-wrap {
+  height: 100%;
+}
+
+.task-detail-modal .ant-input-number-input {
+  height: 100% !important;
+  text-align: center;
+  padding-left: 24px;
+}
+
+/* 调整前缀的位置 */
+.task-detail-modal .ant-input-number-prefix {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
+}
+
+/* 截止时间选择器布局 */
+.task-detail-modal .deadline-wrapper {
+  margin-bottom: 28px;
+}
+
+.task-detail-modal .deadline-wrapper .ant-form-item-control-input-content {
+  display: flex;
+  gap: 16px;
+}
+
+/* 日期和时间选择器样式 */
+.task-detail-modal .deadline-wrapper .ant-picker,
+.task-detail-modal .deadline-wrapper .ant-select {
+  width: 200px;
+}
+
+/* 统一选择器高度和对齐 */
+.task-detail-modal .deadline-wrapper .ant-picker,
+.task-detail-modal .deadline-wrapper .ant-select-selector {
+  height: 36px !important;
+  display: flex;
+  align-items: center;
+}
+
+/* 确保选择器内容垂直居中 */
+.task-detail-modal .deadline-wrapper .ant-picker-input,
+.task-detail-modal .deadline-wrapper .ant-select-selection-item {
+  line-height: 36px;
+}
