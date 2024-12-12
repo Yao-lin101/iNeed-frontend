@@ -1,0 +1,95 @@
+/* 页面容器样式 */
+.task-tabs .ant-tabs-nav {
+  margin-bottom: 24px;
+}
+
+.task-tabs .ant-tabs-tab {
+  padding: 12px 0;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.task-tabs .ant-tabs-tab-active {
+  font-weight: 600;
+}
+
+/* 搜索框样式 */
+.task-search .ant-input-affix-wrapper {
+  border-radius: 8px;
+  height: 40px;
+  padding: 4px 12px;
+  transition: all 0.3s ease;
+}
+
+.task-search .ant-input-affix-wrapper:hover,
+.task-search .ant-input-affix-wrapper-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 发布任务按钮样式 */
+.publish-task-btn {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+}
+
+.publish-task-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.2);
+}
+
+/* 状态筛选按钮组样式 */
+.task-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.task-filter-group .ant-radio-button-wrapper {
+  border-radius: 6px;
+  height: 32px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.task-filter-group .ant-radio-button-wrapper:not(:first-child)::before {
+  display: none;
+}
+
+.task-filter-group .ant-radio-button-wrapper-checked {
+  border-color: #1890ff;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+}
+
+/* 任务列表容器样式 */
+.task-list-container {
+  min-height: 400px;
+}
+
+/* 分页样式 */
+.ant-pagination {
+  margin-top: 24px;
+  padding: 16px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* 加载状态和空状态样式 */
+.ant-spin {
+  margin: 48px 0;
+}
+
+.ant-empty {
+  margin: 48px 0;
+  color: #8c8c8c;
+} 

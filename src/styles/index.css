@@ -3,6 +3,7 @@
 @import 'tailwindcss/utilities';
 
 @import './components/TaskCard.css';
+@import './components/MyTasks.css';
 
 /* 全局样式 */
 .text-primary {
