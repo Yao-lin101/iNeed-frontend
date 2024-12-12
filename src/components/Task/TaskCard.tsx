@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Avatar, message } from 'antd';
-import { UserOutlined, ClockCircleOutlined, MessageOutlined } from '@ant-design/icons';
+import { UserOutlined, ClockCircleOutlined, MessageOutlined, WarningOutlined } from '@ant-design/icons';
 import { Task } from '@/services/taskService';
 import { chatService } from '@/services/chatService';
 import { request } from '@/utils/request';
@@ -10,6 +10,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTaskStore } from '@/models/TaskModel';
 import ChatModal from '@/components/Chat/ChatModal';
 import classNames from 'classnames';
+import dayjs from 'dayjs';
+import { NeonGradientCard } from '@/components/NeonGradientCard';
+import { RainbowButton } from '@/components/RainbowButton';
 
 interface TaskCardProps {
   task: Task;
@@ -184,89 +187,258 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
     height: '280px',
   };
 
+  // 计算剩余时间
+  const getRemainingTime = () => {
+    // 只有待接取和进行中的任务才显示倒计时
+    if (task.status !== 'pending' && task.status !== 'in_progress') {
+      return null;
+    }
+
+    const now = dayjs();
+    const deadline = dayjs(task.deadline);
+    const hours = deadline.diff(now, 'hour');
+    
+    if (hours <= 0) {
+      return null; // 已过期
+    }
+    
+    if (hours < 24) {
+      return {
+        type: 'urgent',
+        text: `${hours}小时后截止`
+      };
+    }
+    
+    const days = Math.floor(hours / 24);
+    if (days <= 3) {
+      return {
+        type: 'warning',
+        text: `${days}天后截止`
+      };
+    }
+    
+    return null;
+  };
+
+  const remainingTime = useMemo(() => getRemainingTime(), [task.deadline, task.status]);
+
+  // 渲染卡片内容
+  const renderCardContent = () => (
+    <div className="flex flex-col items-center justify-center flex-grow">
+      {rewardLevel === 5 ? (
+        // 最高等级使用渐变文字
+        <span className="pointer-events-none z-10 text-4xl font-bold mb-4 gradient-text">
+          ¥{task.reward}
+        </span>
+      ) : (
+        <span className={`text-4xl font-bold mb-4 reward-text-${rewardLevel}`}>
+          ¥{task.reward}
+        </span>
+      )}
+      <p className={classNames(
+        "text-sm line-clamp-3 text-center max-w-[90%]",
+        rewardLevel === 5 ? "text-white/80" : "text-gray-500"
+      )}>
+        {task.description}
+      </p>
+      <div className="w-full mt-4 flex flex-col items-center border-t pt-3">
+        {remainingTime && (
+          <span className={classNames(
+            'countdown-tag',
+            `countdown-${remainingTime.type}`,
+            'mb-2',
+            rewardLevel === 5 && 'gradient-bg border border-white/30'
+          )}>
+            <WarningOutlined className={rewardLevel === 5 ? "mr-1 text-[var(--gradient-from)]" : "mr-1"} />
+            {rewardLevel === 5 ? (
+              <span className="gradient-text font-medium">
+                {remainingTime.text}
+              </span>
+            ) : (
+              <span>{remainingTime.text}</span>
+            )}
+          </span>
+        )}
+        <span className={classNames(
+          'task-tag',
+          'mb-2',
+          getStatusClassName(task.status),
+          rewardLevel === 5 && 'gradient-bg border border-white/30'
+        )}>
+          {rewardLevel === 5 ? (
+            <span className="gradient-text font-medium">
+              {getStatusText(task.status)}
+            </span>
+          ) : (
+            <span>{getStatusText(task.status)}</span>
+          )}
+        </span>
+        {rewardLevel === 5 ? (
+          <h3 className="text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2 gradient-text">
+            {task.title}
+          </h3>
+        ) : (
+          <h3 className={classNames(
+            "text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2",
+            `reward-text-${rewardLevel}`
+          )}>
+            {task.title}
+          </h3>
+        )}
+      </div>
+    </div>
+  );
+
+  // 渲染卡片背面内容
+  const renderBackContent = (isNeon: boolean = false) => (
+    <div className={classNames(
+      "flex flex-col items-center justify-between h-full",
+      isNeon && "text-white"
+    )}>
+      <div className="flex flex-col items-center justify-center gap-6 w-full p-4">
+        <div className="flex flex-col items-center">
+          <Avatar
+            size={64}
+            src={getMediaUrl(userToShow.avatar)}
+            icon={<UserOutlined />}
+            className="mb-2 hover:scale-105 transition-transform"
+          />
+          {isNeon ? (
+            <span className="font-medium gradient-text">
+              {getRoleText()}：{userToShow.username}
+            </span>
+          ) : (
+            <span className="font-medium text-gray-500">
+              {getRoleText()}：{userToShow.username}
+            </span>
+          )}
+        </div>
+        {contactButton.show && (
+          isNeon ? (
+            <RainbowButton
+              onClick={(e) => {
+                e.stopPropagation();
+                handleContact();
+              }}
+              className="!p-0 min-w-[120px] flex items-center justify-center gap-1"
+            >
+              <MessageOutlined className="text-[var(--gradient-from)]" />
+              <span className="gradient-text font-medium">
+                {contactButton.text}
+              </span>
+            </RainbowButton>
+          ) : (
+            <Button
+              type="text"
+              icon={<MessageOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleContact();
+              }}
+              className="contact-btn flex items-center gap-1 !p-0 text-blue-500 hover:text-blue-400"
+            >
+              {contactButton.text}
+            </Button>
+          )
+        )}
+      </div>
+      <div className={classNames(
+        "w-full border-t pt-3 pb-2 text-center",
+        isNeon ? "border-white/20" : "border-gray-200 text-gray-500"
+      )}>
+        <div className={classNames(
+          "flex items-center justify-center",
+          isNeon && "gradient-text"
+        )}>
+          <ClockCircleOutlined className={isNeon ? "mr-2 text-[var(--gradient-from)]" : "mr-2"} />
+          <span>{formatDeadline(task.deadline)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // 根据等级返回不同的卡片组件
+  const CardComponent = rewardLevel === 5 ? (
+    <NeonGradientCard
+      className="h-[280px] cursor-pointer"
+      neonColors={{
+        firstColor: "var(--gradient-from)",
+        secondColor: "var(--gradient-to)"
+      }}
+      borderSize={2}
+      borderRadius={8}
+    >
+      {renderCardContent()}
+    </NeonGradientCard>
+  ) : (
+    <Card
+      className={`h-[280px] reward-level-${rewardLevel}`}
+      bordered
+    >
+      {renderCardContent()}
+    </Card>
+  );
+
   return (
     <>
       <div
-        className="perspective-1000 cursor-pointer"
+        className="perspective-1000 relative"
         style={cardStyle}
+        data-level={rewardLevel}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div
-          className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
-            isFlipped ? 'rotate-y-180' : ''
-          }`}
-        >
-          {/* 卡片正面 */}
-          <Card
-            className={`absolute w-full h-full backface-hidden flex flex-col items-center justify-between reward-level-${rewardLevel}`}
-            bordered
-            onClick={handleClick}
-          >
-            <div className="flex flex-col items-center justify-center flex-grow">
-              <span className={`text-4xl font-bold mb-4 reward-text-${rewardLevel}`}>
-                ¥{task.reward}
-              </span>
-              <p className="text-gray-500 text-sm line-clamp-3 text-center max-w-[90%]">
-                {task.description}
-              </p>
-            </div>
-            <div className="w-full mt-4 flex flex-col items-center border-t pt-3">
-              <span className={classNames(
-                'task-tag',
-                'mb-2',
-                getStatusClassName(task.status)
-              )}>
-                <span className={`reward-text-${rewardLevel}`}>{getStatusText(task.status)}</span>
-              </span>
-              <h3 className={classNames(
-                'text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2',
-                `reward-text-${rewardLevel}`
-              )}>
-                {task.title}
-              </h3>
-            </div>
-          </Card>
+        {/* 光晕层移到最外层 */}
+        {rewardLevel === 5 && (
+          <div 
+            className="absolute inset-0 neon-glow"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, 
+                var(--gradient-from-transparent) 0%,
+                var(--gradient-to-transparent) 50%,
+                transparent 70%
+              )`,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
 
-          {/* 卡片背面 */}
-          <Card
-            className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
-            bordered
-            onClick={handleClick}
+        {/* 卡片容器 */}
+        <div className="relative w-full h-full" style={{ zIndex: 1 }}>
+          <div 
+            className={`w-full h-full transition-transform duration-500 transform-style-3d ${
+              isFlipped ? 'rotate-y-180' : ''
+            }`}
           >
-            <div className="flex flex-col items-center justify-center gap-6 w-full p-4">
-              <div className="flex flex-col items-center">
-                <Avatar
-                  size={64}
-                  src={getMediaUrl(userToShow.avatar)}
-                  icon={<UserOutlined />}
-                  className="mb-2"
-                />
-                <span className="text-gray-500 font-medium">
-                  {getRoleText()}：{userToShow.username}
-                </span>
-              </div>
-              {contactButton.show && (
-                <Button
-                  type="link"
-                  icon={<MessageOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleContact();
-                  }}
-                  className="contact-btn"
-                >
-                  {contactButton.text}
-                </Button>
-              )}
+            {/* 卡片正面 */}
+            <div className="absolute w-full h-full backface-hidden" onClick={handleClick}>
+              {CardComponent}
             </div>
-            <div className="w-full border-t pt-3 pb-2 text-center text-gray-500">
-              <div className="flex items-center justify-center">
-                <ClockCircleOutlined className="mr-2" />
-                <span>{formatDeadline(task.deadline)}</span>
-              </div>
-            </div>
-          </Card>
+
+            {/* 卡片背面 */}
+            {rewardLevel === 5 ? (
+              <NeonGradientCard
+                className="absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between cursor-pointer"
+                neonColors={{
+                  firstColor: "var(--gradient-from)",
+                  secondColor: "var(--gradient-to)"
+                }}
+                borderSize={2}
+                borderRadius={8}
+                onClick={handleClick}
+              >
+                {renderBackContent(true)}
+              </NeonGradientCard>
+            ) : (
+              <Card
+                className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
+                bordered
+                onClick={handleClick}
+              >
+                {renderBackContent(false)}
+              </Card>
+            )}
+          </div>
         </div>
       </div>
 

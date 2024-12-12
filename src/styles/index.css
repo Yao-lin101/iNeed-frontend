@@ -13,6 +13,7 @@
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -20,6 +21,7 @@
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -27,6 +29,56 @@
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 } 
+
+:root {
+  --color-1: 0 100% 63%;
+  --color-2: 270 100% 63%;
+  --color-3: 210 100% 63%;
+  --color-4: 195 100% 63%;
+  --color-5: 90 100% 63%;
+
+  --gradient-from: #ff2975;
+  --gradient-to: #00FFF1;
+  --gradient-config: 35%;
+
+  --gradient-from-transparent: rgba(255, 41, 117, 0.15);
+  --gradient-to-transparent: rgba(0, 255, 241, 0.15);
+}
+
+/* 添加渐变文字的通用类 */
+.gradient-text {
+  background: linear-gradient(to bottom right, var(--gradient-from) var(--gradient-config), var(--gradient-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 500;
+}
+
+/* 添加渐变背景的通用类 */
+.gradient-bg {
+  background: linear-gradient(
+    to bottom right,
+    rgba(255, 41, 117, 0.2) var(--gradient-config),
+    rgba(0, 255, 241, 0.2)
+  );
+}
+
+/* 修改光晕动画 */
+.neon-glow {
+  animation: neonPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes neonPulse {
+  from {
+    opacity: 0.5;
+    transform: translate3d(0, 0, -1px) scale(1);
+  }
+  to {
+    opacity: 0.8;
+    transform: translate3d(0, 0, -1px) scale(1.05);
+  }
+}

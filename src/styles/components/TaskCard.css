@@ -1,5 +1,13 @@
 .perspective-1000 {
   perspective: 1000px;
+  transform-style: preserve-3d;
+  z-index: 1;
+}
+
+.perspective-1000 > div {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
 }
 
 .transform-style-3d {
@@ -12,7 +20,7 @@
 }
 
 .rotate-y-180 {
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) !important;
 }
 
 /* 确保卡片在翻转时保持其他元素的层级 */
@@ -25,10 +33,6 @@
 .ant-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-}
-
-.ant-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* 头像样式 */
@@ -85,12 +89,6 @@
   color: #fa8c16;
 }
 
-.reward-level-5 .task-tag {
-  background: rgba(245, 34, 45, 0.1);
-  color: #f5222d;
-  animation: tagPulse 2s infinite;
-}
-
 /* 报酬等级样式 */
 .reward-level-1 {
   background: #f0f0f0;
@@ -108,21 +106,6 @@
   background: #ffd666;
 }
 
-.reward-level-5 {
-  background: #ffa39e;
-}
-
-/* 任务卡片样式 */
-.ant-card.reward-level-5 {
-  animation: pulse 2s infinite;
-}
-
-/* 模态框样式 */
-.task-detail-modal.reward-level-5 .ant-modal-content {
-  background: linear-gradient(135deg, #fff1f0 0%, #ffa39e 100%) !important;
-  animation: pulse 2s infinite !important;
-}
-
 /* 任务详情模态框样式 */
 .task-detail-modal .ant-modal-content {
   background: #fff;
@@ -134,9 +117,6 @@
 .task-detail-modal.reward-level-2 .ant-modal-content,
 .task-detail-modal.reward-level-3 .ant-modal-content,
 .task-detail-modal.reward-level-4 .ant-modal-content,
-.task-detail-modal.reward-level-5 .ant-modal-content {
-  background: #fff;
-}
 
 /* 模态框标题样式 */
 .task-detail-modal.reward-level-1 .ant-modal-header {
@@ -157,11 +137,6 @@
 .task-detail-modal.reward-level-4 .ant-modal-header {
   background: transparent;
   border-bottom-color: rgba(250, 140, 22, 0.1);
-}
-
-.task-detail-modal.reward-level-5 .ant-modal-header {
-  background: transparent;
-  border-bottom-color: rgba(245, 34, 45, 0.1);
 }
 
 /* 状态特定样式 */
@@ -210,8 +185,8 @@
 }
 
 .reward-text-5 {
-  color: #f5222d;
-  text-shadow: 1px 1px 2px rgba(245, 34, 45, 0.1);
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes pulse {
@@ -415,7 +390,7 @@
   border-top: 1px solid #f0f0f0;
 }
 
-/* 确保滚动区域有合适的内边距 */
+/* 确保滚动区域有合的内边距 */
 .task-detail-modal .flex-1.overflow-auto {
   padding: 24px;
 }
@@ -527,7 +502,7 @@
   line-height: 1;
 }
 
-/* 截止时间选择器布局 */
+/* 截时选择器布局 */
 .task-detail-modal .deadline-wrapper {
   margin-bottom: 28px;
 }
@@ -555,4 +530,70 @@
 .task-detail-modal .deadline-wrapper .ant-picker-input,
 .task-detail-modal .deadline-wrapper .ant-select-selection-item {
   line-height: 36px;
+}
+
+/* 倒计时标签样式 */
+.countdown-tag {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* 紧急状态（24小时内） */
+.countdown-urgent {
+  background: rgba(245, 34, 45, 0.1);
+  color: #f5222d;
+  animation: urgentPulse 2s infinite;
+}
+
+/* 警告状态（3天内） */
+.countdown-warning {
+  background: rgba(250, 140, 22, 0.1);
+  color: #fa8c16;
+}
+
+/* 紧急状态的动画 */
+@keyframes urgentPulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 调整标签之间的间距 */
+.countdown-tag + .task-tag {
+  margin-top: 4px;
+}
+
+/* 等级 5 卡片的层级 */
+.perspective-1000[data-level="5"] {
+  z-index: 2;
+}
+
+/* 光晕动画 */
+.neon-glow {
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    opacity: 0.5;
+    transform: translateZ(-10px) scale(1);
+  }
+  to {
+    opacity: 0.8;
+    transform: translateZ(-10px) scale(1.05);
+  }
 }
