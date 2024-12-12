@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Modal, Card, Button, message, Spin, Tag, Avatar } from 'antd';
+import { Modal, Button, message, Spin, Avatar } from 'antd';
 import { 
   DownloadOutlined, 
   ExclamationCircleOutlined, 
@@ -39,10 +39,8 @@ const TaskDetailModal: React.FC = () => {
   const { user } = useAuthStore();
   const { 
     selectedTask: task,
-    selectedTaskId,
     detailLoading: loading,
     modalVisible: open,
-    setModalVisible,
     resetState,
     loadTaskDetail,
     loadTasks

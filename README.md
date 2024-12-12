@@ -4,15 +4,16 @@
 
 ## 技术栈
 
-- React 18
-- TypeScript 5
-- Ant Design 5
-- Vite 5
-- Zustand
-- Axios
-- React Router 6
-- Tailwind CSS
-- Day.js
+- React + TypeScript
+- Ant Design
+- Vite
+- Zustand（状态管理）
+- Axios（HTTP 请求）
+- React Router（路由管理）
+- Tailwind CSS（样式框架）
+- Day.js（时间处理）
+
+具体依赖版本请参考 `package.json`。
 
 ## 功能特性
 
@@ -25,6 +26,11 @@
 - 用户资料管理
   - 个人信息编辑
   - 头像上传
+    - 图片裁剪功能
+    - 圆形预览
+    - 缩放调节
+    - 实时预览
+    - 自动压缩优化
   - 资料展示
   - 用户 UID 系统
   - 通知设置
