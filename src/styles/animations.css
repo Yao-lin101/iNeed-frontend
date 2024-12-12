@@ -20,37 +20,40 @@
 /* 呼吸效果 */
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.6);
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4);
+  }
+  14% {
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.3);
+  }
+  28% {
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.2);
+  }
+  42% {
+    box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.3);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(24, 144, 255, 0);
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
   }
 }
 
-/* 旋转抖动效果 */
-@keyframes wiggle {
-  0%, 100% {
-    transform: rotate(0deg);
+/* 心跳效果 */
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
   }
-  15% {
-    transform: rotate(-12deg);
+  14% {
+    transform: scale(1.1);
   }
-  30% {
-    transform: rotate(10deg);
+  28% {
+    transform: scale(1);
   }
-  45% {
-    transform: rotate(-6deg);
+  42% {
+    transform: scale(1.1);
   }
-  60% {
-    transform: rotate(4deg);
-  }
-  75% {
-    transform: rotate(-2deg);
-  }
-  85% {
-    transform: rotate(1deg);
+  70% {
+    transform: scale(1);
   }
 } 

@@ -14,7 +14,6 @@ const Profile = React.lazy(() => import('./pages/Profile'));
 const Home = React.lazy(() => import('./pages/Home'));
 const AccountSettings = React.lazy(() => import('./pages/AccountSettings'));
 const TaskCenter = React.lazy(() => import('./pages/TaskCenter'));
-const TaskForm = React.lazy(() => import('./pages/TaskForm'));
 const MyTasks = React.lazy(() => import('./pages/MyTasks'));
 const Chat = React.lazy(() => import('./pages/Chat'));
 
@@ -71,14 +70,6 @@ function App() {
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
                 <Route path="tasks" element={<TaskCenter />} />
-                <Route
-                  path="tasks/create"
-                  element={
-                    <PrivateRoute>
-                      <TaskForm />
-                    </PrivateRoute>
-                  }
-                />
                 <Route
                   path="profile"
                   element={

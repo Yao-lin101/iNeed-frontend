@@ -1,0 +1,278 @@
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* 确保卡片在翻转时保持其他元素的层级 */
+.task-card {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 添加阴影效果 */
+.ant-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 头像样式 */
+.ant-avatar {
+  border: 2px solid #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.ant-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* 标题样式 */
+.line-clamp-2 {
+  min-height: 3em;
+}
+
+/* 按钮样式 */
+.ant-btn-lg {
+  height: 40px;
+  padding: 6.4px 24px;
+  font-size: 16px;
+  border-radius: 6px;
+}
+
+/* 标签基础样式 */
+.task-tag {
+  font-size: 14px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+/* 标签等级样式 */
+.reward-level-1 .task-tag {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.reward-level-2 .task-tag {
+  background: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+}
+
+.reward-level-3 .task-tag {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.reward-level-4 .task-tag {
+  background: rgba(250, 140, 22, 0.1);
+  color: #fa8c16;
+}
+
+.reward-level-5 .task-tag {
+  background: rgba(245, 34, 45, 0.1);
+  color: #f5222d;
+  animation: tagPulse 2s infinite;
+}
+
+/* 报酬等级样式 */
+.reward-level-1 {
+  background: #f0f0f0;
+}
+
+.reward-level-2 {
+  background: #bae7ff;
+}
+
+.reward-level-3 {
+  background: #b7eb8f;
+}
+
+.reward-level-4 {
+  background: #ffd666;
+}
+
+.reward-level-5 {
+  background: #ffa39e;
+}
+
+/* 任务卡片样式 */
+.ant-card.reward-level-5 {
+  animation: pulse 2s infinite;
+}
+
+/* 模态框样式 */
+.task-detail-modal.reward-level-5 .ant-modal-content {
+  background: linear-gradient(135deg, #fff1f0 0%, #ffa39e 100%) !important;
+  animation: pulse 2s infinite !important;
+}
+
+/* 任务详情模态框样式 */
+.task-detail-modal .ant-modal-content {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 移除之前的模态框样式 */
+.task-detail-modal.reward-level-1 .ant-modal-content,
+.task-detail-modal.reward-level-2 .ant-modal-content,
+.task-detail-modal.reward-level-3 .ant-modal-content,
+.task-detail-modal.reward-level-4 .ant-modal-content,
+.task-detail-modal.reward-level-5 .ant-modal-content {
+  background: #fff;
+}
+
+/* 模态框标题样式 */
+.task-detail-modal.reward-level-1 .ant-modal-header {
+  background: transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.task-detail-modal.reward-level-2 .ant-modal-header {
+  background: transparent;
+  border-bottom-color: rgba(24, 144, 255, 0.1);
+}
+
+.task-detail-modal.reward-level-3 .ant-modal-header {
+  background: transparent;
+  border-bottom-color: rgba(82, 196, 26, 0.1);
+}
+
+.task-detail-modal.reward-level-4 .ant-modal-header {
+  background: transparent;
+  border-bottom-color: rgba(250, 140, 22, 0.1);
+}
+
+.task-detail-modal.reward-level-5 .ant-modal-header {
+  background: transparent;
+  border-bottom-color: rgba(245, 34, 45, 0.1);
+}
+
+/* 状态特定样式 */
+.task-tag.pending {
+  opacity: 0.8;
+}
+
+.task-tag.in-progress {
+  font-weight: 500;
+}
+
+.task-tag.submitted {
+  font-weight: 500;
+}
+
+.task-tag.completed {
+  font-weight: 600;
+}
+
+.task-tag.rejected,
+.task-tag.cancelled,
+.task-tag.system-cancelled,
+.task-tag.expired {
+  opacity: 0.9;
+}
+
+/* 文字等级样式 */
+.reward-text-1 {
+  color: #666666;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.reward-text-2 {
+  color: #1890ff;
+  text-shadow: 1px 1px 2px rgba(24, 144, 255, 0.1);
+}
+
+.reward-text-3 {
+  color: #52c41a;
+  text-shadow: 1px 1px 2px rgba(82, 196, 26, 0.1);
+}
+
+.reward-text-4 {
+  color: #fa8c16;
+  text-shadow: 1px 1px 2px rgba(250, 140, 22, 0.1);
+}
+
+.reward-text-5 {
+  color: #f5222d;
+  text-shadow: 1px 1px 2px rgba(245, 34, 45, 0.1);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 34, 45, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(245, 34, 45, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 34, 45, 0);
+  }
+}
+
+@keyframes tagPulse {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes textPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Modal styles */
+.ant-modal {
+  border-radius: 16px !important;
+}
+
+.ant-modal .ant-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.ant-modal .ant-modal-content > * {
+  border-radius: inherit !important;
+}
+
+/* 联系按钮样式 */
+.ant-btn-link.contact-btn {
+  color: rgba(0, 0, 0, 0.45);
+  padding: 0 4px;
+  height: auto;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-link.contact-btn:hover {
+  color: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.04);
+} 
