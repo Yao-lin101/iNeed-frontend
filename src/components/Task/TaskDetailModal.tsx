@@ -144,8 +144,11 @@ const TaskDetailModal: React.FC = () => {
           message.success('任务已取消');
           await loadTaskDetail(task.id);
           await loadTasks();
-        } catch (error) {
-          message.error('取消任务失败');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.detail || 
+                             error.response?.data?.error || 
+                             '取消任务失败';
+          message.error(errorMessage);
         }
       },
     });
@@ -285,7 +288,10 @@ const TaskDetailModal: React.FC = () => {
       await loadTaskDetail(task.id);
       await loadTasks();
     } catch (error: any) {
-      message.error(error.response?.data?.detail || '更新任务失败');
+      const errorMessage = error.response?.data?.detail || 
+                          error.response?.data?.error || 
+                          '更新任务失败';
+      message.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
