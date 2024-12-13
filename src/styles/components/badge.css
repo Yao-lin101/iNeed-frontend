@@ -15,6 +15,54 @@
     min-width: 18px;
     font-weight: 500;
   }
+
+  .ant-scroll-number-only {
+    height: 18px;
+    line-height: 18px;
+  }
+
+  .ant-scroll-number-only-unit {
+    height: 18px;
+    line-height: 18px;
+  }
+}
+
+/* 消息中心菜单项样式 */
+.menu-item-with-icon {
+  .anticon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+  }
+}
+
+/* 消息中心系统通知徽章样式 */
+.message-center-badge {
+  .ant-badge-count {
+    position: absolute;
+    background: #ff4d4f;
+    box-shadow: 0 0 0 1px #fff;
+    font-size: 12px;
+    height: 18px;
+    width: 29px;
+    min-width: 29px;
+    padding: 0;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .anticon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* 会话列表相关样式 */

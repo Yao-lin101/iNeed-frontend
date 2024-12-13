@@ -44,7 +44,7 @@ export interface MessagesReadEventData {
   unread_count: number;
 }
 
-// 消息处理器接口
+// ���息处理器接口
 export interface MessageHandler {
   handleChatMessage?: (context: MessageContext) => void;
   handleMessagesRead?: (data: MessagesReadData) => void;
@@ -221,7 +221,12 @@ export function useWebSocketMessage(handler: MessageHandler) {
           handleSystemMessage(data);
           break;
         case 'notification':
-          handleNotification(data);
+          if (handler.handleNotification) {
+            handler.handleNotification({
+              type: 'notification',
+              message: data.message
+            });
+          }
           break;
       }
     };

@@ -21,6 +21,7 @@ import { formatDeadline } from '@/utils/date';
 import classNames from 'classnames';
 import TaskForm, { TaskFormData } from './TaskForm';
 import dayjs from 'dayjs';
+import { systemMessageService } from '@/services/systemMessageService';
 
 const { confirm } = Modal;
 
@@ -89,6 +90,21 @@ const TaskDetailModal: React.FC = () => {
       async onOk() {
         try {
           await taskService.takeTask(task.id);
+          
+          // 发送系统通知给委托人
+          await systemMessageService.sendNotification({
+            recipient_uid: task.creator.uid,
+            type: 'task_taken',
+            title: '任务被接取通知',
+            content: `您的任务"${task.title}"已被用户 ${user?.username} 接取`,
+            metadata: {
+              task_id: task.id,
+              task_title: task.title,
+              assignee_uid: user?.uid,
+              assignee_username: user?.username
+            }
+          });
+
           message.success('任务接取成功');
           await loadTaskDetail(task.id);
           await loadTasks();

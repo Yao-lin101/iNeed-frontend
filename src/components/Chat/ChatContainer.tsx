@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Menu } from 'antd';
+import { Menu, Badge } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
-  InboxOutlined,
 } from '@ant-design/icons';
 import ConversationList from './ConversationList';
 import MessageArea from './MessageArea';
 import { useConversations } from '@/hooks/useConversations';
-import { Empty } from 'antd';
-import { chatService } from '@/services/chatService';
+import SystemNotificationList from './SystemNotificationList';
 import { useNavigate } from 'react-router-dom';
+import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { systemMessageService } from '@/services/systemMessageService';
+import { chatService } from '@/services/chatService';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface ChatContainerProps {
   initialConversationId?: number;
@@ -25,6 +27,86 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   const [currentTab, setCurrentTab] = useState(initialTab);
   const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
   const navigate = useNavigate();
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const { updateUnreadNotifications } = useUnreadMessages();
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  // 更新未读消息计数
+  useEffect(() => {
+    const count = conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
+    setUnreadMessagesCount(count);
+  }, [conversations]);
+
+  // 获取未读通知数量
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const response = await systemMessageService.getUnreadCount();
+      setUnreadNotificationCount(response.count);
+      updateUnreadNotifications(); // 同步更新导航栏计数
+    } catch (error) {
+      console.error('获取未读通知数量失败:', error);
+    }
+  };
+
+  // 统一处理WebSocket消息
+  useWebSocketMessage({
+    handleNotification: (data) => {
+      console.log('Received notification in ChatContainer:', data);
+      const message = data.message;
+      if (!message) {
+        console.warn('Invalid notification format:', data);
+        return;
+      }
+
+      // 更新未读计数
+      if (message.unread_count !== undefined) {
+        console.log('Updating unread notification count to:', message.unread_count);
+        setUnreadNotificationCount(message.unread_count);
+        updateUnreadNotifications(); // 同步更新导航栏计数
+      }
+
+      // 如果在系统通知页面，刷新列表
+      if (currentTab === 'system') {
+        window.dispatchEvent(new Event('refresh-notifications'));
+      }
+    },
+    handleSystemMessage: (data) => {
+      console.log('Received system message in ChatContainer:', data);
+      const message = data.message;
+      if (!message) {
+        console.warn('Invalid system message format:', data);
+        return;
+      }
+
+      if (message.type === 'notification' && message.unread_count !== undefined) {
+        console.log('Updating unread notification count from system message to:', message.unread_count);
+        setUnreadNotificationCount(message.unread_count);
+        updateUnreadNotifications(); // 同步更新导航栏计数
+        
+        // 如果在系统通知页面，刷新列表
+        if (currentTab === 'system') {
+          window.dispatchEvent(new Event('refresh-notifications'));
+        }
+      }
+    },
+    handleChatMessage: (context) => {
+      // 处理聊天消息
+      if (context.message.conversation === selectedConversation) {
+        // 如果是当前会话的消息，标记为已读
+        chatService.markAsRead(context.message.conversation).catch(console.error);
+      }
+    },
+    handleMessagesRead: (data) => {
+      // 处理消息已读状态
+      if (data.conversation_id) {
+        updateUnreadCount(data.conversation_id, data.unread_count);
+      }
+    }
+  });
+
+  useEffect(() => {
+    fetchUnreadNotificationCount();
+  }, []);
 
   // 监听初始标签页
   useEffect(() => {
@@ -90,7 +172,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       try {
         const response = await chatService.markAsRead(conversationId);
 
-        // 发送WebSocket消息通知其他客户端
+        // 发送WebSocket消息通知他客户端
         window.dispatchEvent(new CustomEvent('ws-message', {
           detail: {
             type: 'chat_message',
@@ -117,13 +199,31 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   const menuItems = [
     {
       key: 'myMessages',
-      icon: <MessageOutlined />,
+      icon: (
+        <Badge 
+          count={currentTab === 'myMessages' ? 0 : unreadMessagesCount} 
+          offset={[90, 8]}
+          className="unread-badge"
+        >
+          <MessageOutlined style={{ fontSize: '16px' }} />
+        </Badge>
+      ),
       label: '我的消息',
+      className: 'menu-item-with-icon'
     },
     {
       key: 'system',
-      icon: <NotificationOutlined />,
+      icon: (
+        <Badge 
+          count={currentTab === 'system' ? 0 : unreadNotificationCount} 
+          offset={[90, 8]}
+          className="unread-badge"
+        >
+          <NotificationOutlined style={{ fontSize: '16px' }} />
+        </Badge>
+      ),
       label: '系统通知',
+      className: 'menu-item-with-icon'
     },
   ];
 
@@ -175,16 +275,13 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
             </>
           )}
           {currentTab === 'system' && (
-            <div className="flex-1 flex flex-col bg-gray-50">
-              <div className="flex-1 flex items-center justify-center">
-                <Empty
-                  image={<InboxOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />}
-                  imageStyle={{ marginBottom: '16px' }}
-                  description={
-                    <span className="text-gray-400 text-base">暂无系统通知</span>
-                  }
-                />
-              </div>
+            <div className="flex-1 flex flex-col bg-white">
+              <SystemNotificationList 
+                onNotificationRead={() => {
+                  fetchUnreadNotificationCount();
+                  updateUnreadNotifications(); // 同步更新导航栏计数
+                }} 
+              />
             </div>
           )}
         </div>
