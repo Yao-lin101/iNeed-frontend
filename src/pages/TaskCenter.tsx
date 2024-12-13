@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Input, Row, Col, Pagination, Button, Spin, Empty } from 'antd';
+import { Input, Row, Col, Pagination, Button, Spin, Empty, message } from 'antd';
 import { SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import TaskCard from '@/components/Task/TaskCard';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskFormModal from '@/components/Task/TaskFormModal';
 import { useTaskStore } from '@/models/TaskModel';
 import '../styles/components/TaskCenter.css';
+import ChatModal from '@/components/Chat/ChatModal';
+import { request } from '@/utils/request';
+import { chatService } from '@/services/chatService';
 
 const { Search } = Input;
 
 const TaskCenter: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [chatModalVisible, setChatModalVisible] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [recipientName, setRecipientName] = useState('');
+  
   const { 
     tasks,
     total,
@@ -19,7 +26,7 @@ const TaskCenter: React.FC = () => {
     searchValue,
     loadTasks,
     setCurrentPage,
-    setSearchValue
+    setSearchValue,
   } = useTaskStore();
 
   useEffect(() => {
@@ -37,8 +44,74 @@ const TaskCenter: React.FC = () => {
     setCurrentPage(page);
   };
 
+  const handleContact = async (uid: string, username: string) => {
+    try {
+      const requestData = { recipient_uid: uid };
+      const response = await request.post('/chat/conversations/', requestData);
+      
+      if (!response.data.id) {
+        throw new Error('创建对话失败：无效的响应数据');
+      }
+      
+      const conversationId = response.data.id;
+      setCurrentConversationId(conversationId);
+      setRecipientName(username);
+      // 确保在下一个事件循环中执行
+      setTimeout(() => {
+        setChatModalVisible(true);
+      }, 0);
+
+      try {
+        await chatService.markAsRead(conversationId);
+      } catch (error) {
+        console.error('标记已读失败:', error);
+      }
+    } catch (error: any) {
+      console.error('创建对话失败:', error);
+      message.error(error.response?.data?.error || '创建对话失败');
+      throw error;
+    }
+  };
+
+  const renderTaskCards = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <Spin size="large" />
+        </div>
+      );
+    }
+
+    if (tasks.length === 0) {
+      return <Empty description="暂无任务" />;
+    }
+
+    return (
+      <>
+        <Row gutter={[16, 16]}>
+          {tasks.map((task) => (
+            <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
+              <TaskCard
+                task={task}
+                onContact={handleContact}
+              />
+            </Col>
+          ))}
+        </Row>
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            current={currentPage}
+            total={total}
+            onChange={handlePageChange}
+            showSizeChanger={false}
+          />
+        </div>
+      </>
+    );
+  };
+
   return (
-    <div className="p-6">
+    <div className="p-6 min-h-[calc(100vh-64px)] bg-gray-50">
       <div className="flex justify-center items-center gap-4 mb-6">
         <div className="w-full max-w-2xl">
           <Search
@@ -60,31 +133,7 @@ const TaskCenter: React.FC = () => {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <Spin size="large" />
-        </div>
-      ) : tasks.length > 0 ? (
-        <>
-          <Row gutter={[16, 16]}>
-            {tasks.map((task) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
-                <TaskCard task={task} />
-              </Col>
-            ))}
-          </Row>
-          <div className="mt-6 flex justify-center">
-            <Pagination
-              current={currentPage}
-              total={total}
-              onChange={handlePageChange}
-              showSizeChanger={false}
-            />
-          </div>
-        </>
-      ) : (
-        <Empty description="暂无任务" />
-      )}
+      {renderTaskCards()}
 
       <TaskDetailModal />
       <TaskFormModal
@@ -94,6 +143,16 @@ const TaskCenter: React.FC = () => {
           loadTasks(currentPage, searchValue);
         }}
       />
+      
+      {currentConversationId && (
+        <ChatModal
+          open={chatModalVisible}
+          onClose={() => setChatModalVisible(false)}
+          conversationId={currentConversationId}
+          recipientName={recipientName}
+          zIndex={1001}
+        />
+      )}
     </div>
   );
 };

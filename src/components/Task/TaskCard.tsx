@@ -2,8 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Avatar, message } from 'antd';
 import { UserOutlined, ClockCircleOutlined, MessageOutlined, WarningOutlined } from '@ant-design/icons';
 import { Task } from '@/services/taskService';
-import { chatService } from '@/services/chatService';
-import { request } from '@/utils/request';
 import { formatDeadline } from '@/utils/date';
 import { getMediaUrl } from '@/utils/url';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -16,6 +14,7 @@ import { RainbowButton } from '@/components/RainbowButton';
 
 interface TaskCardProps {
   task: Task;
+  onContact: (uid: string, username: string) => Promise<void>;
 }
 
 // 获取状态的中文描述
@@ -47,11 +46,11 @@ const getRewardLevel = (reward: number) => {
   return 5;
 };
 
-const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { user } = useAuthStore();
   const [chatModalVisible, setChatModalVisible] = useState(false);
-  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [currentConversationId] = useState<number | null>(null);
   const { 
     setSelectedTaskId, 
     setModalVisible, 
@@ -92,7 +91,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
       return;
     }
     
-    // 设置选中的任务ID并显示模态框
+    // 设置选中的任务ID并示模态框
     setSelectedTaskId(task.id);
     setModalVisible(true);
     
@@ -157,23 +156,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
     }
     
     try {
-      const requestData = { recipient_uid: contactButton.uid };
-      const response = await request.post('/chat/conversations/', requestData);
-      
-      if (!response.data.id) {
-        message.error('创建对话失败：无效的响应数据');
-        return;
-      }
-      
-      const conversationId = response.data.id;
-      setCurrentConversationId(conversationId);
-      setChatModalVisible(true);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
+      await onContact(contactButton.uid, userToShow.username);
     } catch (error: any) {
       message.error(error.response?.data?.error || '创建对话失败');
     }

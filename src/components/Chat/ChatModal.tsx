@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Modal } from 'antd';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MessageArea from './MessageArea';
 import { useMessages } from '@/hooks/useMessages';
 
@@ -18,11 +19,28 @@ const ChatModal: React.FC<ChatModalProps> = ({
   recipientName,
   zIndex
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const mountedRef = useRef(true);
   const lastRefreshRef = useRef<number>(0);
   const { refetch } = useMessages(
     open ? conversationId : null
   );
+
+  // 处理 URL 更新
+  useEffect(() => {
+    if (open && conversationId) {
+      // 打开模态框时,添加会话 ID 到 URL
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set('conversation', conversationId.toString());
+      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+    } else {
+      // 关闭模态框时,移除会话 ID
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.delete('conversation');
+      navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+    }
+  }, [open, conversationId, navigate, location.pathname, location.search]);
 
   // 设置挂载状态
   useEffect(() => {
@@ -35,7 +53,6 @@ const ChatModal: React.FC<ChatModalProps> = ({
   // 处理消息刷新
   const handleRefresh = useCallback(() => {
     const now = Date.now();
-    // 确保两次刷新之间至少间隔 2 秒
     if (now - lastRefreshRef.current > 2000) {
       lastRefreshRef.current = now;
       refetch();
@@ -46,17 +63,21 @@ const ChatModal: React.FC<ChatModalProps> = ({
   useEffect(() => {
     if (!mountedRef.current) return;
 
-    // 当弹窗打开时，确保消息是最新的
     if (open && conversationId) {
       handleRefresh();
     }
   }, [open, conversationId, handleRefresh]);
 
+  // 处理模态框关闭
+  const handleClose = () => {
+    onClose();
+  };
+
   return (
     <Modal
       title={`与 ${recipientName} 的对话`}
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       footer={null}
       zIndex={zIndex}
       width={600}

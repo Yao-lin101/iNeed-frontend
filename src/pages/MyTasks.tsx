@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Card, Row, Col, Button, Input, Radio, Empty, Spin, Pagination } from 'antd';
+import { Tabs, Card, Row, Col, Button, Input, Radio, Empty, Spin, Pagination, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskFormModal from '@/components/Task/TaskFormModal';
 import TaskCard from '@/components/Task/TaskCard';
+import ChatModal from '@/components/Chat/ChatModal';
 import { useTaskStore } from '@/models/TaskModel';
+import { request } from '@/utils/request';
+import { chatService } from '@/services/chatService';
 import type { RadioChangeEvent } from 'antd';
-
 
 const { TabPane } = Tabs;
 const { Search } = Input;
 
 const MyTasks: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [chatModalVisible, setChatModalVisible] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [recipientName, setRecipientName] = useState('');
+  
   const { 
     tasks,
     total,
@@ -69,6 +75,35 @@ const MyTasks: React.FC = () => {
     loadMyTasks(1);
   };
 
+  const handleContact = async (uid: string, username: string) => {
+    try {
+      const requestData = { recipient_uid: uid };
+      const response = await request.post('/chat/conversations/', requestData);
+      
+      if (!response.data.id) {
+        throw new Error('创建对话失败：无效的响应数据');
+      }
+      
+      const conversationId = response.data.id;
+      setCurrentConversationId(conversationId);
+      setRecipientName(username);
+      // 确保在下一个事件循环中执行
+      setTimeout(() => {
+        setChatModalVisible(true);
+      }, 0);
+
+      try {
+        await chatService.markAsRead(conversationId);
+      } catch (error) {
+        console.error('标记已读失败:', error);
+      }
+    } catch (error: any) {
+      console.error('创建对话失败:', error);
+      message.error(error.response?.data?.error || '创建对话失败');
+      throw error;
+    }
+  };
+
   const renderTaskCards = () => {
     if (loading) {
       return (
@@ -87,7 +122,10 @@ const MyTasks: React.FC = () => {
         <Row gutter={[16, 16]}>
           {tasks.map((task) => (
             <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
-              <TaskCard task={task} />
+              <TaskCard
+                task={task}
+                onContact={handleContact}
+              />
             </Col>
           ))}
         </Row>
@@ -191,6 +229,16 @@ const MyTasks: React.FC = () => {
           loadMyTasks(currentPage);
         }}
       />
+      
+      {currentConversationId && (
+        <ChatModal
+          open={chatModalVisible}
+          onClose={() => setChatModalVisible(false)}
+          conversationId={currentConversationId}
+          recipientName={recipientName}
+          zIndex={1001}
+        />
+      )}
     </div>
   );
 };
