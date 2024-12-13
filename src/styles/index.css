@@ -4,6 +4,7 @@
 
 @import './components/TaskCard.css';
 @import './components/MyTasks.css';
+@import './components/badge.css';
 
 /* 全局样式 */
 .text-primary {

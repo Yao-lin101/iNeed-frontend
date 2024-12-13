@@ -30,7 +30,7 @@ export function useMessages(conversationId: number | null) {
       : null
   );
 
-  // 初始化 WebSocket 连��
+  // 初始化 WebSocket 连接
   useEffect(() => {
     if (conversationId && mountedRef.current) {
       wsInitializedRef.current = true;

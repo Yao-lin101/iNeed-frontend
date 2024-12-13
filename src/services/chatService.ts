@@ -33,8 +33,14 @@ export const chatService = {
 
   /** 标记消息为已读 */
   markAsRead: async (conversationId: number) => {
-    const response = await request.post(`/chat/conversations/${conversationId}/mark_as_read/`);
-    return response.data;
+    try {
+      const response = await request.post(`/chat/conversations/${conversationId}/mark_as_read/`);
+      return response.data;
+    } catch (error) {
+      console.error('标记已读失败:', error);
+      // 可以添加重试逻辑
+      throw error;
+    }
   },
 
   /** 删除对话 */

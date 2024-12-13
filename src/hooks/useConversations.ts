@@ -3,11 +3,13 @@ import { message } from 'antd';
 import { Conversation } from '@/types/chat';
 import { request } from '@/utils/request';
 import { useWebSocketMessage, MessageContext, MessagesReadData, ConversationUpdatedData } from './useWebSocketMessage';
+import { useUnreadMessages } from './useUnreadMessages';
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const isFetchingRef = useRef(false);
+  const { updateTotalUnread } = useUnreadMessages();
 
   // 获取会话列表
   const fetchConversations = useCallback(async () => {
@@ -17,6 +19,7 @@ export function useConversations() {
     try {
       const response = await request.get('/chat/conversations/');
       setConversations(response.data.results);
+      updateTotalUnread(response.data.results);
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
       message.error('获取对话列表失败');
@@ -24,7 +27,7 @@ export function useConversations() {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, []);
+  }, [updateTotalUnread]);
 
   // 更新单个会话
   const updateConversation = useCallback((updatedConversation: Conversation) => {

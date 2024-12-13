@@ -19,6 +19,10 @@ const MainLayout: React.FC = () => {
     navigate('/login');
   };
 
+  const handleMessageCenterClick = () => {
+    navigate('/mc/chat');
+  };
+
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
@@ -68,11 +72,18 @@ const MainLayout: React.FC = () => {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Link to="/mc/chat" className="text-gray-600 hover:text-gray-900">
-                <Badge count={totalUnread} offset={[0, 0]}>
+              <div 
+                onClick={handleMessageCenterClick} 
+                className="text-gray-600 hover:text-gray-900 cursor-pointer"
+              >
+                <Badge 
+                  count={totalUnread} 
+                  offset={[0, 0]}
+                  className="unread-badge"
+                >
                   <MessageOutlined style={{ fontSize: '20px' }} />
                 </Badge>
-              </Link>
+              </div>
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                 <div className="cursor-pointer">
                   <Avatar src={user?.avatar} icon={<UserOutlined />} />

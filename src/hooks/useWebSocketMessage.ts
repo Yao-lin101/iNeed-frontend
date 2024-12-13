@@ -9,7 +9,8 @@ export type MessageType = 'chat_message' | 'messages_read' | 'conversation_updat
 export interface MessageContext {
   message: Message;
   isInMessageCenter: boolean;
-  activeConversationId: number | null;
+  activeConversationId: number | null | undefined;
+  source?: 'user-websocket' | 'chat-websocket';
 }
 
 // 消息已读事件数据
@@ -73,7 +74,7 @@ export type WebSocketMessageData = {
 
 export function useWebSocketMessage(handler: MessageHandler) {
   const location = useLocation();
-  const processedMessages = useRef(new Set<string>());
+  const processedMessagesRef = useRef<Set<string>>(new Set());
 
   // 判断当前页面状态
   const isInMessageCenter = useCallback(() => {
@@ -116,15 +117,15 @@ export function useWebSocketMessage(handler: MessageHandler) {
   // 检查消息是否已处理
   const isMessageProcessed = useCallback((messageKey: string | number) => {
     const key = messageKey.toString();
-    if (processedMessages.current.has(key)) {
+    if (processedMessagesRef.current.has(key)) {
       return true;
     }
-    processedMessages.current.add(key);
+    processedMessagesRef.current.add(key);
     
     // 如果处理的消息太多，清理旧的
-    if (processedMessages.current.size > 1000) {
-      const oldestMessages = Array.from(processedMessages.current).slice(0, 500);
-      processedMessages.current = new Set(oldestMessages);
+    if (processedMessagesRef.current.size > 1000) {
+      const oldestMessages = Array.from(processedMessagesRef.current).slice(0, 500);
+      processedMessagesRef.current = new Set(oldestMessages);
     }
     
     return false;
@@ -152,7 +153,8 @@ export function useWebSocketMessage(handler: MessageHandler) {
       handler.handleChatMessage({
         message,
         isInMessageCenter: isInMessageCenter(),
-        activeConversationId: getActiveConversationId()
+        activeConversationId: getActiveConversationId(),
+        source: data.source
       });
     }
     // 处理消息已读事件
@@ -170,7 +172,8 @@ export function useWebSocketMessage(handler: MessageHandler) {
         handler.handleChatMessage({
           message,
           isInMessageCenter: isInMessageCenter(),
-          activeConversationId: getActiveConversationId()
+          activeConversationId: getActiveConversationId(),
+          source: data.source
         });
       }
     }
@@ -201,7 +204,15 @@ export function useWebSocketMessage(handler: MessageHandler) {
       
       switch (data.type) {
         case 'chat_message':
-          handleChatMessage(data);
+          // 确保消息是正确的类型
+          if ('id' in data.message) {
+            handler.handleChatMessage?.({
+              message: data.message,
+              isInMessageCenter: isInMessageCenter(),
+              activeConversationId: getActiveConversationId(),
+              source: data.source
+            });
+          }
           break;
         case 'conversation_updated':
           handleConversationUpdated(data);
