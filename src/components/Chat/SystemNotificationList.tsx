@@ -3,6 +3,7 @@ import { List, Badge, Spin, Empty, Button, message } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { systemMessageService, SystemNotification } from '@/services/systemMessageService';
 import dayjs from 'dayjs';
+import '@/styles/components/chat/system-notification.css';
 
 interface SystemNotificationListProps {
   onNotificationRead?: () => void;
@@ -69,9 +70,7 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
   const renderNotification = (notification: SystemNotification) => {
     return (
       <List.Item
-        className={`cursor-pointer transition-colors ${
-          !notification.is_read ? 'bg-blue-50' : ''
-        }`}
+        className={`system-notification-item ${!notification.is_read ? 'unread' : ''}`}
         onClick={async () => {
           if (!notification.is_read) {
             try {
@@ -99,22 +98,20 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
           }
         }}
       >
-        <List.Item.Meta
-          avatar={
+        <div className="flex items-start gap-4">
+          <div className="notification-icon">
             <Badge dot={!notification.is_read}>
-              <BellOutlined className="text-lg text-blue-500" />
+              <BellOutlined />
             </Badge>
-          }
-          title={notification.title}
-          description={
-            <div className="space-y-1">
-              <div>{notification.content}</div>
-              <div className="text-xs text-gray-400">
-                {dayjs(notification.created_at).format('YYYY-MM-DD HH:mm:ss')}
-              </div>
+          </div>
+          <div className="notification-content">
+            <div className="notification-title">{notification.title}</div>
+            <div className="notification-message">{notification.content}</div>
+            <div className="notification-time">
+              {dayjs(notification.created_at).format('YYYY-MM-DD HH:mm:ss')}
             </div>
-          }
-        />
+          </div>
+        </div>
       </List.Item>
     );
   };
@@ -137,10 +134,10 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="system-notification-list">
       <div className="p-4 border-b flex justify-between items-center">
         <span className="text-gray-500">系统通知</span>
-        <Button type="link" onClick={handleMarkAllRead}>
+        <Button type="link" className="mark-all-read-button" onClick={handleMarkAllRead}>
           全部标记为已读
         </Button>
       </div>
