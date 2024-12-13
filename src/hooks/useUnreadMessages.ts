@@ -29,20 +29,39 @@ export function useUnreadMessages() {
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
     const { message, activeConversationId } = context;
+    
+    // 确保消息和发送者存在
+    if (!message || !message.sender) {
+      console.warn('Invalid message format:', message);
+      return;
+    }
+    
+    console.log('Unread Message Handler:', {
+      messageId: message.id,
+      senderId: message.sender.uid,
+      conversationId: message.conversation,
+      activeConversationId,
+      currentLocation: location.pathname,
+      isInMessageCenter: isInMessageCenter()
+    });
 
     // 只处理其他用户发送的消息
     if (message.sender.uid === user?.uid) {
+      console.log('Skipping own message');
       return;
     }
 
     // 如果在消息中心，不增加未读计数
     if (isInMessageCenter()) {
+      console.log('In message center, skipping');
       return;
     }
 
     // 如果不是当前活跃对话，增加未读计数
     if (message.conversation !== activeConversationId) {
       setTotalUnread(prev => prev + 1);
+    } else {
+      console.log('Message is for active conversation, skipping');
     }
   }, [user?.uid, isInMessageCenter]);
 
