@@ -65,10 +65,10 @@ function App() {
         <Router>
           <Suspense fallback={<LoadingComponent />}>
             <Routes>
+              <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Home />} />
-                <Route path="login" element={<Login />} />
-                <Route path="register" element={<Register />} />
                 <Route path="tasks" element={<TaskCenter />} />
                 <Route
                   path="profile"

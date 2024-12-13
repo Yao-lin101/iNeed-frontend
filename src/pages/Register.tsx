@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Form, Input, Button, Card, message, Space } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
@@ -54,33 +54,43 @@ const Register: React.FC = () => {
     }
   };
 
-  const checkUsername = debounce(async (username: string) => {
-    if (!username || username.length < 3) {
-      return;
-    }
+  const checkUsername = useCallback(
+    debounce(async (username: string) => {
+      if (!username || username.length < 3) {
+        return;
+      }
 
-    try {
-      setIsCheckingUsername(true);
-      await authService.checkUsername(username);
-      // 如果没有抛出错误，说明用户名可用
-      form.setFields([{
-        name: 'username',
-        errors: [],
-        validating: false,
-      }]);
-    } catch (error: any) {
-      form.setFields([{
-        name: 'username',
-        errors: [error.response?.data?.detail || '检查用户名失败'],
-        validating: false,
-      }]);
-    } finally {
-      setIsCheckingUsername(false);
-    }
-  }, 500);
+      try {
+        setIsCheckingUsername(true);
+        await authService.checkUsername(username);
+        // 如果没有抛出错误，说明用户名可用
+        form.setFields([{
+          name: 'username',
+          errors: [],
+          validating: false,
+        }]);
+      } catch (error: any) {
+        form.setFields([{
+          name: 'username',
+          errors: [error.response?.data?.detail || '检查用户名失败'],
+          validating: false,
+        }]);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 500),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      checkUsername.cancel();
+    };
+  }, [checkUsername]);
 
   const onFinish = async (values: RegisterFormData) => {
     try {
+      checkUsername.cancel();
       await register(
         values.username,
         values.email,

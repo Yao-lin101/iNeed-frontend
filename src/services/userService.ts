@@ -85,7 +85,7 @@ export const userService = {
     try {
       await api.head('/users/delete-account/');
     } catch (error: any) {
-      if (error.response?.data?.active_tasks) {
+      if (error.response?.status === 400) {
         throw {
           ...error,
           response: {
