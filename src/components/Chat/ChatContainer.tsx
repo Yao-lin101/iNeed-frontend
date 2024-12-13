@@ -286,7 +286,6 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
                   updateUnreadNotifications(); // 同步更新导航栏计数
                 }} 
               />
-            <div className="h-3 bg-gray-100"></div>
             </div>
           )}
         </div>
