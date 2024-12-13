@@ -50,18 +50,8 @@ const AccountSettings: React.FC = () => {
     fetchUserProfile();
   }, [updateUser]);
 
-  const showDeleteConfirm = async () => {
-    try {
-      await userService.checkAccountStatus();
-      setIsModalVisible(true);
-    } catch (error: any) {
-      if (error.response?.data?.active_tasks) {
-        setTaskError(error.response.data);
-        setIsModalVisible(true);
-      } else {
-        message.error('检查账号状态失败');
-      }
-    }
+  const showDeleteConfirm = () => {
+    setIsModalVisible(true);
   };
 
   const handleCancel = () => {
