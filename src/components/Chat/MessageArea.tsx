@@ -74,8 +74,8 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   }
 
   return (
-    <div ref={messageAreaRef} className="flex flex-col" style={{ height }}>
-      <div className="py-2 px-4 border-b border-gray-200 flex-none flex items-center justify-center">
+    <div ref={messageAreaRef} className="flex flex-col bg-[#f9fafb]" style={{ height }}>
+      <div className="py-2 px-4 border-b border-gray-200 flex-none flex items-center justify-center bg-white">
         <h2 className="text-sm font-medium text-gray-700">{recipientName}</h2>
       </div>
       <div className="flex-1 min-h-0">
