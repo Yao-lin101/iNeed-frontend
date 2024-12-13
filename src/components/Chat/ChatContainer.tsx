@@ -266,11 +266,15 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
                     onDelete={handleDelete}
                   />
                 </div>
+                <div className="h-3 bg-gray-100"></div>
               </div>
-              <div className="flex-1 min-h-0 bg-white">
-                <MessageArea
-                  conversationId={selectedConversation}
-                />
+              <div className="flex-1 min-h-0 bg-white flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <MessageArea
+                    conversationId={selectedConversation}
+                  />
+                </div>
+                <div className="h-3 bg-gray-100"></div>
               </div>
             </>
           )}
@@ -282,6 +286,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
                   updateUnreadNotifications(); // 同步更新导航栏计数
                 }} 
               />
+            <div className="h-3 bg-gray-100"></div>
             </div>
           )}
         </div>

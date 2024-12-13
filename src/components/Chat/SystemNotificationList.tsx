@@ -153,6 +153,7 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
           }}
         />
       </div>
+	  <div className="h-3 bg-gray-100"></div>
     </div>
   );
 };
