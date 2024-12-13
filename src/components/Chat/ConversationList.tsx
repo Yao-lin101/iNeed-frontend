@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { List, Avatar, Badge, Skeleton, Modal, message } from 'antd';
+import { List, Avatar, Badge, Modal, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -161,25 +161,12 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 </Avatar>
               </Badge>
               <div className="flex-1 min-w-0 ml-4">
-                <div className="flex justify-between items-center mb-1">
-                  <span className={`font-medium text-sm truncate max-w-[70%] ${unreadCount > 0 ? 'text-blue-600' : ''}`}>
-                    {otherParticipant.username}
-                  </span>
-                  {lastMessage && (
-                    <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                      {dayjs(lastMessage.created_at).fromNow()}
-                    </span>
-                  )}
+                <span className={`font-medium text-sm truncate max-w-[70%] ${unreadCount > 0 ? 'text-blue-600' : ''}`}>
+                  {otherParticipant.username}
+                </span>
+                <div className={`text-xs truncate ${unreadCount > 0 ? 'text-gray-900' : 'text-gray-500'}`}>
+                  {lastMessage?.content || '暂无消息'}
                 </div>
-                {loading ? (
-                  <Skeleton.Input style={{ width: '100%' }} size="small" />
-                ) : (
-                  <div className={`text-xs truncate ${
-                    unreadCount > 0 ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
-                    {lastMessage?.content || '暂无消息'}
-                  </div>
-                )}
               </div>
             </div>
           </List.Item>

@@ -1,0 +1,40 @@
+/* 基础徽章样式 */
+.badge-base {
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* 未读徽章基础样式 */
+.unread-badge {
+  .ant-badge-count {
+    background: #ff4d4f;
+    box-shadow: 0 0 0 1px #fff;
+    font-size: 12px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 6px;
+    min-width: 18px;
+    font-weight: 500;
+  }
+}
+
+/* 会话列表相关样式 */
+.conversation-item {
+  &.unread {
+    background-color: var(--bg-secondary);
+    
+    .username {
+      color: #1890ff;
+    }
+    
+    .message-preview {
+      color: #333;
+    }
+  }
+
+  .avatar-bounce {
+    animation: 
+      pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+      heartbeat 2s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
+    transform-origin: center center;
+  }
+} 
