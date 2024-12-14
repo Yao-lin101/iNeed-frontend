@@ -40,9 +40,37 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
 
   // 监听刷新事件
   useEffect(() => {
-    const handleRefresh = () => {
-      fetchNotifications();
+    const handleRefresh = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (!customEvent.detail) return;
+
+      const { type, data } = customEvent.detail;
+      
+      if (type === 'notification' && data.unread_count !== undefined) {
+        // 如果是标记已读的消息，只更新本地状态
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      } else if (type === 'new_notification' && data.id) {
+        // 如果是新通知，添加到列表开头
+        const newNotification: SystemNotification = {
+          id: data.id,
+          type: data.type,
+          title: data.title,
+          content: data.content,
+          metadata: data.metadata,
+          is_read: false,
+          created_at: data.created_at
+        };
+        setNotifications(prev => {
+          // 检查通知是否已存在
+          if (prev.some(n => n.id === data.id)) {
+            return prev;
+          }
+          return [newNotification, ...prev];
+        });
+        setTotal(prev => prev + 1);
+      }
     };
+
     window.addEventListener('refresh-notifications', handleRefresh);
     return () => {
       window.removeEventListener('refresh-notifications', handleRefresh);

@@ -86,7 +86,28 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       const message = data.message;
       if (!message) return;
 
-      // 更新未读通知计数
+      // 如果是新通知消息（包括任务通知）
+      if (message.id && (message.type.startsWith('task_') || message.type === 'system_notification')) {
+        window.dispatchEvent(new CustomEvent('refresh-notifications', {
+          detail: { 
+            type: 'new_notification',
+            data: {
+              id: message.id,
+              type: message.type,
+              title: message.title,
+              content: message.content,
+              metadata: message.metadata,
+              is_read: false,
+              created_at: message.created_at || new Date().toISOString()
+            }
+          }
+        }));
+
+        setUnreadNotificationCount(prev => prev + 1);
+        return;
+      }
+
+      // 如果是未读计数更新消息
       if (message.unread_count !== undefined) {
         // 如果不在系统通知标签页，才更新未读计数
         if (currentTab !== 'system') {
@@ -94,11 +115,6 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         } else {
           setUnreadNotificationCount(0);
         }
-      }
-
-      // 如果在系统通知页面，刷新列表
-      if (currentTab === 'system') {
-        window.dispatchEvent(new Event('refresh-notifications'));
       }
     }
   });
