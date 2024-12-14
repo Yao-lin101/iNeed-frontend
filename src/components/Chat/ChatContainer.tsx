@@ -10,6 +10,7 @@ import { useConversations } from '@/hooks/useConversations';
 import SystemNotificationList from './SystemNotificationList';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { systemMessageService } from '@/services/systemMessageService';
+import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
 
 interface ChatContainerProps {
   initialConversationId?: number;
@@ -78,6 +79,29 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   const handleConversationSelect = (conversationId: number | null) => {
     setSelectedConversation(conversationId);
   };
+
+  // 处理 WebSocket 消息
+  useWebSocketMessage({
+    handleNotification: (data) => {
+      const message = data.message;
+      if (!message) return;
+
+      // 更新未读通知计数
+      if (message.unread_count !== undefined) {
+        // 如果不在系统通知标签页，才更新未读计数
+        if (currentTab !== 'system') {
+          setUnreadNotificationCount(message.unread_count);
+        } else {
+          setUnreadNotificationCount(0);
+        }
+      }
+
+      // 如果在系统通知页面，刷新列表
+      if (currentTab === 'system') {
+        window.dispatchEvent(new Event('refresh-notifications'));
+      }
+    }
+  });
 
   const menuItems = [
     {
