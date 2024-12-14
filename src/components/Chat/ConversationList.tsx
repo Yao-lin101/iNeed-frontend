@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { List, Avatar, Badge, Modal, message } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
-import { useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -31,7 +30,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
   onDelete,
 }) => {
   const { user } = useAuthStore();
-  const [, setSearchParams] = useSearchParams();
   const prevConversationsRef = useRef<Conversation[]>([]);
   const listItemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const animationTimeoutsRef = useRef<{ [key: number]: number }>({});
@@ -51,7 +49,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
   // 处理会话选择
   const handleSelect = (conversationId: number) => {
     onSelect(conversationId);
-    setSearchParams({ conversation: conversationId.toString() });
   };
 
   // 处理删除会话
@@ -67,7 +64,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
           message.success('会话已删除');
           if (selectedId === conversationId) {
             onSelect(null);
-            setSearchParams({});
           }
           onDelete?.(conversationId);
         } catch (error) {

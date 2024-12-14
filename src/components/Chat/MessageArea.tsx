@@ -7,6 +7,7 @@ import { useConversations } from '@/hooks/useConversations';
 import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
 import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface MessageAreaProps {
   conversationId: number | null;
@@ -23,6 +24,8 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   const { messages, loading, sendMessage } = useMessages(conversationId);
   const { conversations, refetch: refetchConversations } = useConversations();
   const prevConversationIdRef = useRef<number | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const currentConversation = conversations.find(c => c.id === conversationId);
   const recipientName = currentConversation?.other_participant?.username;
@@ -66,7 +69,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     if (conversationId) {
       // 加载消息
       refetchConversations();
-      // 标记为已读
+      // 标记为��读
       chatService.markAsRead(conversationId).catch(error => {
         console.error('标记已读失败:', error);
       });
@@ -89,6 +92,21 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       }
     }
   });
+
+  // 处理 URL 更新
+  useEffect(() => {
+    if (conversationId) {
+      // 添加会话 ID 到 URL
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set('conversation', conversationId.toString());
+      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+    } else {
+      // 移除会话 ID
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.delete('conversation');
+      navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+    }
+  }, [conversationId, navigate, location.pathname, location.search]);
 
   if (!conversationId) {
     return (
