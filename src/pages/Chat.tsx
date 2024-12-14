@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ChatContainer from '../components/Chat/ChatContainer';
+import TaskDetailModal from '@/components/Task/TaskDetailModal';
 
 interface ChatProps {
   initialTab?: 'myMessages' | 'system';
@@ -19,6 +20,7 @@ const Chat: React.FC<ChatProps> = ({ initialTab = 'myMessages' }) => {
           initialTab={initialTab}
         />
       </div>
+      <TaskDetailModal />
     </div>
   );
 };

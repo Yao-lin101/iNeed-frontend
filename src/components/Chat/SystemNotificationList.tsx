@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { List, Badge, Spin, Empty, Button, message } from 'antd';
-import { BellOutlined } from '@ant-design/icons';
+import { BellOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { systemMessageService, SystemNotification } from '@/services/systemMessageService';
+import { useTaskStore } from '@/models/TaskModel';
 import dayjs from 'dayjs';
 import '@/styles/components/chat/system-notification.css';
 
@@ -12,6 +13,7 @@ interface SystemNotificationListProps {
 const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
   onNotificationRead
 }) => {
+  const { loadTaskDetail, setModalVisible } = useTaskStore();
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -67,7 +69,19 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
     }
   };
 
+  const handleViewTask = async (taskId: number) => {
+    try {
+      await loadTaskDetail(taskId);
+      setModalVisible(true);
+    } catch (error) {
+      message.error('加载任务详情失败');
+    }
+  };
+
   const renderNotification = (notification: SystemNotification) => {
+    const isTaskNotification = notification.type.startsWith('task_');
+    const taskId = isTaskNotification ? notification.metadata?.task_id : null;
+
     return (
       <List.Item
         className={`system-notification-item ${!notification.is_read ? 'unread' : ''}`}
@@ -98,19 +112,34 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
           }
         }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-center w-full gap-4">
           <div className="notification-icon">
             <Badge dot={!notification.is_read}>
               <BellOutlined />
             </Badge>
           </div>
-          <div className="notification-content">
+          <div className="notification-content flex-1">
             <div className="notification-title">{notification.title}</div>
             <div className="notification-message">{notification.content}</div>
-            <div className="notification-time">
+            <div className="notification-time text-gray-400 text-sm">
               {dayjs(notification.created_at).format('YYYY-MM-DD HH:mm:ss')}
             </div>
           </div>
+          {isTaskNotification && taskId && (
+            <div className="flex items-center">
+              <Button
+                type="link"
+                size="small"
+                className="view-task-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewTask(taskId);
+                }}
+              >
+                查看任务 <ArrowRightOutlined />
+              </Button>
+            </div>
+          )}
         </div>
       </List.Item>
     );
@@ -153,7 +182,7 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
           }}
         />
       </div>
-	  <div className="h-3 bg-gray-100"></div>
+      <div className="h-3 bg-gray-100"></div>
     </div>
   );
 };

@@ -23,6 +23,7 @@ import TaskForm, { TaskFormData } from './TaskForm';
 import dayjs from 'dayjs';
 import { systemMessageService } from '@/services/systemMessageService';
 
+
 const { confirm } = Modal;
 
 // 获取报酬等级
@@ -120,6 +121,23 @@ const TaskDetailModal: React.FC = () => {
     if (!task) return;
     try {
       await taskService.submitTask(task.id, data);
+      
+      // 发送系统通知给委托人
+      await systemMessageService.sendNotification({
+        recipient_uid: task.creator.uid,
+        type: 'task_submitted',
+        title: '任务待审核通知',
+        content: `您的任务"${task.title}"已被接取人 ${user?.username} 提交，请及时审核`,
+        metadata: {
+          task_id: task.id,
+          task_title: task.title,
+          assignee_uid: user?.uid,
+          assignee_username: user?.username,
+          completion_note: data.completion_note,
+          has_attachments: !!data.attachments
+        }
+      });
+
       message.success('任务提交成功');
       setSubmitModalVisible(false);
       await loadTaskDetail(task.id);
@@ -134,6 +152,25 @@ const TaskDetailModal: React.FC = () => {
     if (!task) return;
     try {
       await taskService.reviewTask(task.id, status, review_note);
+      
+      // 发送系统通知给接取人
+      await systemMessageService.sendNotification({
+        recipient_uid: task.assignee!.uid,
+        type: status === 'completed' ? 'task_completed' : 'task_rejected',
+        title: status === 'completed' ? '任务审核通过通知' : '任务审核未通过通知',
+        content: status === 'completed' 
+          ? `您提交的任务"${task.title}"已通过审核，任务已完成` 
+          : `您提交的任务"${task.title}"未通过审核，请查看审核说明`,
+        metadata: {
+          task_id: task.id,
+          task_title: task.title,
+          review_status: status,
+          review_note: review_note,
+          creator_uid: user?.uid,
+          creator_username: user?.username
+        }
+      });
+
       message.success('审核完成');
       setReviewModalVisible(false);
       await loadTaskDetail(task.id);
@@ -183,6 +220,21 @@ const TaskDetailModal: React.FC = () => {
       async onOk() {
         try {
           await taskService.abandonTask(task.id);
+          
+          // 发送系统通知给委托人
+          await systemMessageService.sendNotification({
+            recipient_uid: task.creator.uid,
+            type: 'task_abandoned',
+            title: '任务被放弃通知',
+            content: `您的任务"${task.title}"已被接取人 ${user?.username} 放弃`,
+            metadata: {
+              task_id: task.id,
+              task_title: task.title,
+              assignee_uid: user?.uid,
+              assignee_username: user?.username
+            }
+          });
+
           message.success('已放弃任务');
           await loadTaskDetail(task.id);
           await loadTasks();
