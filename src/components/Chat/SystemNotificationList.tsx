@@ -69,8 +69,21 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
     }
   };
 
-  const handleViewTask = async (taskId: number) => {
+  const handleViewTask = async (taskId: number, notificationId: number) => {
     try {
+      // 先标记通知为已读
+      const targetNotification = notifications.find(n => n.id === notificationId);
+      if (targetNotification && !targetNotification.is_read) {
+        await systemMessageService.markAsRead(notificationId);
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notificationId ? { ...n, is_read: true } : n
+          )
+        );
+        onNotificationRead?.();
+      }
+
+      // 然后加载任务详情
       await loadTaskDetail(taskId);
       setModalVisible(true);
     } catch (error) {
@@ -133,7 +146,7 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
                 className="view-task-button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleViewTask(taskId);
+                  handleViewTask(taskId, notification.id);
                 }}
               >
                 查看任务 <ArrowRightOutlined />
