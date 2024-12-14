@@ -4,6 +4,8 @@ import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
+import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
 
 interface MessageAreaProps {
@@ -58,6 +60,35 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       }
     }
   };
+
+  // 监听会话ID变化
+  useEffect(() => {
+    if (conversationId) {
+      // 加载消息
+      refetchConversations();
+      // 标记为已读
+      chatService.markAsRead(conversationId).catch(error => {
+        console.error('标记已读失败:', error);
+      });
+    }
+  }, [conversationId, refetchConversations]);
+
+  // 处理新消息
+  useWebSocketMessage({
+    handleChatMessage: (context) => {
+      if (!conversationId) return;
+      
+      const { message } = context;
+      // 如果是当前会话的新消息，立即标记为已读
+      if (message.conversation === conversationId) {
+        chatService.markAsRead(conversationId).catch(error => {
+          console.error('标记已读失败:', error);
+        });
+        // 刷新消息列表
+        refetchConversations();
+      }
+    }
+  });
 
   if (!conversationId) {
     return (

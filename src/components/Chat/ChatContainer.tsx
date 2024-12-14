@@ -89,13 +89,6 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         }
       }
     },
-    handleChatMessage: (context) => {
-      // 处理聊天消息
-      if (context.message.conversation === selectedConversation) {
-        // 如果是当前会话的消息，标记为已读
-        chatService.markAsRead(context.message.conversation).catch(console.error);
-      }
-    },
     handleMessagesRead: (data) => {
       // 处理消息已读状态
       if (data.conversation_id) {
@@ -137,7 +130,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       setSelectedConversation(null);
       navigate('/mc/sm', { replace: true });
     } else {
-      // 切换到我的消息时，导航到消息中心
+      // 切换到我的消息时���导航到消息中心
       navigate('/mc/chat', { replace: true });
     }
   };
