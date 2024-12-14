@@ -69,7 +69,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     if (conversationId) {
       // 加载消息
       refetchConversations();
-      // 标记为��读
+      // 标记为已读
       chatService.markAsRead(conversationId).catch(error => {
         console.error('标记已读失败:', error);
       });
@@ -106,6 +106,15 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       searchParams.delete('conversation');
       navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
     }
+
+    // 清理函数：组件卸载时移除会话参数
+    return () => {
+      const searchParams = new URLSearchParams(location.search);
+      if (searchParams.has('conversation')) {
+        searchParams.delete('conversation');
+        navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+      }
+    };
   }, [conversationId, navigate, location.pathname, location.search]);
 
   if (!conversationId) {
