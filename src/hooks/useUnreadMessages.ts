@@ -17,6 +17,12 @@ export function useUnreadMessages() {
     return location.pathname.startsWith('/mc');
   }, [location.pathname]);
 
+  // 检查是否有活跃会话
+  const hasActiveConversation = useCallback(() => {
+    const searchParams = new URLSearchParams(location.search);
+    return searchParams.has('conversation');
+  }, [location.search]);
+
   // 更新未读消息总数
   const updateTotalUnread = useCallback((conversations: Conversation[]) => {
     // 如果在消息中心，不计算聊天消息的未读数
@@ -26,7 +32,7 @@ export function useUnreadMessages() {
     }
     const total = conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
     setTotalUnread(total);
-  }, [isInMessageCenter]);
+  }, [isInMessageCenter, hasActiveConversation]);
 
   // 获取系统通知未读数量
   const fetchUnreadNotifications = useCallback(async () => {
