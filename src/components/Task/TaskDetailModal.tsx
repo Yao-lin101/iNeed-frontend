@@ -448,9 +448,15 @@ const TaskDetailModal: React.FC = () => {
                       <span className={classNames(
                         'task-tag',
                         getStatusClassName(task.status),
-                        `reward-level-${rewardLevel}`
+                        rewardLevel === 5 && 'gradient-bg border border-white/30'
                       )}>
-                        <span className={`reward-text-${rewardLevel}`}>{getStatusText(task.status)}</span>
+                        {rewardLevel === 5 ? (
+                          <span className="gradient-text font-medium">
+                            {getStatusText(task.status)}
+                          </span>
+                        ) : (
+                          <span>{getStatusText(task.status)}</span>
+                        )}
                       </span>
                     </div>
 
@@ -493,9 +499,15 @@ const TaskDetailModal: React.FC = () => {
                       )}
                       <div>
                         报酬：
-                        <span className={`font-bold reward-text-${rewardLevel}`}>
-                          ¥{task.reward}
-                        </span>
+                        {rewardLevel === 5 ? (
+                          <span className="font-bold gradient-text">
+                            ¥{task.reward}
+                          </span>
+                        ) : (
+                          <span className={`font-bold reward-text-${rewardLevel}`}>
+                            ¥{task.reward}
+                          </span>
+                        )}
                       </div>
                       <div>截止日期：{formatDeadline(task.deadline)}</div>
                     </div>
