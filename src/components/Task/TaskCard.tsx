@@ -179,12 +179,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
 
     const now = dayjs();
     const deadline = dayjs(task.deadline);
-    const hours = deadline.diff(now, 'hour');
+    const minutes = deadline.diff(now, 'minute');
     
-    if (hours <= 0) {
-      return null; // 已过期
+    // 如果剩余不到1小时
+    if (minutes < 60) {
+      return {
+        type: 'urgent',
+        text: `${minutes}分钟后截止`
+      };
     }
     
+    const hours = Math.floor(minutes / 60);
+    // 如果剩余不到24小时
     if (hours < 24) {
       return {
         type: 'urgent',
@@ -193,6 +199,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     }
     
     const days = Math.floor(hours / 24);
+    // 如果剩余不到3天
     if (days <= 3) {
       return {
         type: 'warning',
@@ -200,7 +207,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
       };
     }
     
-    return null;
+    return {
+      type: 'normal',
+      text: `${days}天后截止`
+    };
   };
 
   const remainingTime = useMemo(() => getRemainingTime(), [task.deadline, task.status]);
@@ -209,7 +219,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
   const renderCardContent = () => (
     <div className="flex flex-col items-center justify-center flex-grow">
       {rewardLevel === 5 ? (
-        // 最高等级使用渐变文字
+        // 最高等级使用渐变字
         <span className="pointer-events-none z-10 text-4xl font-bold mb-4 gradient-text">
           ¥{task.reward}
         </span>
