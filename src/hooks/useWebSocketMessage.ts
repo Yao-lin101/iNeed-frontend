@@ -44,7 +44,7 @@ export interface MessagesReadEventData {
   unread_count: number;
 }
 
-// ���息处理器接口
+// 消息处理器接口
 export interface MessageHandler {
   handleChatMessage?: (context: MessageContext) => void;
   handleMessagesRead?: (data: MessagesReadData) => void;
