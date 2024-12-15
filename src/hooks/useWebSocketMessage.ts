@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useChatStore } from '@/store/useChatStore';
 import { Message, Conversation } from '@/types/chat';
 
 // 消息类型定义
@@ -11,6 +11,7 @@ export interface MessageContext {
   isInMessageCenter: boolean;
   activeConversationId: number | null | undefined;
   source?: 'user-websocket' | 'chat-websocket';
+  shouldCountAsUnread?: boolean;
 }
 
 // 消息已读事件数据
@@ -73,46 +74,8 @@ export type WebSocketMessageData = {
 };
 
 export function useWebSocketMessage(handler: MessageHandler) {
-  const location = useLocation();
+  const { chatContext } = useChatStore();
   const processedMessagesRef = useRef<Set<string>>(new Set());
-
-  // 判断当前页面状态
-  const isInMessageCenter = useCallback(() => {
-    const result = location.pathname.startsWith('/mc/chat');
-    return result;
-  }, [location.pathname]);
-
-  // 获取当前活跃的聊天窗口ID
-  const getActiveConversationId = useCallback(() => {
-    // 从 URL 参数中获取会话 ID
-    const searchParams = new URLSearchParams(location.search);
-    const conversationId = searchParams.get('conversation');
-    if (conversationId) {
-      return parseInt(conversationId, 10);
-    }
-    
-    // 从pathname中获取会话ID
-    const matches = location.pathname.match(/conversation[=/](\d+)/);
-    if (matches) {
-      return parseInt(matches[1], 10);
-    }
-    
-    return null;
-  }, [location.pathname, location.search]);
-
-  // 检查会话是否处于活跃状态
-  const isConversationActive = useCallback((conversationId: number) => {
-    // 检查URL参数
-    const searchParams = new URLSearchParams(location.search);
-    const urlConversationId = searchParams.get('conversation');
-    if (urlConversationId === conversationId.toString()) {
-      return true;
-    }
-    
-    // 检查URL路径中是否包含会话ID
-    return location.pathname.includes(`conversation/${conversationId}`) || 
-           location.pathname.includes(`conversation=${conversationId}`);
-  }, [location.pathname, location.search]);
 
   // 检查消息是否已处理
   const isMessageProcessed = useCallback((messageKey: string | number) => {
@@ -122,7 +85,6 @@ export function useWebSocketMessage(handler: MessageHandler) {
     }
     processedMessagesRef.current.add(key);
     
-    // 如果处理的消息太多，清理旧的
     if (processedMessagesRef.current.size > 1000) {
       const oldestMessages = Array.from(processedMessagesRef.current).slice(0, 500);
       processedMessagesRef.current = new Set(oldestMessages);
@@ -131,11 +93,17 @@ export function useWebSocketMessage(handler: MessageHandler) {
     return false;
   }, []);
 
+  // 将 shouldCountAsUnread 的计算提取为一个函数
+  const calculateShouldCountAsUnread = useCallback((messageConversationId: number) => {
+    return chatContext.isInMessageCenter
+      ? messageConversationId !== chatContext.activeConversationId
+      : !chatContext.chatModalVisible || messageConversationId !== chatContext.activeConversationId;
+  }, [chatContext]);
+
   // 处理聊天消息
   const handleChatMessage = useCallback((data: WebSocketMessageData) => {
     if (data.type !== 'chat_message' || !handler.handleChatMessage) return;
     
-    // 处理普通聊天消息
     if ('id' in data.message) {
       const message = data.message;
       const messageKey = `${message.id}-${data.source}`;
@@ -143,18 +111,14 @@ export function useWebSocketMessage(handler: MessageHandler) {
         return;
       }
 
-      // 检查消息来源，避免重复处理
-      if (data.source === 'chat-websocket' && message.conversation) {
-        if (isConversationActive(message.conversation)) {
-          return; // 已经由聊天WebSocket处理了
-        }
-      }
+      const shouldCountAsUnread = calculateShouldCountAsUnread(message.conversation);
 
       handler.handleChatMessage({
         message,
-        isInMessageCenter: isInMessageCenter(),
-        activeConversationId: getActiveConversationId(),
-        source: data.source
+        isInMessageCenter: chatContext.isInMessageCenter,
+        activeConversationId: chatContext.activeConversationId,
+        source: data.source,
+        shouldCountAsUnread
       });
     }
     // 处理消息已读事件
@@ -171,13 +135,13 @@ export function useWebSocketMessage(handler: MessageHandler) {
       if (!isMessageProcessed(message.id)) {
         handler.handleChatMessage({
           message,
-          isInMessageCenter: isInMessageCenter(),
-          activeConversationId: getActiveConversationId(),
+          isInMessageCenter: chatContext.isInMessageCenter,
+          activeConversationId: chatContext.activeConversationId,
           source: data.source
         });
       }
     }
-  }, [handler.handleChatMessage, handler.handleMessagesRead, isInMessageCenter, getActiveConversationId, isMessageProcessed, isConversationActive]);
+  }, [handler.handleChatMessage, chatContext, calculateShouldCountAsUnread, isMessageProcessed]);
 
   // 处理会话更新
   const handleConversationUpdated = useCallback((data: WebSocketMessageData) => {
@@ -204,15 +168,8 @@ export function useWebSocketMessage(handler: MessageHandler) {
       
       switch (data.type) {
         case 'chat_message':
-          // 确保消息是正确的类型
-          if ('id' in data.message) {
-            handler.handleChatMessage?.({
-              message: data.message,
-              isInMessageCenter: isInMessageCenter(),
-              activeConversationId: getActiveConversationId(),
-              source: data.source
-            });
-          }
+          // 直接调用 handleChatMessage，避免重复处理
+          handleChatMessage(data);
           break;
         case 'conversation_updated':
           handleConversationUpdated(data);
@@ -221,12 +178,7 @@ export function useWebSocketMessage(handler: MessageHandler) {
           handleSystemMessage(data);
           break;
         case 'notification':
-          if (handler.handleNotification) {
-            handler.handleNotification({
-              type: 'notification',
-              message: data.message
-            });
-          }
+          handleNotification(data);
           break;
       }
     };
@@ -240,8 +192,6 @@ export function useWebSocketMessage(handler: MessageHandler) {
 
   // 返回一些有用的工具函数
   return {
-    isInMessageCenter,
-    getActiveConversationId,
     isMessageProcessed,
   };
 } 

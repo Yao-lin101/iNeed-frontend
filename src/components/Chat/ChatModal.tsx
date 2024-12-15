@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { Modal } from 'antd';
+import { Modal, Empty } from 'antd';
 import MessageArea from './MessageArea';
 import { useMessages } from '@/hooks/useMessages';
 
@@ -49,15 +49,10 @@ const ChatModal: React.FC<ChatModalProps> = ({
     }
   }, [open, conversationId, handleRefresh]);
 
-  // 处理模态框关闭
-  const handleClose = () => {
-    onClose();
-  };
-
   return (
     <Modal
       open={open}
-      onCancel={handleClose}
+      onCancel={onClose}
       footer={null}
       zIndex={zIndex}
       width={600}
@@ -70,10 +65,22 @@ const ChatModal: React.FC<ChatModalProps> = ({
       }}
       destroyOnClose
     >
-      <MessageArea
-        conversationId={open ? conversationId : null}
-        height="500px"
-      />
+      {open && conversationId ? (
+        <MessageArea
+          conversationId={conversationId}
+          height="500px"
+        />
+      ) : (
+        <div className="h-full flex items-center justify-center bg-gray-50">
+          <Empty
+            description={
+              <span className="text-gray-400">
+                无法加载会话
+              </span>
+            }
+          />
+        </div>
+      )}
     </Modal>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Badge } from 'antd';
+import { Menu, Badge, Empty } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
@@ -80,13 +80,25 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     setSelectedConversation(conversationId);
   };
 
+  // 当切换到系统通知标签时，清除选中的会话
+  useEffect(() => {
+    if (currentTab === 'system') {
+      setSelectedConversation(null);
+    }
+  }, [currentTab]);
+
   // 处理 WebSocket 消息
   useWebSocketMessage({
+    handleChatMessage: (message) => {
+      if (message.shouldCountAsUnread) {
+        setUnreadMessagesCount(prev => prev + 1);
+        refetchConversations();
+      }
+    },
     handleNotification: (data) => {
       const message = data.message;
       if (!message) return;
 
-      // 如果是新通知消息（包括任务通知）
       if (message.id && (message.type.startsWith('task_') || message.type === 'system_notification')) {
         window.dispatchEvent(new CustomEvent('refresh-notifications', {
           detail: { 
@@ -104,12 +116,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         }));
 
         setUnreadNotificationCount(prev => prev + 1);
-        return;
-      }
-
-      // 如果是未读计数更新消息
-      if (message.unread_count !== undefined) {
-        // 如果不在系统通知标签页，才更新未读计数
+      } else if (message.unread_count !== undefined) {
         if (currentTab !== 'system') {
           setUnreadNotificationCount(message.unread_count);
         } else {
@@ -193,9 +200,21 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
               </div>
               <div className="flex-1 min-h-0 bg-white flex flex-col">
                 <div className="flex-1 min-h-0">
-                  <MessageArea
-                    conversationId={selectedConversation}
-                  />
+                  {selectedConversation ? (
+                    <MessageArea
+                      conversationId={selectedConversation}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center bg-gray-50">
+                      <Empty
+                        description={
+                          <span className="text-gray-400">
+                            选择一个会话开始聊天
+                          </span>
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="h-3 bg-gray-100"></div>
               </div>

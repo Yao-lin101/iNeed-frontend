@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Input, Button, Empty } from 'antd';
+import { Input, Button } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
@@ -8,6 +8,7 @@ import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
 import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useMessageArea } from '@/contexts/MessageAreaContext';
 
 interface MessageAreaProps {
   conversationId: number | null;
@@ -21,11 +22,13 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<InputRef>(null);
   const messageAreaRef = useRef<HTMLDivElement>(null);
+  const hasUpdatedRef = useRef(false);
   const { messages, loading, sendMessage } = useMessages(conversationId);
   const { conversations, refetch: refetchConversations } = useConversations();
   const prevConversationIdRef = useRef<number | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { setActiveConversation } = useMessageArea();
 
   const currentConversation = conversations.find(c => c.id === conversationId);
   const recipientName = currentConversation?.other_participant?.username;
@@ -81,7 +84,11 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     handleChatMessage: (context) => {
       if (!conversationId) return;
       
-      const { message } = context;
+      const { message, shouldCountAsUnread } = context;
+      console.log('MessageArea - Received message for conversation:', message.conversation);
+      console.log('MessageArea - Current active conversation:', conversationId);
+      console.log('MessageArea - Should count as unread:', shouldCountAsUnread);
+
       // 如果是当前会话的新消息，立即标记为已读
       if (message.conversation === conversationId) {
         chatService.markAsRead(conversationId).catch(error => {
@@ -117,19 +124,23 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     };
   }, [conversationId, navigate, location.pathname, location.search]);
 
-  if (!conversationId) {
-    return (
-      <div className="h-full flex items-center justify-center bg-gray-50">
-        <Empty
-          description={
-            <span className="text-gray-400">
-              选择一个会话开始聊天
-            </span>
-          }
-        />
-      </div>
-    );
-  }
+  // 更新聊天上下文状态
+  useEffect(() => {
+    if (conversationId && !hasUpdatedRef.current) {
+      console.log('MessageArea - Setting active conversation:', conversationId);
+      setActiveConversation(conversationId);
+      hasUpdatedRef.current = true;
+    }
+
+    return () => {
+      const isUnmounting = !messageAreaRef.current;
+      if (isUnmounting) {
+        console.log('MessageArea - Cleanup: clearing active conversation (unmounting)');
+        setActiveConversation(null);
+        hasUpdatedRef.current = false;
+      }
+    };
+  }, [conversationId]);
 
   return (
     <div ref={messageAreaRef} className="flex flex-col bg-[#f9fafb]" style={{ height }}>
