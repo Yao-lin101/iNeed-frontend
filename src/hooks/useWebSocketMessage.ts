@@ -221,7 +221,12 @@ export function useWebSocketMessage(handler: MessageHandler) {
           handleSystemMessage(data);
           break;
         case 'notification':
-          handleNotification(data);
+          if (handler.handleNotification) {
+            handler.handleNotification({
+              type: 'notification',
+              message: data.message
+            });
+          }
           break;
       }
     };

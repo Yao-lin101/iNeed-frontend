@@ -4,7 +4,10 @@ import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
+import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface MessageAreaProps {
   conversationId: number | null;
@@ -21,6 +24,8 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   const { messages, loading, sendMessage } = useMessages(conversationId);
   const { conversations, refetch: refetchConversations } = useConversations();
   const prevConversationIdRef = useRef<number | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const currentConversation = conversations.find(c => c.id === conversationId);
   const recipientName = currentConversation?.other_participant?.username;
@@ -59,6 +64,59 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     }
   };
 
+  // 监听会话ID变化
+  useEffect(() => {
+    if (conversationId) {
+      // 加载消息
+      refetchConversations();
+      // 标记为已读
+      chatService.markAsRead(conversationId).catch(error => {
+        console.error('标记已读失败:', error);
+      });
+    }
+  }, [conversationId, refetchConversations]);
+
+  // 处理新消息
+  useWebSocketMessage({
+    handleChatMessage: (context) => {
+      if (!conversationId) return;
+      
+      const { message } = context;
+      // 如果是当前会话的新消息，立即标记为已读
+      if (message.conversation === conversationId) {
+        chatService.markAsRead(conversationId).catch(error => {
+          console.error('标记已读失败:', error);
+        });
+        // 刷新消息列表
+        refetchConversations();
+      }
+    }
+  });
+
+  // 处理 URL 更新
+  useEffect(() => {
+    if (conversationId) {
+      // 添加会话 ID 到 URL
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set('conversation', conversationId.toString());
+      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+    } else {
+      // 移除会话 ID
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.delete('conversation');
+      navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+    }
+
+    // 清理函数：组件卸载时移除会话参数
+    return () => {
+      const searchParams = new URLSearchParams(location.search);
+      if (searchParams.has('conversation')) {
+        searchParams.delete('conversation');
+        navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+      }
+    };
+  }, [conversationId, navigate, location.pathname, location.search]);
+
   if (!conversationId) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
@@ -74,8 +132,8 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   }
 
   return (
-    <div ref={messageAreaRef} className="flex flex-col" style={{ height }}>
-      <div className="py-2 px-4 border-b border-gray-200 flex-none flex items-center justify-center">
+    <div ref={messageAreaRef} className="flex flex-col bg-[#f9fafb]" style={{ height }}>
+      <div className="py-2 px-4 border-b border-gray-200 flex-none flex items-center justify-center bg-white">
         <h2 className="text-sm font-medium text-gray-700">{recipientName}</h2>
       </div>
       <div className="flex-1 min-h-0">

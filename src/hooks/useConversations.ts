@@ -72,8 +72,14 @@ export function useConversations() {
       conversation.last_message = message;
       conversation.updated_at = new Date().toISOString();
       
-      // 更新未读计数（如果不是当前活跃对话）
-      if (!isInMessageCenter || message.conversation !== activeConversationId) {
+      // 检查是否需要增加未读计数
+      // 1. 如果消息属于当前活跃的会话，不增加计数
+      // 2. 如果在消息中心且有活跃会话，不增加计数（处理聊天弹窗的情况）
+      const isActiveConversation = message.conversation === activeConversationId;
+      const hasActiveConversation = activeConversationId !== null;
+      const shouldIncreaseUnread = !isActiveConversation && !(isInMessageCenter && hasActiveConversation);
+      
+      if (shouldIncreaseUnread) {
         conversation.unread_count = (conversation.unread_count || 0) + 1;
       }
       

@@ -7,6 +7,15 @@
 @import './components/badge.css';
 
 /* 全局样式 */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
 .text-primary {
   color: #1890ff;
 }
@@ -33,7 +42,7 @@
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-} 
+}
 
 :root {
   --color-1: 0 100% 63%;

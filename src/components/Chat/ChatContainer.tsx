@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Menu } from 'antd';
+import { Menu, Badge } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
-  InboxOutlined,
 } from '@ant-design/icons';
 import ConversationList from './ConversationList';
 import MessageArea from './MessageArea';
 import { useConversations } from '@/hooks/useConversations';
-import { Empty } from 'antd';
-import { chatService } from '@/services/chatService';
-import { useNavigate } from 'react-router-dom';
+import SystemNotificationList from './SystemNotificationList';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { systemMessageService } from '@/services/systemMessageService';
+import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
 
 interface ChatContainerProps {
   initialConversationId?: number;
@@ -23,107 +23,130 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
 }) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState(initialTab);
-  const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
+  const { conversations, loading, refetch: refetchConversations } = useConversations();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
-  // 监听初始标签页
+  // 更新未读消息计数
   useEffect(() => {
-    setCurrentTab(initialTab);
-    // 根据初始标签页设置URL
-    if (initialTab === 'system') {
-      navigate('/mc/sm', { replace: true });
-    } else {
-      navigate('/mc/chat', { replace: true });
-    }
-  }, [initialTab, navigate]);
+    const count = conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
+    setUnreadMessagesCount(count);
+  }, [conversations]);
 
-  // 监听初始会话ID
-  useEffect(() => {
-    if (initialConversationId) {
-      setSelectedConversation(initialConversationId);
-      // 如果有初始会话ID，确保在消息标签页
-      setCurrentTab('myMessages');
-      navigate(`/mc/chat?conversation=${initialConversationId}`, { replace: true });
+  // 获取未读通知数量
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const response = await systemMessageService.getUnreadCount();
+      setUnreadNotificationCount(response.count);
+    } catch (error) {
+      console.error('获取未读通知数量失败:', error);
     }
-  }, [initialConversationId, navigate]);
+  };
+
+  // 初始化
+  useEffect(() => {
+    fetchUnreadNotificationCount();
+  }, []);
+
+  // 同步路由和标签状态
+  useEffect(() => {
+    const path = location.pathname;
+    const newTab = path === '/mc/sm' ? 'system' : 'myMessages';
+    
+    if (currentTab !== newTab) {
+      setCurrentTab(newTab);
+      if (newTab === 'system') {
+        setSelectedConversation(null);
+      }
+    }
+  }, [location.pathname]);
 
   // 处理标签页切换
   const handleTabChange = (key: 'myMessages' | 'system') => {
-    setCurrentTab(key);
     if (key === 'system') {
-      // 切换到系统通知时，清除选中的会话并导航到系统消息页面
       setSelectedConversation(null);
-      navigate('/mc/sm', { replace: true });
+      setTimeout(() => {
+        navigate('/mc/sm');
+      }, 0);
     } else {
-      // 切换到我的消息时，导航到消息中心
-      navigate('/mc/chat', { replace: true });
+      navigate('/mc/chat');
     }
   };
 
   // 处理会话选择
-  const handleConversationSelect = async (conversationId: number | null) => {
-    if (conversationId === null) {
-      setSelectedConversation(null);
-      navigate('/mc/chat', { replace: true });
-      return;
-    }
-    
-    // 找到选中的会话
-    const selectedConv = conversations.find(conv => conv.id === conversationId);
-    if (!selectedConv) return;
-
-    // 更新URL
-    navigate(`/mc/chat?conversation=${conversationId}`, { replace: true });
-
-    // 获取当前未读计数
-    const currentUnreadCount = selectedConv.unread_count || 0;
-    
-    // 更新选中状态
+  const handleConversationSelect = (conversationId: number | null) => {
     setSelectedConversation(conversationId);
-    
-    // 如果有未读消息，先更新未读计数
-    if (currentUnreadCount > 0) {
-      // 立即更新本地未读计数
-      updateUnreadCount(conversationId, 0);
-      
-      // 调用API标记为已读
-      try {
-        const response = await chatService.markAsRead(conversationId);
+  };
 
-        // 发送WebSocket消息通知其他客户端
-        window.dispatchEvent(new CustomEvent('ws-message', {
-          detail: {
-            type: 'chat_message',
-            message: {
-              type: 'messages_read',
-              conversation_id: conversationId,
-              unread_count: currentUnreadCount,
-              reader: response.reader
+  // 处理 WebSocket 消息
+  useWebSocketMessage({
+    handleNotification: (data) => {
+      const message = data.message;
+      if (!message) return;
+
+      // 如果是新通知消息（包括任务通知）
+      if (message.id && (message.type.startsWith('task_') || message.type === 'system_notification')) {
+        window.dispatchEvent(new CustomEvent('refresh-notifications', {
+          detail: { 
+            type: 'new_notification',
+            data: {
+              id: message.id,
+              type: message.type,
+              title: message.title,
+              content: message.content,
+              metadata: message.metadata,
+              is_read: false,
+              created_at: message.created_at || new Date().toISOString()
             }
           }
         }));
-      } catch (error) {
-        console.error('Failed to mark messages as read:', error);
-        // 如果API调用失败，恢复未读计数
-        updateUnreadCount(conversationId, currentUnreadCount);
+
+        setUnreadNotificationCount(prev => prev + 1);
+        return;
+      }
+
+      // 如果是未读计数更新消息
+      if (message.unread_count !== undefined) {
+        // 如果不在系统通知标签页，才更新未读计数
+        if (currentTab !== 'system') {
+          setUnreadNotificationCount(message.unread_count);
+        } else {
+          setUnreadNotificationCount(0);
+        }
       }
     }
-  };
-
-  const handleDelete = async () => {
-    await refetchConversations();
-  };
+  });
 
   const menuItems = [
     {
       key: 'myMessages',
-      icon: <MessageOutlined />,
+      icon: (
+        <Badge 
+          count={currentTab === 'myMessages' ? 0 : unreadMessagesCount} 
+          offset={[90, 8]}
+          className="unread-badge"
+        >
+          <MessageOutlined style={{ fontSize: '16px' }} />
+        </Badge>
+      ),
       label: '我的消息',
+      className: 'menu-item-with-icon'
     },
     {
       key: 'system',
-      icon: <NotificationOutlined />,
+      icon: (
+        <Badge 
+          count={currentTab === 'system' ? 0 : unreadNotificationCount} 
+          offset={[90, 8]}
+          className="unread-badge"
+        >
+          <NotificationOutlined style={{ fontSize: '16px' }} />
+        </Badge>
+      ),
       label: '系统通知',
+      className: 'menu-item-with-icon'
     },
   ];
 
@@ -163,28 +186,26 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
                     loading={loading}
                     selectedId={selectedConversation}
                     onSelect={handleConversationSelect}
-                    onDelete={handleDelete}
+                    onDelete={refetchConversations}
                   />
                 </div>
+                <div className="h-3 bg-gray-100"></div>
               </div>
-              <div className="flex-1 min-h-0 bg-white">
-                <MessageArea
-                  conversationId={selectedConversation}
-                />
+              <div className="flex-1 min-h-0 bg-white flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <MessageArea
+                    conversationId={selectedConversation}
+                  />
+                </div>
+                <div className="h-3 bg-gray-100"></div>
               </div>
             </>
           )}
           {currentTab === 'system' && (
-            <div className="flex-1 flex flex-col bg-gray-50">
-              <div className="flex-1 flex items-center justify-center">
-                <Empty
-                  image={<InboxOutlined style={{ fontSize: '64px', color: '#bfbfbf' }} />}
-                  imageStyle={{ marginBottom: '16px' }}
-                  description={
-                    <span className="text-gray-400 text-base">暂无系统通知</span>
-                  }
-                />
-              </div>
+            <div className="flex-1 flex flex-col bg-white">
+              <SystemNotificationList 
+                onNotificationRead={fetchUnreadNotificationCount}
+              />
             </div>
           )}
         </div>
