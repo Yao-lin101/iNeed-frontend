@@ -13,7 +13,7 @@ interface SystemNotificationListProps {
 const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
   onNotificationRead
 }) => {
-  const { loadTaskDetail, setModalVisible } = useTaskStore();
+  const { loadTaskDetail, setModalVisible, setModalContext } = useTaskStore();
   const [notifications, setNotifications] = useState<SystemNotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -111,7 +111,8 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
         onNotificationRead?.();
       }
 
-      // 然后加载任务详情
+      // 设置任务详情模态框的上下文和状态
+      setModalContext('notification');
       await loadTaskDetail(taskId);
       setModalVisible(true);
     } catch (error) {

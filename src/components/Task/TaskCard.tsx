@@ -54,6 +54,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
   const { 
     setSelectedTaskId, 
     setModalVisible, 
+    setModalContext,
     loadTaskDetail,
     selectedTaskId,
     modalVisible
@@ -91,8 +92,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
       return;
     }
     
-    // 设置选中的任务ID并示模态框
+    // 设置选中的任务ID和模态框上下文
     setSelectedTaskId(task.id);
+    setModalContext(window.location.pathname === '/my-tasks' ? 'myTasks' : 'taskCenter');
     setModalVisible(true);
     
     // 加载任务详情

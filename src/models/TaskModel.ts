@@ -42,6 +42,10 @@ interface TaskState {
   
   // 状态重置
   resetState: () => void;
+
+  // 弹窗上下文
+  modalContext: 'myTasks' | 'taskCenter' | 'notification' | null;
+  setModalContext: (context: 'myTasks' | 'taskCenter' | 'notification' | null) => void;
 }
 
 const initialState = {
@@ -56,6 +60,7 @@ const initialState = {
   modalVisible: false,
   activeTab: 'created' as const,
   status: '',
+  modalContext: null,
 };
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -136,4 +141,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       modalVisible: false,
     });
   },
+
+  // 弹窗上下文
+  setModalContext: (context) => set({ modalContext: context }),
 })); 

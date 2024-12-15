@@ -48,7 +48,10 @@ const TaskDetailModal: React.FC = () => {
     modalVisible: open,
     resetState,
     loadTaskDetail,
-    loadTasks
+    loadTasks,
+    modalContext,
+    currentPage,
+    loadMyTasks
   } = useTaskStore();
 
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
@@ -108,7 +111,7 @@ const TaskDetailModal: React.FC = () => {
 
           message.success('任务接取成功');
           await loadTaskDetail(task.id);
-          await loadTasks();
+          await refreshTaskList();
         } catch (error) {
           message.error('任务接取失败');
         }
@@ -141,7 +144,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('任务提交成功');
       setSubmitModalVisible(false);
       await loadTaskDetail(task.id);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error) {
       message.error('任务提交失败');
     }
@@ -174,7 +177,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('审核完成');
       setReviewModalVisible(false);
       await loadTaskDetail(task.id);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error: any) {
       console.error('审核失败:', error);
       message.error(error.response?.data?.detail || '审核失败');
@@ -196,7 +199,7 @@ const TaskDetailModal: React.FC = () => {
           await taskService.cancelTask(task.id);
           message.success('任务已取消');
           await loadTaskDetail(task.id);
-          await loadTasks();
+          await refreshTaskList();
         } catch (error: any) {
           const errorMessage = error.response?.data?.detail || 
                              error.response?.data?.error || 
@@ -237,7 +240,7 @@ const TaskDetailModal: React.FC = () => {
 
           message.success('已放弃任务');
           await loadTaskDetail(task.id);
-          await loadTasks();
+          await refreshTaskList();
         } catch (error) {
           message.error('放弃任务失败');
         }
@@ -253,7 +256,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('可以重新提交任务了');
       await loadTaskDetail(task.id);
       setSubmitModalVisible(true);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error) {
       message.error('操作失败');
     }
@@ -354,7 +357,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('任务更新成功');
       setIsEditing(false);
       await loadTaskDetail(task.id);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || 
                           error.response?.data?.error || 
@@ -368,6 +371,18 @@ const TaskDetailModal: React.FC = () => {
   const handleCloseModal = () => {
     setIsEditing(false);
     resetState();
+  };
+
+  const refreshTaskList = async () => {
+    switch (modalContext) {
+      case 'myTasks':
+        await loadMyTasks(currentPage);
+        break;
+      case 'taskCenter':
+        await loadTasks(currentPage);
+        break;
+      // notification 或其他情况下不刷新列表
+    }
   };
 
   return (
