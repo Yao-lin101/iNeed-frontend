@@ -13,7 +13,6 @@ export const MessageAreaProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const { setActiveConversationId: setStoreActiveConversationId } = useChatStore();
 
   const setActiveConversation = useCallback((id: number | null) => {
-    console.log('MessageAreaContext - Setting active conversation:', id);
     setActiveConversationId(id);
     setStoreActiveConversationId(id);
   }, []);

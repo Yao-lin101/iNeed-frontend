@@ -84,10 +84,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     handleChatMessage: (context) => {
       if (!conversationId) return;
       
-      const { message, shouldCountAsUnread } = context;
-      console.log('MessageArea - Received message for conversation:', message.conversation);
-      console.log('MessageArea - Current active conversation:', conversationId);
-      console.log('MessageArea - Should count as unread:', shouldCountAsUnread);
+      const { message } = context;
 
       // 如果是当前会话的新消息，立即标记为已读
       if (message.conversation === conversationId) {
@@ -100,13 +97,19 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     }
   });
 
-  // 处理 URL 更新
+  // 处理 URL 更新和聊天上下文状态
   useEffect(() => {
+    // 处理 URL 更新
     if (conversationId) {
-      // 添加会话 ID 到 URL
       const searchParams = new URLSearchParams(location.search);
       searchParams.set('conversation', conversationId.toString());
       navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+
+      // 更新聊天上下文状态
+      if (!hasUpdatedRef.current) {
+        setActiveConversation(conversationId);
+        hasUpdatedRef.current = true;
+      }
     } else {
       // 移除会话 ID
       const searchParams = new URLSearchParams(location.search);
@@ -114,33 +117,27 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
     }
 
-    // 清理函数：组件卸载时移除会话参数
-    return () => {
-      const searchParams = new URLSearchParams(location.search);
-      if (searchParams.has('conversation')) {
-        searchParams.delete('conversation');
-        navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
-      }
-    };
-  }, [conversationId, navigate, location.pathname, location.search]);
-
-  // 更新聊天上下文状态
-  useEffect(() => {
-    if (conversationId && !hasUpdatedRef.current) {
-      console.log('MessageArea - Setting active conversation:', conversationId);
-      setActiveConversation(conversationId);
-      hasUpdatedRef.current = true;
-    }
-
+    // 清理函数
     return () => {
       const isUnmounting = !messageAreaRef.current;
       if (isUnmounting) {
-        console.log('MessageArea - Cleanup: clearing active conversation (unmounting)');
-        setActiveConversation(null);
-        hasUpdatedRef.current = false;
+
+        // 只有在离开消息中心时才清除状态
+        if (!location.pathname.startsWith('/mc/')) {
+          // 清除 URL 参数
+          const searchParams = new URLSearchParams(location.search);
+          if (searchParams.has('conversation')) {
+            searchParams.delete('conversation');
+            navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+          }
+          
+          // 清除活跃会话
+          setActiveConversation(null);
+          hasUpdatedRef.current = false;
+        }
       }
     };
-  }, [conversationId]);
+  }, [conversationId, navigate, location.pathname, location.search]);
 
   return (
     <div ref={messageAreaRef} className="flex flex-col bg-[#f9fafb]" style={{ height }}>
