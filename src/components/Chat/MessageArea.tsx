@@ -130,11 +130,10 @@ const MessageArea: React.FC<MessageAreaProps> = ({
             searchParams.delete('conversation');
             navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
           }
-          
-          // 清除活跃会话
-          setActiveConversation(null);
           hasUpdatedRef.current = false;
         }
+        // 清除活跃会话
+        setActiveConversation(null);
       }
     };
   }, [conversationId, navigate, location.pathname, location.search]);
