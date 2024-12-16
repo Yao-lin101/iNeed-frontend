@@ -11,7 +11,6 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { taskService, TaskSubmitData } from '@/services/taskService';
 import { chatService } from '@/services/chatService';
-import { request } from '@/utils/request';
 import { useTaskStore } from '@/models/TaskModel';
 import TaskSubmitModal from './TaskSubmitModal';
 import TaskReviewModal from './TaskReviewModal';
@@ -270,23 +269,10 @@ const TaskDetailModal: React.FC = () => {
     }
     
     try {
-      const requestData = { recipient_uid: task.creator.uid };
-      const response = await request.post('/chat/conversations/', requestData);
-      
-      if (!response.data.id) {
-        message.error('创建对话失败：无效的响应数据');
-        return;
-      }
-      
+      const response = await chatService.createConversation(task.creator.uid);
       const conversationId = response.data.id;
       setCurrentConversationId(conversationId);
       setChatModalVisible(true);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       message.error(error.response?.data?.error || '创建对话失败');
     }
@@ -300,23 +286,10 @@ const TaskDetailModal: React.FC = () => {
     }
     
     try {
-      const requestData = { recipient_uid: task.assignee.uid };
-      const response = await request.post('/chat/conversations/', requestData);
-      
-      if (!response.data.id) {
-        message.error('创建对话失败：无效的响应数据');
-        return;
-      }
-      
+      const response = await chatService.createConversation(task.assignee.uid);
       const conversationId = response.data.id;
       setCurrentConversationId(conversationId);
       setChatModalVisible(true);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       message.error(error.response?.data?.error || '创建对话失败');
     }

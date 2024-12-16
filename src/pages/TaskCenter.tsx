@@ -8,7 +8,6 @@ import { useTaskStore } from '@/models/TaskModel';
 import '../styles/components/TaskCenter.css';
 import ChatModal from '@/components/Chat/ChatModal';
 import { request } from '@/utils/request';
-import { chatService } from '@/services/chatService';
 
 const { Search } = Input;
 
@@ -60,12 +59,6 @@ const TaskCenter: React.FC = () => {
       setTimeout(() => {
         setChatModalVisible(true);
       }, 0);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       console.error('创建对话失败:', error);
       message.error(error.response?.data?.error || '创建对话失败');

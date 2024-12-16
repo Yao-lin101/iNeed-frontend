@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Input, Button } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
-import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { useWebSocketMessage, MessageContext } from '@/hooks/useWebSocketMessage';
 import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -72,29 +72,34 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     if (conversationId) {
       // 加载消息
       refetchConversations();
-      // 标记为已读
+    }
+  }, [conversationId, refetchConversations]);
+
+  // 单独处理标记已读
+  useEffect(() => {
+    if (conversationId && messages.length > 0) {
       chatService.markAsRead(conversationId).catch(error => {
         console.error('标记已读失败:', error);
       });
     }
-  }, [conversationId, refetchConversations]);
+  }, [conversationId, messages.length]);
 
   // 处理新消息
   useWebSocketMessage({
-    handleChatMessage: (context) => {
+    handleChatMessage: useCallback((context: MessageContext) => {
       if (!conversationId) return;
       
       const { message } = context;
 
       // 如果是当前会话的新消息，立即标记为已读
-      if (message.conversation === conversationId) {
+      if (message.conversation === conversationId && messages.length > 0) {
         chatService.markAsRead(conversationId).catch(error => {
           console.error('标记已读失败:', error);
         });
         // 刷新消息列表
         refetchConversations();
       }
-    }
+    }, [conversationId, messages, refetchConversations])
   });
 
   // 处理 URL 更新和聊天上下文状态

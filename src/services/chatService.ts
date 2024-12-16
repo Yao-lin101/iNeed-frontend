@@ -15,8 +15,14 @@ export const chatService = {
 
   /** 创建新对话 */
   createConversation: async (recipientUid: string) => {
-    const response = await request.post('/chat/conversations/', { recipient_uid: recipientUid });
-    return response.data;
+    try {
+      const response = await request.post('/chat/conversations/', {
+        recipient_uid: recipientUid
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
   },
 
   /** 获取对话消息 */

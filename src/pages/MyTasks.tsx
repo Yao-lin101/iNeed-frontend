@@ -7,7 +7,6 @@ import TaskCard from '@/components/Task/TaskCard';
 import ChatModal from '@/components/Chat/ChatModal';
 import { useTaskStore } from '@/models/TaskModel';
 import { request } from '@/utils/request';
-import { chatService } from '@/services/chatService';
 import type { RadioChangeEvent } from 'antd';
 
 const { TabPane } = Tabs;
@@ -91,12 +90,6 @@ const MyTasks: React.FC = () => {
       setTimeout(() => {
         setChatModalVisible(true);
       }, 0);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       console.error('创建对话失败:', error);
       message.error(error.response?.data?.error || '创建对话失败');
