@@ -46,7 +46,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
   return (
     <div className="h-full overflow-y-auto p-4 message-list">
       <div className="space-y-4">
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           const currentUserUid = user?.uid || '';
           const senderUid = message.sender.uid || '';
           const isSelf = currentUserUid === senderUid;
@@ -54,7 +54,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
 
           return (
             <div
-              key={message.id}
+              key={`${message.id}-${message.created_at}-${index}`}
               className={`flex items-start gap-3 ${
                 isSelf ? 'flex-row-reverse' : ''
               }`}
