@@ -28,10 +28,11 @@ export const useChatStore = create<ChatState>((set) => ({
       chatContext: { ...state.chatContext, isInMessageCenter: value }
     })),
 
-  setActiveConversationId: (id) =>
+  setActiveConversationId: (id) => {
     set((state) => ({
       chatContext: { ...state.chatContext, activeConversationId: id }
-    })),
+    }));
+  },
 
   setChatModalVisible: (visible) =>
     set((state) => ({

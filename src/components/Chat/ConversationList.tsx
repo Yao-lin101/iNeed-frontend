@@ -33,7 +33,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   const listItemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const animationTimeoutsRef = useRef<{ [key: number]: number }>({});
 
-  // 处理会��选择
+  // 处理会话选择
   const handleSelect = (conversationId: number) => {
     // 清除本地未读计数
     const conversation = conversations.find(conv => conv.id === conversationId);

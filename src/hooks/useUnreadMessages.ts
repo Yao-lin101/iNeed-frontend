@@ -5,6 +5,7 @@ import { Conversation } from '@/types/chat';
 import { useLocation } from 'react-router-dom';
 import { chatService } from '@/services/chatService';
 import { systemMessageService } from '@/services/systemMessageService';
+import { useChatStore } from '@/store/useChatStore';
 
 export function useUnreadMessages() {
   const [totalUnread, setTotalUnread] = useState(0);
@@ -12,6 +13,7 @@ export function useUnreadMessages() {
   const { user } = useAuthStore();
   const location = useLocation();
   const fetchNotificationsRef = useRef<() => Promise<void>>();
+  const { chatContext: { activeConversationId } } = useChatStore();
 
   // 检查是否在消息中心
   const isInMessageCenter = useCallback(() => {
@@ -28,31 +30,31 @@ export function useUnreadMessages() {
     return location.pathname === '/mc/chat';
   }, [location.pathname]);
 
-
   // 更新未读消息总数
   const updateTotalUnread = useCallback((conversations: Conversation[]) => {
-    const total = conversations.reduce((sum: number, conv: Conversation) => sum + (conv.unread_count || 0), 0);
-    console.log('设置聊天未读总数:', total);
+    // 重新获取最新的 activeConversationId
+    const currentActiveId = useChatStore.getState().chatContext.activeConversationId;
+    
+    const total = conversations.reduce((sum: number, conv: Conversation) => {
+      // 如果是当前活跃会话，不计入未读计数
+      if (conv.id === currentActiveId) {
+        return sum;
+      }
+      return sum + (conv.unread_count || 0);
+    }, 0);
     setTotalUnread(total);
-  }, []);
+  }, [isInMessageCenter]);
 
   // 获取系统通知未读数量
   const fetchUnreadNotifications = useCallback(async () => {
     try {
       const response = await systemMessageService.getUnreadCount();
-      // console.log('获取系统通知未读数量:', response.count);
-      // 只有在系统消息标签页时才清零
-      if (location.pathname === '/mc/sm') {
-        console.log('在系统消息标签页，清零未读计数');
-        setUnreadNotifications(0);
-      } else {
-        console.log('设置系统通知未读数量:', response.count);
-        setUnreadNotifications(response.count);
-      }
+      // 始终保持实际的未读数，让 getTotalUnread 处理显示逻辑
+      setUnreadNotifications(response.count);
     } catch (error) {
       console.error('Failed to fetch unread notifications:', error);
     }
-  }, [location.pathname]);
+  }, [location.pathname, isInMessageCenter]);
 
   // 保存最新的 fetchUnreadNotifications 到 ref
   useEffect(() => {
@@ -61,7 +63,7 @@ export function useUnreadMessages() {
 
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
-    const { message, activeConversationId } = context;
+    const { message } = context;
     
     // 确保消息和发送者存在
     if (!message || !message.sender) {
@@ -79,11 +81,13 @@ export function useUnreadMessages() {
       return;
     }
 
-    // 如果不是当前活跃对话，加未读计数
-    if (message.conversation !== activeConversationId) {
-      setTotalUnread(prev => prev + 1);
+    // 如果当前活跃会话，不增加未读计数
+    if (message.conversation === activeConversationId) {
+      return;
     }
-  }, [user?.uid, isInChatTab]);
+
+    setTotalUnread(prev => prev + 1);
+  }, [user?.uid, isInChatTab, activeConversationId, isInMessageCenter]);
 
   // 处理消息已读状态
   const handleMessagesRead = useCallback((data: MessagesReadData) => {
@@ -96,18 +100,12 @@ export function useUnreadMessages() {
 
   // 处理系统通知
   const handleNotification = useCallback((data: any) => {
-    console.log('Received notification data:', data);
     
     // 确保通知数据格式正确
     if (!data || !data.type) {
       console.warn('Invalid notification format:', data);
       return;
     }
-
-    console.log('Processing notification:', {
-      type: data.type,
-      title: data.title
-    });
 
     // 只有不在系统消息标签页时才增加未读计数
     if (!isInSystemMessageTab()) {
@@ -133,8 +131,6 @@ export function useUnreadMessages() {
   // 初始化和路由变化时的处理
   useEffect(() => {
     const pathname = location.pathname;
-    console.log('路由变化:', pathname);
-    
     const updateCounts = async () => {
       // 获取未读计数
       try {
@@ -148,16 +144,13 @@ export function useUnreadMessages() {
       await fetchNotificationsRef.current?.();
     };
 
-    // 立即执行更新
-    updateCounts();
-  }, [location.pathname, updateTotalUnread]);
-
-  // 定期更新系统通知未读数量
-  useEffect(() => {
-    // 每分钟更新一次未读通知数量
-    const interval = setInterval(fetchUnreadNotifications, 60000);
-    return () => clearInterval(interval);
-  }, [fetchUnreadNotifications]);
+    // 在以下情况更新计数：
+    // 1. 进入消息中心时
+    // 2. activeConversationId 变化时（无论在哪里）
+    if (pathname.startsWith('/mc') || activeConversationId !== null) {
+      updateCounts();
+    }
+  }, [location.pathname, updateTotalUnread, activeConversationId]);
 
   // 获取总未读计数
   const getTotalUnread = useCallback(() => {

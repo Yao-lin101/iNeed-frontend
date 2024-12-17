@@ -24,7 +24,7 @@ export function useConversations() {
       updateTotalUnread(response.data.results);
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
-      message.error('获取对话���败');
+      message.error('获取对话失败');
     } finally {
       setLoading(false);
       isFetchingRef.current = false;
@@ -54,19 +54,9 @@ export function useConversations() {
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
     const { message, activeConversationId, source } = context;
-    
-    console.log('收到消息:', {
-      messageId: message.id,
-      conversationId: message.conversation,
-      activeConversationId,
-      senderId: message.sender.uid,
-      currentUserId: user?.uid,
-      source
-    });
 
     // 如果是自己发送的消息，不增加未读计数
     if (message.sender.uid === user?.uid) {
-      console.log('自己发送的消息，不增加未读计数');
       return;
     }
     
@@ -76,7 +66,6 @@ export function useConversations() {
       if (conversationIndex === -1) {
         // 如果是新会话，触发一次获取
         if (!isFetchingRef.current) {
-          console.log('新会话，触发获取');
           fetchConversations();
         }
         return prev;
@@ -94,25 +83,12 @@ export function useConversations() {
       if (source === 'user-websocket') {
         // 判断是否是活跃会话（确保 activeConversationId 不为 null）
         const isActiveConversation = activeConversationId !== null && message.conversation === activeConversationId;
-        console.log('活跃会话判断:', {
-          isActiveConversation,
-          messageConversationId: message.conversation,
-          activeConversationId,
-          willIncreaseUnread: !isActiveConversation,
-          source
-        });
         
         // 只有在非活跃会话时才增加未读计数
         if (!isActiveConversation) {
           conversation.unread_count = (conversation.unread_count || 0) + 1;
-          console.log('增加未读计数:', {
-            conversationId: conversation.id,
-            newUnreadCount: conversation.unread_count,
-            source
-          });
         }
       } else {
-        console.log('chat-websocket消息，不处理未读计数');
       }
       
       // 移动到顶部

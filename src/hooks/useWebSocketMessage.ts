@@ -81,7 +81,6 @@ export function useWebSocketMessage(handler: MessageHandler) {
   const isMessageProcessed = useCallback((messageKey: string | number) => {
     const key = messageKey.toString();
     if (processedMessagesRef.current.has(key)) {
-      console.log('消息已处理，跳过:', messageKey);
       return true;
     }
     processedMessagesRef.current.add(key);
@@ -101,12 +100,8 @@ export function useWebSocketMessage(handler: MessageHandler) {
     
     if ('id' in data.message) {
       const message = data.message;
-      const messageKey = `${message.id}-${data.source}`;
-      console.log('WebSocket消息来源:', {
-        messageId: message.id,
-        source: data.source,
-        messageKey
-      });
+      // 只使用消息ID作为去重key
+      const messageKey = message.id;
       
       if (isMessageProcessed(messageKey)) {
         return;
@@ -130,6 +125,7 @@ export function useWebSocketMessage(handler: MessageHandler) {
     // 处理新消息事件
     else if ('type' in data.message && data.message.type === 'new_message' && handler.handleChatMessage) {
       const { message } = data.message;
+      // 只使用消息ID作为去重key
       if (!isMessageProcessed(message.id)) {
         handler.handleChatMessage({
           message,
