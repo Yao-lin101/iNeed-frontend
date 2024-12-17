@@ -15,6 +15,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
   open,
   onClose,
   conversationId,
+  recipientName,
   zIndex
 }) => {
   const mountedRef = useRef(true);
@@ -69,6 +70,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
         <MessageArea
           conversationId={conversationId}
           height="500px"
+          recipientName={recipientName}
         />
       ) : (
         <div className="h-full flex items-center justify-center bg-gray-50">

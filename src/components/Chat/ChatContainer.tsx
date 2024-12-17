@@ -151,6 +151,7 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
                   {selectedConversation ? (
                     <MessageArea
                       conversationId={selectedConversation}
+                      recipientName={conversations.find(c => c.id === selectedConversation)?.other_participant?.username}
                     />
                   ) : (
                     <div className="h-full flex items-center justify-center bg-gray-50">

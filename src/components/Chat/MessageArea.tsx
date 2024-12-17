@@ -12,11 +12,13 @@ import { useMessageArea } from '@/contexts/MessageAreaContext';
 interface MessageAreaProps {
   conversationId: number | null;
   height?: string;
+  recipientName?: string;
 }
 
 const MessageArea: React.FC<MessageAreaProps> = ({ 
   conversationId,
-  height = '100%'
+  height = '100%',
+  recipientName
 }) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<InputRef>(null);
@@ -127,6 +129,12 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       className="flex flex-col h-full"
       style={{ height }}
     >
+      <div className="flex-none p-4 border-b text-center">
+        <h2 className="text-base font-medium text-gray-700 m-0">
+          {recipientName || '聊天'}
+        </h2>
+      </div>
+
       <div className="flex-1 overflow-hidden">
         {/* 加载更多提示 */}
         {loadingMore && (
