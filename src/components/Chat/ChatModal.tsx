@@ -19,7 +19,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
 }) => {
   const mountedRef = useRef(true);
   const lastRefreshRef = useRef<number>(0);
-  const { refetch } = useMessages(
+  const { refresh } = useMessages(
     open ? conversationId : null
   );
 
@@ -36,9 +36,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
     const now = Date.now();
     if (now - lastRefreshRef.current > 2000) {
       lastRefreshRef.current = now;
-      refetch();
+      refresh?.();
     }
-  }, [refetch]);
+  }, [refresh]);
 
   // 监听对话状态变化
   useEffect(() => {

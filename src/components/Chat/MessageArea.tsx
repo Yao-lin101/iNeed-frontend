@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Input, Button } from 'antd';
+import { Input, Button, Spin } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
@@ -23,46 +23,91 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   const inputRef = useRef<InputRef>(null);
   const messageAreaRef = useRef<HTMLDivElement>(null);
   const hasUpdatedRef = useRef(false);
-  const { messages, loading, sendMessage } = useMessages(conversationId);
-  const { conversations, refetch: refetchConversations } = useConversations();
+  const { 
+    messages, 
+    loading, 
+    loadingMore,
+    sendMessage,
+    disconnect,
+    isConnected,
+    connect,
+    send,
+    getWebSocket,
+    cancelDisconnect,
+  } = useMessages(conversationId);
+  const { refetch: refetchConversations } = useConversations();
   const prevConversationIdRef = useRef<number | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { setActiveConversation } = useMessageArea();
 
-  const currentConversation = conversations.find(c => c.id === conversationId);
-  const recipientName = currentConversation?.other_participant?.username;
 
   // 滚动到底部
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (messageAreaRef.current) {
       const messageList = messageAreaRef.current.querySelector('.message-list');
       if (messageList) {
         messageList.scrollTop = messageList.scrollHeight;
       }
     }
-  };
+  }, []);
 
   // 当会话ID变化时
   useEffect(() => {
     // 更新前一个会话ID
     prevConversationIdRef.current = conversationId;
 
-    // 等待消息加载完成后滚动到底部
-    if (conversationId && !loading && messages.length > 0 && messageAreaRef.current) {
+    // 等待消息加载完成动
+    if (conversationId && !loading && messages.length > 0) {
       scrollToBottom();
     }
-  }, [conversationId, loading, messages.length]);
+  }, [conversationId, loading, messages.length, scrollToBottom]);
 
   const handleSend = async () => {
     const content = inputValue.trim();
     if (content && conversationId) {
       try {
-        await sendMessage(content);
+        console.log('准备发送消息:', content);
+        // 准备要发送的消息
+        const messageToSend = JSON.stringify({
+          type: 'chat_message',
+          message: content
+        });
+
+        // 检查是否有活跃的连接
+        if (!conversationId || !isConnected(conversationId)) {
+          console.log('需要建立新连接');
+          connect();
+          // 等待连接建立
+          await new Promise<void>((resolve) => {
+            const checkConnection = () => {
+              if (conversationId && isConnected(conversationId)) {
+                console.log('连接已建立，发送消息');
+                send(messageToSend, conversationId);
+                resolve();
+              } else {
+                console.log('等待连接建立, 当前状态:', getWebSocket(conversationId)?.readyState);
+                setTimeout(checkConnection, 100);
+              }
+            };
+            checkConnection();
+          });
+        } else {
+          // 已有连接，直接发送
+          console.log('使用现有连接发送消息');
+          send(messageToSend, conversationId);
+        }
         setInputValue('');
         refetchConversations();
       } catch (error) {
         console.error('Failed to send message:', error);
+        // 如果 WebSocket 发送失败，尝试 HTTP
+        try {
+          await sendMessage(content);
+          setInputValue('');
+        } catch (httpError) {
+          console.error('HTTP 发送也失败:', httpError);
+        }
       }
     }
   };
@@ -90,44 +135,54 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       if (!conversationId) return;
       
       const { message } = context;
-
-      // 如果是当前会话的新消息，立即标记为已读
       if (message.conversation === conversationId && messages.length > 0) {
+        console.log('标记已读:', conversationId);
         chatService.markAsRead(conversationId).catch(error => {
           console.error('标记已读失败:', error);
         });
-        // 刷新消息列表
-        refetchConversations();
       }
-    }, [conversationId, messages, refetchConversations])
+    }, [conversationId, messages])
   });
 
   // 处理 URL 更新和聊天上下文状态
   useEffect(() => {
-    // 处理 URL 更新
-    if (conversationId) {
-      const searchParams = new URLSearchParams(location.search);
-      searchParams.set('conversation', conversationId.toString());
-      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+    // 只在 conversationId 变化时更新 URL
+    if (prevConversationIdRef.current !== conversationId) {
+      // 处理 URL 更新
+      if (conversationId) {
+        // 如果已经有连接，取消延迟断开
+        if (isConnected(conversationId)) {
+          console.log('打开窗口，取消延迟断开:', conversationId);
+          cancelDisconnect(conversationId);
+        }
 
-      // 更新聊天上下文状态
-      if (!hasUpdatedRef.current) {
-        setActiveConversation(conversationId);
-        hasUpdatedRef.current = true;
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('conversation', conversationId.toString());
+        navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
+  
+        // 更新聊天上下文状态
+        if (!hasUpdatedRef.current) {
+          setActiveConversation(conversationId);
+          hasUpdatedRef.current = true;
+        }
+      } else {
+        // 移除会话 ID
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.delete('conversation');
+        navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
       }
-    } else {
-      // 移除会话 ID
-      const searchParams = new URLSearchParams(location.search);
-      searchParams.delete('conversation');
-      navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
     }
 
-    // 清理函数
+    // 清理函
     return () => {
       const isUnmounting = !messageAreaRef.current;
       if (isUnmounting) {
+        // 安排延迟断开 WebSocket
+        if (conversationId && isConnected(conversationId)) {
+          disconnect(conversationId);
+        }
 
-        // 只有在离开消息中心时才清除状态
+        // 只有在离开消中心时才清除状态
         if (!location.pathname.startsWith('/mc/')) {
           // 清除 URL 参数
           const searchParams = new URLSearchParams(location.search);
@@ -141,33 +196,47 @@ const MessageArea: React.FC<MessageAreaProps> = ({
         setActiveConversation(null);
       }
     };
-  }, [conversationId, navigate, location.pathname, location.search]);
+  }, [conversationId, navigate, location.pathname, disconnect, isConnected, cancelDisconnect]);
+
 
   return (
-    <div ref={messageAreaRef} className="flex flex-col bg-[#f9fafb]" style={{ height }}>
-      <div className="py-2 px-4 border-b border-gray-200 flex-none flex items-center justify-center bg-white">
-        <h2 className="text-sm font-medium text-gray-700">{recipientName}</h2>
-      </div>
-      <div className="flex-1 min-h-0">
-        <MessageList messages={messages} loading={loading} />
-      </div>
-      <div className="flex p-4 border-t border-gray-200">
-        <Input
-          ref={inputRef}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onPressEnter={handleSend}
-          placeholder="输入消息..."
-          autoComplete="off"
+    <div 
+      ref={messageAreaRef} 
+      className="flex flex-col h-full"
+      style={{ height }}
+    >
+      <div className="flex-1 overflow-hidden">
+        {/* 加载更多提示 */}
+        {loadingMore && (
+          <div className="flex justify-center items-center py-2">
+            <Spin size="small" />
+          </div>
+        )}
+        
+        <MessageList
+          messages={messages}
+          loading={loading}
         />
-        <Button
-          type="primary"
-          icon={<SendOutlined />}
-          onClick={handleSend}
-          className="ml-2"
-        >
-          发送
-        </Button>
+      </div>
+
+      {/* 输入区域 */}
+      <div className="p-4 border-t">
+        <div className="flex gap-2">
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onPressEnter={handleSend}
+            placeholder="输入消息..."
+          />
+          <Button
+            type="primary"
+            icon={<SendOutlined />}
+            onClick={handleSend}
+          >
+            发送
+          </Button>
+        </div>
       </div>
     </div>
   );

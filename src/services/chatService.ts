@@ -25,12 +25,6 @@ export const chatService = {
     }
   },
 
-  /** 获取对话消息 */
-  getMessages: async (conversationId: number) => {
-    const response = await request.get(`/chat/conversations/${conversationId}/messages/`);
-    return response.data;
-  },
-
   /** 发送消息 */
   sendMessage: async (conversationId: number, content: string) => {
     const response = await request.post(`/chat/conversations/${conversationId}/messages/`, { content });
@@ -65,5 +59,37 @@ export const chatService = {
   cleanMessages: async (conversationId: number) => {
     const response = await request.post(`/chat/conversations/${conversationId}/clean_messages/`);
     return response.data;
-  }
+  },
+
+  /** 获取历史消息（分页） */
+  getHistoryMessages: async (
+    conversationId: number,
+    page: number = 1,
+    pageSize: number = 20
+  ) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString()
+    });
+    
+    const response = await request.get(
+      `/chat/conversations/${conversationId}/history_messages/?${params}`
+    );
+    return response.data;
+  },
+
+  /** 同步新消息 */
+  syncMessages: async (
+    conversationId: number,
+    lastSyncTime: string
+  ) => {
+    const params = new URLSearchParams({
+      last_sync_time: lastSyncTime
+    });
+    
+    const response = await request.get(
+      `/chat/conversations/${conversationId}/sync_messages/?${params}`
+    );
+    return response.data;
+  },
 }; 

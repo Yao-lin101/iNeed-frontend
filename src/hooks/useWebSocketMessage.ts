@@ -81,10 +81,12 @@ export function useWebSocketMessage(handler: MessageHandler) {
   const isMessageProcessed = useCallback((messageKey: string | number) => {
     const key = messageKey.toString();
     if (processedMessagesRef.current.has(key)) {
+      console.log('消息已处理，跳过:', messageKey);
       return true;
     }
     processedMessagesRef.current.add(key);
     
+    // 限制已处理消息的数量
     if (processedMessagesRef.current.size > 1000) {
       const oldestMessages = Array.from(processedMessagesRef.current).slice(0, 500);
       processedMessagesRef.current = new Set(oldestMessages);
@@ -93,13 +95,6 @@ export function useWebSocketMessage(handler: MessageHandler) {
     return false;
   }, []);
 
-  // 将 shouldCountAsUnread 的计算提取为一个函数
-  const calculateShouldCountAsUnread = useCallback((messageConversationId: number) => {
-    return chatContext.isInMessageCenter
-      ? messageConversationId !== chatContext.activeConversationId
-      : !chatContext.chatModalVisible || messageConversationId !== chatContext.activeConversationId;
-  }, [chatContext]);
-
   // 处理聊天消息
   const handleChatMessage = useCallback((data: WebSocketMessageData) => {
     if (data.type !== 'chat_message' || !handler.handleChatMessage) return;
@@ -107,18 +102,21 @@ export function useWebSocketMessage(handler: MessageHandler) {
     if ('id' in data.message) {
       const message = data.message;
       const messageKey = `${message.id}-${data.source}`;
+      console.log('WebSocket消息来源:', {
+        messageId: message.id,
+        source: data.source,
+        messageKey
+      });
+      
       if (isMessageProcessed(messageKey)) {
         return;
       }
-
-      const shouldCountAsUnread = calculateShouldCountAsUnread(message.conversation);
 
       handler.handleChatMessage({
         message,
         isInMessageCenter: chatContext.isInMessageCenter,
         activeConversationId: chatContext.activeConversationId,
         source: data.source,
-        shouldCountAsUnread
       });
     }
     // 处理消息已读事件
@@ -141,7 +139,7 @@ export function useWebSocketMessage(handler: MessageHandler) {
         });
       }
     }
-  }, [handler.handleChatMessage, chatContext, calculateShouldCountAsUnread, isMessageProcessed]);
+  }, [handler.handleChatMessage, chatContext, isMessageProcessed]);
 
   // 处理会话更新
   const handleConversationUpdated = useCallback((data: WebSocketMessageData) => {
