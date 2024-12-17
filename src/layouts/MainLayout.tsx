@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
 import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -13,6 +13,20 @@ const MainLayout: React.FC = () => {
   const { totalUnread } = useUnreadMessages();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 设置页面类型
+  useEffect(() => {
+    if (location.pathname.startsWith('/mc')) {
+      document.body.setAttribute('data-page', 'message-center');
+    } else {
+      document.body.removeAttribute('data-page');
+    }
+    
+    // 清理函数
+    return () => {
+      document.body.removeAttribute('data-page');
+    };
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -100,8 +114,8 @@ const MainLayout: React.FC = () => {
           )}
         </div>
       </Header>
-      <Content className={location.pathname.startsWith('/mc') ? '' : 'p-6'}>
-        <div className={location.pathname.startsWith('/mc') ? '' : 'bg-white p-6 min-h-[280px]'}>
+      <Content className={location.pathname.startsWith('/mc') ? 'h-full' : 'p-6 overflow-y-auto'}>
+        <div className={location.pathname.startsWith('/mc') ? 'h-full' : 'bg-white p-6 min-h-[280px]'}>
           <Outlet />
         </div>
       </Content>
