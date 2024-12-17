@@ -12,7 +12,6 @@ export function useUnreadMessages() {
   const { user } = useAuthStore();
   const location = useLocation();
   const fetchNotificationsRef = useRef<() => Promise<void>>();
-  const lastProcessedPathRef = useRef<string>('');
 
   // 检查是否在消息中心
   const isInMessageCenter = useCallback(() => {
