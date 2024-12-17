@@ -6,6 +6,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Message } from '@/types/chat';
 import { useAuthStore } from '@/store/useAuthStore';
 import { getMediaUrl } from '@/utils/url';
+import '@/styles/components/chat/message-list.css';
 
 // 配置 dayjs
 dayjs.extend(relativeTime);
@@ -19,14 +20,25 @@ interface MessageListProps {
 const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
   const { user } = useAuthStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isFirstLoadRef = useRef(true);
+  const prevMessagesLengthRef = useRef(messages.length);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: isFirstLoadRef.current ? 'auto' : 'smooth' });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // 检查是否是初次加载或者是发送消息
+    const isNewMessageFromSelf = messages.length > prevMessagesLengthRef.current && 
+      messages[messages.length - 1]?.sender.uid === user?.uid;
+
+    if ((!loading && messages.length > 0 && isFirstLoadRef.current) || isNewMessageFromSelf) {
+      scrollToBottom();
+      isFirstLoadRef.current = false;
+    }
+
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages, loading, user?.uid]);
 
   if (loading) {
     return (
@@ -44,7 +56,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4 message-list">
+    <div className="h-full overflow-y-auto p-4 message-list bg-[#eefbef]">
       <div className="space-y-4">
         {messages.map((message, index) => {
           const currentUserUid = user?.uid || '';

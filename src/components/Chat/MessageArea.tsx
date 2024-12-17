@@ -123,6 +123,19 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     }, [conversationId])
   });
 
+  // 修改消息加载完成的监听
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      // 只在初始加载时滚动到底部
+      const messageList = document.querySelector('.message-list');
+      if (messageList && messageList.scrollTop === 0) {
+        requestAnimationFrame(() => {
+          messageList.scrollTop = messageList.scrollHeight;
+        });
+      }
+    }
+  }, [loading]);
+
   return (
     <div 
       ref={messageAreaRef} 
