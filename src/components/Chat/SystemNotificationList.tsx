@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { List, Badge, Spin, Empty, Button, message } from 'antd';
 import { BellOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { systemMessageService, SystemNotification } from '@/services/systemMessageService';
 import { useTaskStore } from '@/models/TaskModel';
 import dayjs from 'dayjs';
 import '@/styles/components/chat/system-notification.css';
+import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
 
 interface SystemNotificationListProps {
   onNotificationRead?: () => void;
@@ -76,6 +77,26 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
       window.removeEventListener('refresh-notifications', handleRefresh);
     };
   }, []);
+
+  // 监听新通知事件
+  useWebSocketMessage({
+    handleNotification: useCallback((data: any) => {
+      console.log('SystemNotificationList - Received notification data:', data);
+
+      // 检查是否是有效的通知数据
+      if (data && data.id && data.type && data.title) {
+        setNotifications(prev => {
+          // 检查通知是否已存在
+          if (prev.some(n => n.id === data.id)) {
+            return prev;
+          }
+          // 添加新通知到列表开头
+          return [data, ...prev];
+        });
+        
+      }
+    }, [])
+  });
 
   const handleMarkAllRead = async () => {
     try {
