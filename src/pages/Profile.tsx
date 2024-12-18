@@ -59,12 +59,19 @@ const Profile: React.FC = () => {
     } catch (error: any) {
       if (error.response?.status === 400) {
         const errors = error.response.data;
-        Object.keys(errors).forEach(key => {
-          form.setFields([{
-            name: key,
-            errors: Array.isArray(errors[key]) ? errors[key] : [errors[key]]
-          }]);
-        });
+        // 处理字段级别的错误
+        if (typeof errors === 'object') {
+          Object.keys(errors).forEach(key => {
+            const errorMessages = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+            form.setFields([{
+              name: key,
+              errors: errorMessages
+            }]);
+          });
+        } else {
+          // 处理非字段级别的错误
+          message.error(error.response.data.detail || '更新失败');
+        }
       } else {
         message.error(error.response?.data?.detail || '更新失败');
       }
