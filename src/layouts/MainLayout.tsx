@@ -56,6 +56,18 @@ const MainLayout: React.FC = () => {
     },
   ];
 
+  // 获取当前选中的菜单项
+  const getSelectedKeys = () => {
+    const pathname = location.pathname;
+    // 在消息中心时返回空数组，而不是空字符串
+    if (pathname.startsWith('/mc')) return [];
+    
+    if (pathname === '/') return ['home'];
+    if (pathname.startsWith('/tasks')) return ['tasks'];
+    if (pathname.startsWith('/my-tasks')) return ['my-tasks'];
+    return [];
+  };
+
   const navItems: MenuProps['items'] = [
     {
       key: 'home',
@@ -77,11 +89,16 @@ const MainLayout: React.FC = () => {
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center justify-between bg-white">
-        <div className="flex items-center">
-          <Link to="/" className="text-xl font-bold mr-8">
+        <div className="flex items-center flex-1">
+          <Link to="/" className="text-xl font-bold mr-8 flex-none">
             iNeed
           </Link>
-          <Menu mode="horizontal" defaultSelectedKeys={['home']} items={navItems} />
+          <Menu 
+            mode="horizontal" 
+            selectedKeys={getSelectedKeys()}
+            items={navItems} 
+            className="flex-1 min-w-[300px]"
+          />
         </div>
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
