@@ -5,7 +5,6 @@ import TaskCard from '@/components/Task/TaskCard';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskFormModal from '@/components/Task/TaskFormModal';
 import { useTaskStore } from '@/models/TaskModel';
-import '../styles/components/TaskCenter.css';
 import ChatModal from '@/components/Chat/ChatModal';
 import { request } from '@/utils/request';
 
@@ -104,7 +103,7 @@ const TaskCenter: React.FC = () => {
   };
 
   return (
-    <div className="p-6 min-h-[calc(100vh-64px)] bg-gray-50">
+    <div className="min-h-[calc(100vh-64px)]">
       <div className="flex justify-center items-center gap-4 mb-6">
         <div className="w-full max-w-2xl">
           <Search

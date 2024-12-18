@@ -3,8 +3,8 @@
 @import 'tailwindcss/utilities';
 
 @import './components/TaskCard.css';
-@import './components/MyTasks.css';
 @import './components/badge.css';
+@import './components/task/common.css';
 
 /* 全局样式 */
 html, body {
