@@ -107,7 +107,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     const button = target.closest('button');
     if (target.tagName === 'BUTTON' || button) {
       e.stopPropagation();
-      // 如果是联系按钮，��发联系事件
+      // 如果是联系按钮，触发联系事件
       if (button?.classList.contains('contact-btn') || button?.classList.contains('rainbow-button')) {
         handleContact();
       }
@@ -152,7 +152,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
         uid: null
       };
     } else {
-      // 如果当前用户不是委托人，显示联系委���人按钮
+      // 如果当前用户不是委托人，显示联系委托人按钮
       return {
         show: true,
         text: '联系委托人',
