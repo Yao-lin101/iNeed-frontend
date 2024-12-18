@@ -9,8 +9,8 @@ import { useTaskStore } from '@/models/TaskModel';
 import ChatModal from '@/components/Chat/ChatModal';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
-import { NeonGradientCard } from '@/components/NeonGradientCard';
-import { RainbowButton } from '@/components/RainbowButton';
+import { NeonGradientCard } from '@/components/ui/neon-gradient-card';
+import { RainbowButton } from '@/components/ui/rainbow-button';
 import '@/styles/components/TaskCard.css';  // 确保引入样式文件
 
 interface TaskCardProps {

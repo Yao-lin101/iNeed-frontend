@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from 'antd';
-import { RainbowButton } from "@/components/RainbowButton";
+import { RainbowButton } from "@/components/ui/rainbow-button";
 
 const { Title } = Typography;
 
