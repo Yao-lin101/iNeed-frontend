@@ -650,3 +650,93 @@
   height: 100%;
   z-index: 1;
 }
+
+/* 添加新的霓虹按钮样式 */
+.neon-contact-button {
+  position: relative;
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+/* 按钮悬停效果 */
+.neon-contact-button:hover {
+  border-color: var(--gradient-from);
+  box-shadow: 
+    0 0 10px var(--gradient-from-transparent),
+    0 0 20px var(--gradient-from-transparent),
+    inset 0 0 15px var(--gradient-from-transparent);
+  transform: translateY(-1px);
+}
+
+/* 按钮内容容器 */
+.neon-contact-button-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 按钮背景动画 */
+.neon-contact-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    var(--gradient-from-transparent),
+    var(--gradient-to-transparent)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.neon-contact-button:hover::before {
+  opacity: 0.15;
+}
+
+/* 光晕效果 */
+.neon-contact-button::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    90deg,
+    var(--gradient-from),
+    var(--gradient-to)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  filter: blur(5px);
+  z-index: -1;
+}
+
+.neon-contact-button:hover::after {
+  opacity: 0.2;
+}
+
+/* 图标样式 */
+.neon-contact-button .anticon {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.neon-contact-button:hover .anticon {
+  transform: scale(1.1);
+}
+
+/* 文字样式 */
+.neon-contact-button-text {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.neon-contact-button:hover .neon-contact-button-text {
+  text-shadow: 0 0 8px var(--gradient-from-transparent);
+}

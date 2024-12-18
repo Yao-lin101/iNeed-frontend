@@ -10,7 +10,6 @@ import ChatModal from '@/components/Chat/ChatModal';
 import classNames from 'classnames';
 import dayjs from 'dayjs';
 import { NeonGradientCard } from '@/components/ui/neon-gradient-card';
-import { RainbowButton } from '@/components/ui/rainbow-button';
 import '@/styles/components/TaskCard.css';  // 确保引入样式文件
 
 interface TaskCardProps {
@@ -327,18 +326,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
         </div>
         {contactButton.show && (
           isNeon ? (
-            <RainbowButton
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleContact();
               }}
-              className="!p-0 min-w-[120px] flex items-center justify-center gap-1"
+              className="neon-contact-button"
             >
-              <MessageOutlined className="text-[var(--gradient-from)]" />
-              <span className="gradient-text font-medium">
-                {contactButton.text}
-              </span>
-            </RainbowButton>
+              <div className="neon-contact-button-content">
+                <MessageOutlined className="text-[var(--gradient-from)]" />
+                <span className="neon-contact-button-text gradient-text">
+                  {contactButton.text}
+                </span>
+              </div>
+            </button>
           ) : (
             <Button
               type="text"
