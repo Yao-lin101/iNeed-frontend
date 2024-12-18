@@ -597,3 +597,56 @@
     transform: translateZ(-10px) scale(1.05);
   }
 }
+
+/* 等级5卡片的透视效果样式 */
+.task-card-level-5 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 背面内容容器 */
+.task-card-level-5-back {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+/* 正面内容容器 */
+.task-card-level-5-front {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 透视效果遮罩基础样式 */
+.perspective-mask {
+  transition: all 0.3s ease;
+}
+
+/* 光晕效果 */
+.card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--gradient-from-transparent) 0%,
+    var(--gradient-to-transparent) 50%,
+    transparent 70%
+  );
+}
+
+/* 卡片容器基础样式 */
+.card-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
