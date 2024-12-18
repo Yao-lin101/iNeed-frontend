@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { Modal } from 'antd';
+import { Modal, Empty } from 'antd';
 import MessageArea from './MessageArea';
 import { useMessages } from '@/hooks/useMessages';
 
@@ -15,11 +15,12 @@ const ChatModal: React.FC<ChatModalProps> = ({
   open,
   onClose,
   conversationId,
+  recipientName,
   zIndex
 }) => {
   const mountedRef = useRef(true);
   const lastRefreshRef = useRef<number>(0);
-  const { refetch } = useMessages(
+  const { refresh } = useMessages(
     open ? conversationId : null
   );
 
@@ -36,9 +37,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
     const now = Date.now();
     if (now - lastRefreshRef.current > 2000) {
       lastRefreshRef.current = now;
-      refetch();
+      refresh?.();
     }
-  }, [refetch]);
+  }, [refresh]);
 
   // 监听对话状态变化
   useEffect(() => {
@@ -49,15 +50,10 @@ const ChatModal: React.FC<ChatModalProps> = ({
     }
   }, [open, conversationId, handleRefresh]);
 
-  // 处理模态框关闭
-  const handleClose = () => {
-    onClose();
-  };
-
   return (
     <Modal
       open={open}
-      onCancel={handleClose}
+      onCancel={onClose}
       footer={null}
       zIndex={zIndex}
       width={600}
@@ -70,10 +66,23 @@ const ChatModal: React.FC<ChatModalProps> = ({
       }}
       destroyOnClose
     >
-      <MessageArea
-        conversationId={open ? conversationId : null}
-        height="500px"
-      />
+      {open && conversationId ? (
+        <MessageArea
+          conversationId={conversationId}
+          height="500px"
+          recipientName={recipientName}
+        />
+      ) : (
+        <div className="h-full flex items-center justify-center bg-gray-50">
+          <Empty
+            description={
+              <span className="text-gray-400">
+                无法加载会话
+              </span>
+            }
+          />
+        </div>
+      )}
     </Modal>
   );
 };

@@ -3,17 +3,25 @@
 @import 'tailwindcss/utilities';
 
 @import './components/TaskCard.css';
-@import './components/MyTasks.css';
 @import './components/badge.css';
+@import './components/task/common.css';
 
 /* 全局样式 */
 html, body {
   height: 100%;
-  overflow: hidden;
+}
+
+body:not([data-page="message-center"]) {
+  overflow-y: auto;
 }
 
 #root {
   height: 100%;
+}
+
+/* 消息中心页面样式 */
+body[data-page="message-center"] {
+  overflow: hidden;
 }
 
 .text-primary {

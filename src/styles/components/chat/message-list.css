@@ -1,0 +1,8 @@
+.message-list {
+  background-color: #f3f4f6;
+  height: 100%;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* 保持其他现有样式... */

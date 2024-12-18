@@ -1,161 +1,185 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Input, Button, Empty } from 'antd';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Input, Button, Spin } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
-import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { useWebSocketMessage, MessageContext } from '@/hooks/useWebSocketMessage';
 import { chatService } from '@/services/chatService';
 import type { InputRef } from 'antd/lib/input';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useMessageArea } from '@/contexts/MessageAreaContext';
 
 interface MessageAreaProps {
   conversationId: number | null;
   height?: string;
+  recipientName?: string;
 }
 
 const MessageArea: React.FC<MessageAreaProps> = ({ 
   conversationId,
-  height = '100%'
+  height = '100%',
+  recipientName
 }) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<InputRef>(null);
   const messageAreaRef = useRef<HTMLDivElement>(null);
-  const { messages, loading, sendMessage } = useMessages(conversationId);
-  const { conversations, refetch: refetchConversations } = useConversations();
+  const { 
+    messages, 
+    loading, 
+    loadingMore,
+    sendMessage,
+    disconnect,
+    isConnected,
+    connect,
+    send,
+    cancelDisconnect,
+  } = useMessages(conversationId);
+  const { refetch: refetchConversations } = useConversations();
   const prevConversationIdRef = useRef<number | null>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const currentConversation = conversations.find(c => c.id === conversationId);
-  const recipientName = currentConversation?.other_participant?.username;
-
-  // 滚动到底部
-  const scrollToBottom = () => {
-    if (messageAreaRef.current) {
-      const messageList = messageAreaRef.current.querySelector('.message-list');
-      if (messageList) {
-        messageList.scrollTop = messageList.scrollHeight;
-      }
-    }
-  };
+  const { setActiveConversation } = useMessageArea();
 
   // 当会话ID变化时
   useEffect(() => {
-    // 更新前一个会话ID
-    prevConversationIdRef.current = conversationId;
-
-    // 等待消息加载完成后滚动到底部
-    if (conversationId && !loading && messages.length > 0 && messageAreaRef.current) {
-      scrollToBottom();
+    // 当 conversationId 变化时设置 activeConversation
+    if (prevConversationIdRef.current !== conversationId) {
+      setActiveConversation(conversationId);
+      prevConversationIdRef.current = conversationId;
     }
-  }, [conversationId, loading, messages.length]);
+    if (conversationId && isConnected(conversationId)) {
+      cancelDisconnect(conversationId);
+    }
+
+    // 组件卸载时清除 activeConversation
+    return () => {
+      const isUnmounting = !messageAreaRef.current;
+      // 安排延迟断开 WebSocket
+      if (conversationId && isConnected(conversationId)) {
+        disconnect(conversationId);
+      }
+      if (isUnmounting) {
+        setActiveConversation(null);
+      }
+    };
+  }, [conversationId, setActiveConversation]);
 
   const handleSend = async () => {
     const content = inputValue.trim();
     if (content && conversationId) {
       try {
-        await sendMessage(content);
+        // 准备要发送的消息
+        const messageToSend = JSON.stringify({
+          type: 'chat_message',
+          message: content
+        });
+
+        // 检查是否有活跃的连接
+        if (!conversationId || !isConnected(conversationId)) {
+          connect();
+          // 等待连接建立
+          await new Promise<void>((resolve) => {
+            const checkConnection = () => {
+              if (conversationId && isConnected(conversationId)) {
+                send(messageToSend, conversationId);
+                resolve();
+              } else {
+                setTimeout(checkConnection, 100);
+              }
+            };
+            checkConnection();
+          });
+        } else {
+          // 已有连接，直接发送
+          send(messageToSend, conversationId);
+        }
         setInputValue('');
         refetchConversations();
       } catch (error) {
         console.error('Failed to send message:', error);
+        // 如果 WebSocket 发送失败，尝试 HTTP
+        try {
+          await sendMessage(content);
+          setInputValue('');
+        } catch (httpError) {
+          console.error('HTTP 发送也失败:', httpError);
+        }
       }
     }
   };
 
-  // 监听会话ID变化
+
+  // 单独处理标记已读
   useEffect(() => {
-    if (conversationId) {
-      // 加载消息
-      refetchConversations();
-      // 标记为已读
+    if (conversationId && messages.length > 0) {
       chatService.markAsRead(conversationId).catch(error => {
         console.error('标记已读失败:', error);
       });
     }
-  }, [conversationId, refetchConversations]);
+  }, [conversationId, messages]);
 
   // 处理新消息
   useWebSocketMessage({
-    handleChatMessage: (context) => {
+    handleChatMessage: useCallback((_context: MessageContext) => {
       if (!conversationId) return;
-      
-      const { message } = context;
-      // 如果是当前会话的新消息，立即标记为已读
-      if (message.conversation === conversationId) {
-        chatService.markAsRead(conversationId).catch(error => {
-          console.error('标记已读失败:', error);
-        });
-        // 刷新消息列表
-        refetchConversations();
-      }
-    }
+    }, [conversationId])
   });
 
-  // 处理 URL 更新
+  // 修改消息加载完成的监听
   useEffect(() => {
-    if (conversationId) {
-      // 添加会话 ID 到 URL
-      const searchParams = new URLSearchParams(location.search);
-      searchParams.set('conversation', conversationId.toString());
-      navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
-    } else {
-      // 移除会话 ID
-      const searchParams = new URLSearchParams(location.search);
-      searchParams.delete('conversation');
-      navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
-    }
-
-    // 清理函数：组件卸载时移除会话参数
-    return () => {
-      const searchParams = new URLSearchParams(location.search);
-      if (searchParams.has('conversation')) {
-        searchParams.delete('conversation');
-        navigate(`${location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`, { replace: true });
+    if (!loading && messages.length > 0) {
+      // 只在初始加载时滚动到底部
+      const messageList = document.querySelector('.message-list');
+      if (messageList && messageList.scrollTop === 0) {
+        requestAnimationFrame(() => {
+          messageList.scrollTop = messageList.scrollHeight;
+        });
       }
-    };
-  }, [conversationId, navigate, location.pathname, location.search]);
-
-  if (!conversationId) {
-    return (
-      <div className="h-full flex items-center justify-center bg-gray-50">
-        <Empty
-          description={
-            <span className="text-gray-400">
-              选择一个会话开始聊天
-            </span>
-          }
-        />
-      </div>
-    );
-  }
+    }
+  }, [loading]);
 
   return (
-    <div ref={messageAreaRef} className="flex flex-col bg-[#f9fafb]" style={{ height }}>
-      <div className="py-2 px-4 border-b border-gray-200 flex-none flex items-center justify-center bg-white">
-        <h2 className="text-sm font-medium text-gray-700">{recipientName}</h2>
+    <div 
+      ref={messageAreaRef} 
+      className="flex flex-col h-full"
+      style={{ height }}
+    >
+      <div className="flex-none py-2 px-4 border-b text-center">
+        <h2 className="text-base font-medium text-gray-700 m-0">
+          {recipientName || '聊天'}
+        </h2>
       </div>
-      <div className="flex-1 min-h-0">
-        <MessageList messages={messages} loading={loading} />
-      </div>
-      <div className="flex p-4 border-t border-gray-200">
-        <Input
-          ref={inputRef}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onPressEnter={handleSend}
-          placeholder="输入消息..."
-          autoComplete="off"
+
+      <div className="flex-1 overflow-hidden">
+        {/* 加载更多提示 */}
+        {loadingMore && (
+          <div className="flex justify-center items-center py-2">
+            <Spin size="small" />
+          </div>
+        )}
+        
+        <MessageList
+          messages={messages}
+          loading={loading}
         />
-        <Button
-          type="primary"
-          icon={<SendOutlined />}
-          onClick={handleSend}
-          className="ml-2"
-        >
-          发送
-        </Button>
+      </div>
+
+      {/* 输入区域 */}
+      <div className="p-4 border-t">
+        <div className="flex gap-2">
+          <Input
+            ref={inputRef}
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onPressEnter={handleSend}
+            placeholder="输入消息..."
+          />
+          <Button
+            type="primary"
+            icon={<SendOutlined />}
+            onClick={handleSend}
+          >
+            发送
+          </Button>
+        </div>
       </div>
     </div>
   );

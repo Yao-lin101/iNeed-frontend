@@ -13,6 +13,7 @@
     "@ant-design/icons": "^5.5.2",
     "@ant-design/pro-components": "^2.8.2",
     "@emotion/react": "^11.13.5",
+    "@tanstack/react-query": "^5.62.7",
     "@types/date-fns": "^2.5.3",
     "antd": "^5.22.3",
     "axios": "^1.7.9",

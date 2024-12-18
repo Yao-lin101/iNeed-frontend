@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Card, Row, Col, Button, Input, Radio, Empty, Spin, Pagination, message } from 'antd';
+import { Tabs, Row, Col, Button, Input, Radio, Empty, Spin, Pagination, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskFormModal from '@/components/Task/TaskFormModal';
@@ -7,7 +7,6 @@ import TaskCard from '@/components/Task/TaskCard';
 import ChatModal from '@/components/Chat/ChatModal';
 import { useTaskStore } from '@/models/TaskModel';
 import { request } from '@/utils/request';
-import { chatService } from '@/services/chatService';
 import type { RadioChangeEvent } from 'antd';
 
 const { TabPane } = Tabs;
@@ -91,12 +90,6 @@ const MyTasks: React.FC = () => {
       setTimeout(() => {
         setChatModalVisible(true);
       }, 0);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       console.error('创建对话失败:', error);
       message.error(error.response?.data?.error || '创建对话失败');
@@ -141,93 +134,73 @@ const MyTasks: React.FC = () => {
     );
   };
 
-  return (
-    <div className="p-6 min-h-[calc(100vh-64px)] bg-gray-50">
-      <Card 
-        bordered={false}
-        className="shadow-sm rounded-lg"
-      >
-        <Tabs
-          activeKey={activeTab}
-          onChange={(key) => {
-            setActiveTab(key as 'created' | 'assigned');
+  // 抽取搜索和筛选组件
+  const renderSearchAndFilter = (showPublishButton = false) => (
+    <div className="mb-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <Search
+          placeholder="搜索任务标题或描述"
+          allowClear
+          onSearch={(value) => {
+            setSearchValue(value);
             setCurrentPage(1);
-            setSearchValue('');
+            loadMyTasks(1);
           }}
-          className="task-tabs"
-        >
-          <TabPane tab="我发布的任务" key="created">
-            <div className="mb-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <Search
-                  placeholder="搜索任务标题或描述"
-                  allowClear
-                  onSearch={(value) => {
-                    setSearchValue(value);
-                    setCurrentPage(1);
-                    loadMyTasks(1);
-                  }}
-                  className="max-w-md task-search"
-                  prefix={<SearchOutlined className="text-gray-400" />}
-                />
-                <Button 
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setIsFormModalOpen(true)}
-                  className="publish-task-btn"
-                >
-                  发布任务
-                </Button>
-              </div>
-              <Radio.Group
-                value={status}
-                onChange={handleStatusChange}
-                optionType="button"
-                buttonStyle="solid"
-                options={getStatusOptions()}
-                className="task-filter-group"
-              />
-            </div>
-            <div className="task-list-container">
-              {renderTaskCards()}
-            </div>
-          </TabPane>
-          <TabPane tab="我接取的任务" key="assigned">
-            <div className="mb-6 space-y-4">
-              <Search
-                placeholder="搜索任务标题或描述"
-                allowClear
-                onSearch={(value) => {
-                  setSearchValue(value);
-                  setCurrentPage(1);
-                  loadMyTasks(1);
-                }}
-                className="max-w-md task-search"
-                prefix={<SearchOutlined className="text-gray-400" />}
-              />
-              <Radio.Group
-                value={status}
-                onChange={handleStatusChange}
-                optionType="button"
-                buttonStyle="solid"
-                options={getStatusOptions()}
-                className="task-filter-group"
-              />
-            </div>
-            <div className="task-list-container">
-              {renderTaskCards()}
-            </div>
-          </TabPane>
-        </Tabs>
-      </Card>
+          className="max-w-md task-search"
+          prefix={<SearchOutlined className="text-gray-400" />}
+        />
+        {showPublishButton && (
+          <Button 
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsFormModalOpen(true)}
+            className="publish-task-btn"
+          >
+            发布任务
+          </Button>
+        )}
+      </div>
+      <Radio.Group
+        value={status}
+        onChange={handleStatusChange}
+        optionType="button"
+        buttonStyle="solid"
+        options={getStatusOptions()}
+        className="task-filter-group"
+      />
+    </div>
+  );
+
+  return (
+    <div className="min-h-[calc(100vh-64px)]">
+      <Tabs
+        activeKey={activeTab}
+        onChange={(key) => {
+          setActiveTab(key as 'created' | 'assigned');
+          setCurrentPage(1);
+          setSearchValue('');
+        }}
+        className="task-tabs"
+      >
+        <TabPane tab="我发布的任务" key="created">
+          {renderSearchAndFilter(true)}
+          <div className="task-list-container">
+            {renderTaskCards()}
+          </div>
+        </TabPane>
+        <TabPane tab="我接取的任务" key="assigned">
+          {renderSearchAndFilter()}
+          <div className="task-list-container">
+            {renderTaskCards()}
+          </div>
+        </TabPane>
+      </Tabs>
 
       <TaskDetailModal />
       <TaskFormModal
         open={isFormModalOpen}
         onCancel={() => setIsFormModalOpen(false)}
-        onSuccess={() => {
-          loadMyTasks(currentPage);
-        }}
+        onSuccess={() => loadMyTasks(currentPage)}
       />
       
       {currentConversationId && (

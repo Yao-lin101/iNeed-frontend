@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Modal, Button, message, Spin, Avatar } from 'antd';
+import { Modal, Button, message, Spin, Avatar, Popconfirm } from 'antd';
 import { 
   DownloadOutlined, 
   ExclamationCircleOutlined, 
@@ -11,7 +11,6 @@ import {
 import { useAuthStore } from '@/store/useAuthStore';
 import { taskService, TaskSubmitData } from '@/services/taskService';
 import { chatService } from '@/services/chatService';
-import { request } from '@/utils/request';
 import { useTaskStore } from '@/models/TaskModel';
 import TaskSubmitModal from './TaskSubmitModal';
 import TaskReviewModal from './TaskReviewModal';
@@ -23,8 +22,6 @@ import TaskForm, { TaskFormData } from './TaskForm';
 import dayjs from 'dayjs';
 import { systemMessageService } from '@/services/systemMessageService';
 
-
-const { confirm } = Modal;
 
 // 获取报酬等级
 const getRewardLevel = (reward: number) => {
@@ -48,7 +45,10 @@ const TaskDetailModal: React.FC = () => {
     modalVisible: open,
     resetState,
     loadTaskDetail,
-    loadTasks
+    loadTasks,
+    modalContext,
+    currentPage,
+    loadMyTasks
   } = useTaskStore();
 
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
@@ -64,7 +64,7 @@ const TaskDetailModal: React.FC = () => {
   // 计算报酬等级
   const rewardLevel = useMemo(() => task ? getRewardLevel(task.reward) : 1, [task?.reward]);
 
-  // 获取状态的中文描述
+  // 获取状态的��文描述
   const getStatusText = (status: string) => {
     const textMap: Record<string, string> = {
       pending: '待接取',
@@ -82,38 +82,29 @@ const TaskDetailModal: React.FC = () => {
   // 处理接取任务
   const handleTakeTask = async () => {
     if (!task) return;
-    confirm({
-      title: '确认接取任务',
-      icon: <ExclamationCircleOutlined />,
-      content: '接取任务后，您需要在截止日期前完成任务。确定要接取这个任务？',
-      okText: '确认接取',
-      cancelText: '取消',
-      async onOk() {
-        try {
-          await taskService.takeTask(task.id);
-          
-          // 发送系统通知给委托人
-          await systemMessageService.sendNotification({
-            recipient_uid: task.creator.uid,
-            type: 'task_taken',
-            title: '任务被接取通知',
-            content: `您的任务"${task.title}"已被用户 ${user?.username} 接取`,
-            metadata: {
-              task_id: task.id,
-              task_title: task.title,
-              assignee_uid: user?.uid,
-              assignee_username: user?.username
-            }
-          });
-
-          message.success('任务接取成功');
-          await loadTaskDetail(task.id);
-          await loadTasks();
-        } catch (error) {
-          message.error('任务接取失败');
+    try {
+      await taskService.takeTask(task.id);
+      
+      // 发送系统通知给委托人
+      await systemMessageService.sendNotification({
+        recipient_uid: task.creator.uid,
+        type: 'task_taken',
+        title: '任务被接取通知',
+        content: `您的任务"${task.title}"已被用户 ${user?.username} 接取`,
+        metadata: {
+          task_id: task.id,
+          task_title: task.title,
+          assignee_uid: user?.uid,
+          assignee_username: user?.username
         }
-      },
-    });
+      });
+
+      message.success('任务接取成功');
+      await loadTaskDetail(task.id);
+      await refreshTaskList();
+    } catch (error) {
+      message.error('任务接取失败');
+    }
   };
 
   // 处理提交任务
@@ -141,7 +132,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('任务提交成功');
       setSubmitModalVisible(false);
       await loadTaskDetail(task.id);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error) {
       message.error('任务提交失败');
     }
@@ -174,7 +165,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('审核完成');
       setReviewModalVisible(false);
       await loadTaskDetail(task.id);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error: any) {
       console.error('审核失败:', error);
       message.error(error.response?.data?.detail || '审核失败');
@@ -184,65 +175,45 @@ const TaskDetailModal: React.FC = () => {
   // 处理取消任务
   const handleCancelTask = async () => {
     if (!task) return;
-    confirm({
-      title: '确认取消任务',
-      icon: <ExclamationCircleOutlined />,
-      content: '取消任务后，其他用户将无法接取此任务。确定要取消这个任务吗？',
-      okText: '确认取消',
-      cancelText: '取消',
-      okButtonProps: { danger: true },
-      async onOk() {
-        try {
-          await taskService.cancelTask(task.id);
-          message.success('任务已取消');
-          await loadTaskDetail(task.id);
-          await loadTasks();
-        } catch (error: any) {
-          const errorMessage = error.response?.data?.detail || 
-                             error.response?.data?.error || 
-                             '取消任务失败';
-          message.error(errorMessage);
-        }
-      },
-    });
+    try {
+      await taskService.cancelTask(task.id);
+      message.success('任务已取消');
+      await loadTaskDetail(task.id);
+      await refreshTaskList();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || 
+                          error.response?.data?.error || 
+                          '取消任务失败';
+      message.error(errorMessage);
+    }
   };
 
   // 处理放弃任务
   const handleAbandonTask = async () => {
     if (!task) return;
-    confirm({
-      title: '确认放弃任务',
-      icon: <ExclamationCircleOutlined />,
-      content: '放弃任务后，任务将重新变为待接取状态，其他人可以接取。确定要放弃这个任务吗？',
-      okText: '确认放弃',
-      cancelText: '取消',
-      okButtonProps: { danger: true },
-      async onOk() {
-        try {
-          await taskService.abandonTask(task.id);
-          
-          // 发送系统通知给委托人
-          await systemMessageService.sendNotification({
-            recipient_uid: task.creator.uid,
-            type: 'task_abandoned',
-            title: '任务被放弃通知',
-            content: `您的任务"${task.title}"已被接取人 ${user?.username} 放弃`,
-            metadata: {
-              task_id: task.id,
-              task_title: task.title,
-              assignee_uid: user?.uid,
-              assignee_username: user?.username
-            }
-          });
-
-          message.success('已放弃任务');
-          await loadTaskDetail(task.id);
-          await loadTasks();
-        } catch (error) {
-          message.error('放弃任务失败');
+    try {
+      await taskService.abandonTask(task.id);
+      
+      // 发送系统通知给委托人
+      await systemMessageService.sendNotification({
+        recipient_uid: task.creator.uid,
+        type: 'task_abandoned',
+        title: '任务被放弃通知',
+        content: `您的任务"${task.title}"已被接取人 ${user?.username} 放弃`,
+        metadata: {
+          task_id: task.id,
+          task_title: task.title,
+          assignee_uid: user?.uid,
+          assignee_username: user?.username
         }
-      },
-    });
+      });
+
+      message.success('已放弃任务');
+      await loadTaskDetail(task.id);
+      await refreshTaskList();
+    } catch (error) {
+      message.error('放弃任务失败');
+    }
   };
 
   // 处理重新提交
@@ -253,7 +224,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('可以重新提交任务了');
       await loadTaskDetail(task.id);
       setSubmitModalVisible(true);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error) {
       message.error('操作失败');
     }
@@ -267,23 +238,10 @@ const TaskDetailModal: React.FC = () => {
     }
     
     try {
-      const requestData = { recipient_uid: task.creator.uid };
-      const response = await request.post('/chat/conversations/', requestData);
-      
-      if (!response.data.id) {
-        message.error('创建对话失败：无效的响应数据');
-        return;
-      }
-      
+      const response = await chatService.createConversation(task.creator.uid);
       const conversationId = response.data.id;
       setCurrentConversationId(conversationId);
       setChatModalVisible(true);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       message.error(error.response?.data?.error || '创建对话失败');
     }
@@ -297,23 +255,10 @@ const TaskDetailModal: React.FC = () => {
     }
     
     try {
-      const requestData = { recipient_uid: task.assignee.uid };
-      const response = await request.post('/chat/conversations/', requestData);
-      
-      if (!response.data.id) {
-        message.error('创建对话失败：无效的响应数据');
-        return;
-      }
-      
+      const response = await chatService.createConversation(task.assignee.uid);
       const conversationId = response.data.id;
       setCurrentConversationId(conversationId);
       setChatModalVisible(true);
-
-      try {
-        await chatService.markAsRead(conversationId);
-      } catch (error) {
-        console.error('标记已读失败:', error);
-      }
     } catch (error: any) {
       message.error(error.response?.data?.error || '创建对话失败');
     }
@@ -354,7 +299,7 @@ const TaskDetailModal: React.FC = () => {
       message.success('任务更新成功');
       setIsEditing(false);
       await loadTaskDetail(task.id);
-      await loadTasks();
+      await refreshTaskList();
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || 
                           error.response?.data?.error || 
@@ -368,6 +313,18 @@ const TaskDetailModal: React.FC = () => {
   const handleCloseModal = () => {
     setIsEditing(false);
     resetState();
+  };
+
+  const refreshTaskList = async () => {
+    switch (modalContext) {
+      case 'myTasks':
+        await loadMyTasks(currentPage);
+        break;
+      case 'taskCenter':
+        await loadTasks(currentPage);
+        break;
+      // notification 或其他情况下不刷新列表
+    }
   };
 
   return (
@@ -567,9 +524,19 @@ const TaskDetailModal: React.FC = () => {
                   <div className="flex-none border-t bg-white">
                     <div className="px-6 py-4 flex justify-end gap-4">
                       {task.status === 'pending' && !isCreator && !isAssignee && (
-                        <Button type="primary" onClick={handleTakeTask}>
-                          接取任务
-                        </Button>
+                        <Popconfirm
+                          title="确认接取任务"
+                          description="接取任务后，您需要在截止日期前完成任务。确定要接取这个任务？"
+                          icon={<ExclamationCircleOutlined style={{ color: '#faad14' }} />}
+                          onConfirm={handleTakeTask}
+                          okText="确认接取"
+                          cancelText="取消"
+                          placement="topRight"
+                        >
+                          <Button type="primary">
+                            接取任务
+                          </Button>
+                        </Popconfirm>
                       )}
                       {isCreator && task.status === 'pending' && (
                         <>
@@ -580,9 +547,20 @@ const TaskDetailModal: React.FC = () => {
                           >
                             编辑
                           </Button>
-                          <Button danger onClick={handleCancelTask}>
-                            取消任务
-                          </Button>
+                          <Popconfirm
+                            title="确认取消任务"
+                            description="取消任务后，其他用户将无法接取此任务。确定要取消这个任务吗？"
+                            icon={<ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />}
+                            onConfirm={handleCancelTask}
+                            okText="确认取消"
+                            cancelText="取消"
+                            placement="topRight"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button danger>
+                              取消任务
+                            </Button>
+                          </Popconfirm>
                         </>
                       )}
                       {isAssignee && task.status === 'in_progress' && (
@@ -590,9 +568,20 @@ const TaskDetailModal: React.FC = () => {
                           <Button type="primary" onClick={() => setSubmitModalVisible(true)}>
                             提交任务
                           </Button>
-                          <Button danger onClick={handleAbandonTask}>
-                            放弃任务
-                          </Button>
+                          <Popconfirm
+                            title="确认放弃任务"
+                            description="放弃任务后，任务将重新变为待接取状态，其他人可以接取。确定要放弃这个任务吗？"
+                            icon={<ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />}
+                            onConfirm={handleAbandonTask}
+                            okText="确认放弃"
+                            cancelText="取消"
+                            placement="topRight"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button danger>
+                              放弃任务
+                            </Button>
+                          </Popconfirm>
                         </>
                       )}
                       {isCreator && task.status === 'submitted' && (
@@ -605,9 +594,20 @@ const TaskDetailModal: React.FC = () => {
                           <Button onClick={handleRetryTask} type="primary">
                             重新提交
                           </Button>
-                          <Button danger onClick={handleAbandonTask}>
-                            放弃任务
-                          </Button>
+                          <Popconfirm
+                            title="确认放弃任务"
+                            description="放弃任务后，任务将重新变为待接取状态，其他人可以接取。确定要放弃这个任务吗？"
+                            icon={<ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />}
+                            onConfirm={handleAbandonTask}
+                            okText="确认放弃"
+                            cancelText="取消"
+                            placement="topRight"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button danger>
+                              放弃任务
+                            </Button>
+                          </Popconfirm>
                         </>
                       )}
                     </div>

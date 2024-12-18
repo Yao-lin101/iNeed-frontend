@@ -6,7 +6,6 @@ import 'dayjs/locale/zh-cn';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Conversation } from '@/types/chat';
 import { getMediaUrl } from '@/utils/url';
-import { useAuthStore } from '@/store/useAuthStore';
 import { chatService } from '@/services/chatService';
 import '@/styles/components/chat/conversation-list.css';
 
@@ -20,6 +19,7 @@ interface ConversationListProps {
   selectedId: number | null;
   onSelect: (id: number | null) => void | Promise<void>;
   onDelete?: (id: number) => void;
+  updateUnreadCount?: (conversationId: number, count: number) => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -28,26 +28,18 @@ const ConversationList: React.FC<ConversationListProps> = ({
   selectedId,
   onSelect,
   onDelete,
+  updateUnreadCount,
 }) => {
-  const { user } = useAuthStore();
-  const prevConversationsRef = useRef<Conversation[]>([]);
   const listItemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const animationTimeoutsRef = useRef<{ [key: number]: number }>({});
 
-  // 检查会话是否有新消息
-  const hasNewMessage = (conversation: Conversation, prevConversations: Conversation[]) => {
-    const prevConversation = prevConversations.find(c => c.id === conversation.id);
-    if (!prevConversation) return false;
-    
-    const currentLastMessage = conversation.last_message;
-    const prevLastMessage = prevConversation.last_message;
-    
-    return currentLastMessage && prevLastMessage && 
-           currentLastMessage.id !== prevLastMessage.id;
-  };
-
   // 处理会话选择
   const handleSelect = (conversationId: number) => {
+    // 清除本地未读计数
+    const conversation = conversations.find(conv => conv.id === conversationId);
+    if (conversation?.unread_count) {
+      updateUnreadCount?.(conversationId, 0);
+    }
     onSelect(conversationId);
   };
 
@@ -81,33 +73,6 @@ const ConversationList: React.FC<ConversationListProps> = ({
       });
     };
   }, []);
-
-  // 监听会话列表变化
-  useEffect(() => {
-    conversations.forEach(conversation => {
-      if (hasNewMessage(conversation, prevConversationsRef.current)) {
-        const isSelected = conversation.id === selectedId;
-        const lastMessage = conversation.last_message;
-        const isSelfMessage = lastMessage?.sender.uid === user?.uid;
-        const element = listItemRefs.current[conversation.id];
-        
-        if (!isSelected && !isSelfMessage && element) {
-          // 清理之前的动画超时
-          if (animationTimeoutsRef.current[conversation.id]) {
-            window.clearTimeout(animationTimeoutsRef.current[conversation.id]);
-          }
-
-          element.classList.add('new-message-highlight');
-          animationTimeoutsRef.current[conversation.id] = window.setTimeout(() => {
-            element.classList.remove('new-message-highlight');
-            delete animationTimeoutsRef.current[conversation.id];
-          }, 2000);
-        }
-      }
-    });
-    
-    prevConversationsRef.current = conversations;
-  }, [conversations, selectedId, user?.uid]);
 
   return (
     <List

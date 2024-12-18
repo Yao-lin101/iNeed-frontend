@@ -1,127 +1,154 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { message } from 'antd';
 import { getToken } from '../utils/auth';
 import { useAuthStore } from '../store/useAuthStore';
 import { getWebSocketUrl } from '../utils/url';
 import { WebSocketMessageData } from './useWebSocketMessage';
 
-export function useWebSocket(path: string | null) {
-  const [connected, setConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<number>();
-  const reconnectCountRef = useRef(0);
-  const cleanupRef = useRef(false);
-  const MAX_RECONNECT_ATTEMPTS = 3;
-  const { isAuthenticated } = useAuthStore();
+// 全局存储所有 WebSocket 连接
+const globalWsMap = new Map<number, WebSocket>();
+const globalTimeoutMap = new Map<number, number>();
 
-  const cleanup = useCallback(() => {
-    cleanupRef.current = true;
-    if (wsRef.current) {
-      wsRef.current.onclose = null; // 防止触发重连
-      wsRef.current.close(1000, 'Cleanup');
-      wsRef.current = null;
+export function useWebSocket(path: string | null) {
+  const { isAuthenticated } = useAuthStore();
+  const pendingMessagesRef = useRef<string[]>([]);
+
+
+  // 延迟断开连接
+  const scheduleDisconnect = useCallback((conversationId: number) => {
+    const existingTimeout = globalTimeoutMap.get(conversationId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
     }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = undefined;
-    }
-    setConnected(false);
-    reconnectCountRef.current = 0;
+    const timeoutId = window.setTimeout(() => {
+      // 只关闭连接，不删除它
+      const ws = globalWsMap.get(conversationId);
+      if (ws) {
+        ws.close();
+      }
+      globalTimeoutMap.delete(conversationId);
+    }, 3 * 60 * 1000); // 3分钟
+    globalTimeoutMap.set(conversationId, timeoutId);
   }, []);
 
+  // 取消延迟断开
+  const cancelDisconnect = useCallback((conversationId: number) => {
+    const timeoutId = globalTimeoutMap.get(conversationId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      globalTimeoutMap.delete(conversationId);
+    }
+  }, []);
+
+  // 获取连接
+  const getConnection = useCallback((conversationId: number) => {
+    const ws = globalWsMap.get(conversationId);
+    // 如果连接已关闭或正在关闭，删除它
+    if (ws && (ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING)) {
+      globalWsMap.delete(conversationId);
+      return null;
+    }
+    return ws;
+  }, []);
+
+  // 建立连接
   const connect = useCallback(() => {
-    if (!path || !isAuthenticated || cleanupRef.current) return;
+    // 从 path 中提取 conversationId
+    const match = path?.match(/\/chat\/(\d+)\//);
+    const newConversationId = match ? parseInt(match[1]) : null;
+    
+    if (!newConversationId) return;
+
+    // 检查是否已经有该会话的连接
+    const existingWs = getConnection(newConversationId);
+    if (existingWs?.readyState === WebSocket.OPEN || 
+        existingWs?.readyState === WebSocket.CONNECTING) {
+      return;
+    }
+
+    if (!path || !isAuthenticated) {
+      console.log('连接条件不满足:', { 
+        path, 
+        isAuthenticated
+      });
+      return;
+    }
 
     const token = getToken();
     if (!token) return;
 
-    // 如果已经有连接，不要创建新的连接
-    if (wsRef.current?.readyState === WebSocket.OPEN || 
-        wsRef.current?.readyState === WebSocket.CONNECTING) {
-      return;
-    }
-
     try {
       const ws = new WebSocket(getWebSocketUrl(`${path}?token=${token}`));
+      globalWsMap.set(newConversationId, ws);
 
       ws.onopen = () => {
-        if (cleanupRef.current) {
-          ws.close();
-          return;
-        }
-        setConnected(true);
-        reconnectCountRef.current = 0;
-      };
-
-      ws.onclose = (event) => {
-        if (cleanupRef.current) return;
-        
-        setConnected(false);
-
-        // 只有在非正常关闭且未达到最大重试次数时才尝试重连
-        if (!event.wasClean && isAuthenticated && reconnectCountRef.current < MAX_RECONNECT_ATTEMPTS) {
-          reconnectTimeoutRef.current = window.setTimeout(() => {
-            if (!cleanupRef.current) {
-              reconnectCountRef.current += 1;
-              connect();
-            }
-          }, 3000);
-        } else if (reconnectCountRef.current >= MAX_RECONNECT_ATTEMPTS) {
-          message.error('WebSocket 连接失败，请刷新页面重试');
+        while (pendingMessagesRef.current.length > 0) {
+          const message = pendingMessagesRef.current.shift();
+          if (message) getConnection(newConversationId)?.send(message);
         }
       };
 
       ws.onmessage = (event) => {
-        if (cleanupRef.current) return;
         try {
           const data = JSON.parse(event.data) as WebSocketMessageData;
-          
+          // 验证消息是否属于当前会话
+          if (data.message?.conversation !== newConversationId) {
+            return;
+          }
           const customEvent = new CustomEvent('ws-message', { 
             detail: {
               ...data,
               source: 'chat-websocket'
             }
           });
-          
           window.dispatchEvent(customEvent);
         } catch (error) {
           message.error('消息解析失败');
         }
       };
-
-      wsRef.current = ws;
     } catch (error) {
-      if (!cleanupRef.current) {
-        message.error('创建 WebSocket 连接失败');
-      }
+      console.error('创建 WebSocket 连接失败:', error);
+      message.error('创建 WebSocket 连接失败');
     }
-  }, [path, isAuthenticated]);
-
-  useEffect(() => {
-    cleanupRef.current = false;
-    connect();
-
-    return () => {
-      cleanup();
-    };
-  }, [connect, cleanup]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      cleanup();
-    }
-  }, [isAuthenticated, cleanup]);
-
-  const send = useCallback((data: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(data);
-    } else {
-      message.error('未连接到服务器');
-    }
-  }, []);
+  }, [path, isAuthenticated, cancelDisconnect]);
 
   return {
-    connected,
-    send,
+    isConnected: useCallback((conversationId: number) => {
+      const ws = getConnection(conversationId);
+      return ws?.readyState === WebSocket.OPEN;
+    }, [getConnection]),
+    connect,
+    disconnect: (conversationId: number) => scheduleDisconnect(conversationId),
+    cancelDisconnect: (conversationId: number) => cancelDisconnect(conversationId),
+    path,
+    getWebSocket: getConnection,
+    send: async (data: string, conversationId: number) => {
+      const ws = getConnection(conversationId);
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(data);
+      } else {
+        pendingMessagesRef.current.push(data);
+        // 等待连接建立
+        await new Promise<void>((resolve, reject) => {
+          const maxAttempts = 10;
+          let attempts = 0;
+          
+          const checkConnection = () => {
+            const currentWs = getConnection(conversationId);
+            if (currentWs?.readyState === WebSocket.OPEN) {
+              resolve();
+            } else if (attempts >= maxAttempts) {
+              console.error('连接超时');
+              reject(new Error('连接超时'));
+            } else {
+              attempts++;
+              setTimeout(checkConnection, 100);
+            }
+          };
+          
+          checkConnection();
+        });
+      }
+    }
   };
 } 

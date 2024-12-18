@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Badge } from 'antd';
+import { Menu, Badge, Empty } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
@@ -9,69 +9,46 @@ import MessageArea from './MessageArea';
 import { useConversations } from '@/hooks/useConversations';
 import SystemNotificationList from './SystemNotificationList';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { systemMessageService } from '@/services/systemMessageService';
 import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { MessageAreaProvider } from '@/contexts/MessageAreaContext';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 interface ChatContainerProps {
   initialConversationId?: number;
   initialTab?: 'myMessages' | 'system';
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({ 
+const ChatContainerInner: React.FC<ChatContainerProps> = ({ 
   initialConversationId,
   initialTab = 'myMessages'
 }) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState(initialTab);
-  const { conversations, loading, refetch: refetchConversations } = useConversations();
+  const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
   const navigate = useNavigate();
   const location = useLocation();
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
-
-  // 更新未读消息计数
-  useEffect(() => {
-    const count = conversations.reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
-    setUnreadMessagesCount(count);
-  }, [conversations]);
-
-  // 获取未读通知数量
-  const fetchUnreadNotificationCount = async () => {
-    try {
-      const response = await systemMessageService.getUnreadCount();
-      setUnreadNotificationCount(response.count);
-    } catch (error) {
-      console.error('获取未读通知数量失败:', error);
-    }
-  };
-
-  // 初始化
-  useEffect(() => {
-    fetchUnreadNotificationCount();
-  }, []);
+  const { unreadMessagesCount, unreadNotifications } = useUnreadMessages();
 
   // 同步路由和标签状态
   useEffect(() => {
     const path = location.pathname;
     const newTab = path === '/mc/sm' ? 'system' : 'myMessages';
     
+    // 只在标签真正改变时更新状态
     if (currentTab !== newTab) {
       setCurrentTab(newTab);
-      if (newTab === 'system') {
-        setSelectedConversation(null);
-      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, currentTab]);
 
   // 处理标签页切换
   const handleTabChange = (key: 'myMessages' | 'system') => {
-    if (key === 'system') {
-      setSelectedConversation(null);
-      setTimeout(() => {
-        navigate('/mc/sm');
-      }, 0);
-    } else {
-      navigate('/mc/chat');
+    // 只在标签真正改变时进行导航
+    if (key !== currentTab) {
+      if (key === 'system') {
+        navigate('/mc/sm', { replace: true });
+      } else {
+        navigate('/mc/chat', { replace: true });
+      }
     }
   };
 
@@ -80,41 +57,18 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     setSelectedConversation(conversationId);
   };
 
+  // 当切换到系统通知标签时，清除选中的会话
+  useEffect(() => {
+    if (currentTab === 'system') {
+      setSelectedConversation(null);
+    }
+  }, [currentTab]);
+
   // 处理 WebSocket 消息
   useWebSocketMessage({
-    handleNotification: (data) => {
-      const message = data.message;
-      if (!message) return;
-
-      // 如果是新通知消息（包括任务通知）
-      if (message.id && (message.type.startsWith('task_') || message.type === 'system_notification')) {
-        window.dispatchEvent(new CustomEvent('refresh-notifications', {
-          detail: { 
-            type: 'new_notification',
-            data: {
-              id: message.id,
-              type: message.type,
-              title: message.title,
-              content: message.content,
-              metadata: message.metadata,
-              is_read: false,
-              created_at: message.created_at || new Date().toISOString()
-            }
-          }
-        }));
-
-        setUnreadNotificationCount(prev => prev + 1);
-        return;
-      }
-
-      // 如果是未读计数更新消息
-      if (message.unread_count !== undefined) {
-        // 如果不在系统通知标签页，才更新未读计数
-        if (currentTab !== 'system') {
-          setUnreadNotificationCount(message.unread_count);
-        } else {
-          setUnreadNotificationCount(0);
-        }
+    handleChatMessage: (message) => {
+      if (message.shouldCountAsUnread) {
+        refetchConversations();
       }
     }
   });
@@ -138,7 +92,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       key: 'system',
       icon: (
         <Badge 
-          count={currentTab === 'system' ? 0 : unreadNotificationCount} 
+          count={currentTab === 'system' ? 0 : unreadNotifications} 
           offset={[90, 8]}
           className="unread-badge"
         >
@@ -187,15 +141,29 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
                     selectedId={selectedConversation}
                     onSelect={handleConversationSelect}
                     onDelete={refetchConversations}
+                    updateUnreadCount={updateUnreadCount}
                   />
                 </div>
                 <div className="h-3 bg-gray-100"></div>
               </div>
               <div className="flex-1 min-h-0 bg-white flex flex-col">
                 <div className="flex-1 min-h-0">
-                  <MessageArea
-                    conversationId={selectedConversation}
-                  />
+                  {selectedConversation ? (
+                    <MessageArea
+                      conversationId={selectedConversation}
+                      recipientName={conversations.find(c => c.id === selectedConversation)?.other_participant?.username}
+                    />
+                  ) : (
+                    <div className="h-full flex items-center justify-center bg-gray-50">
+                      <Empty
+                        description={
+                          <span className="text-gray-400">
+                            选择一个会话开始聊天
+                          </span>
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="h-3 bg-gray-100"></div>
               </div>
@@ -204,13 +172,21 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
           {currentTab === 'system' && (
             <div className="flex-1 flex flex-col bg-white">
               <SystemNotificationList 
-                onNotificationRead={fetchUnreadNotificationCount}
+                onNotificationRead={refetchConversations}
               />
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+};
+
+const ChatContainer: React.FC<ChatContainerProps> = (props) => {
+  return (
+    <MessageAreaProvider>
+      <ChatContainerInner {...props} />
+    </MessageAreaProvider>
   );
 };
 

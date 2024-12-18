@@ -50,4 +50,26 @@
 
 .publish-task-btn .anticon {
   font-size: 16px;
+}
+
+/* 任务筛选组样式 */
+.task-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.task-filter-group .ant-radio-button-wrapper {
+  height: 32px;
+  line-height: 30px;
+}
+
+/* 任务列表容器样式 */
+.task-list-container {
+  min-height: 200px;
+}
+
+/* 任务标签页样式 */
+.task-tabs .ant-tabs-nav {
+  margin-bottom: 24px;
 } 

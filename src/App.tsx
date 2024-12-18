@@ -6,6 +6,8 @@ import MainLayout from './layouts/MainLayout';
 import { useAuthStore } from './store/useAuthStore';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useUserWebSocket } from './hooks/useUserWebSocket';
+import { MessageAreaProvider } from '@/contexts/MessageAreaContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // 懒加载页面组件
 const Login = React.lazy(() => import('./pages/Login'));
@@ -35,6 +37,9 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+// 创建一个 client 实例
+const queryClient = new QueryClient();
+
 function App() {
   const { loadUser, error } = useAuthStore();
   
@@ -60,63 +65,67 @@ function App() {
   }, [error]);
 
   return (
-    <ErrorBoundary>
-      <ConfigProvider locale={zhCN}>
-        <Router>
-          <Suspense fallback={<LoadingComponent />}>
-            <Routes>
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<Home />} />
-                <Route path="tasks" element={<TaskCenter />} />
-                <Route
-                  path="profile"
-                  element={
-                    <PrivateRoute>
-                      <Profile />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="account"
-                  element={
-                    <PrivateRoute>
-                      <AccountSettings />
-                    </PrivateRoute>
-                  }
-                />
-                <Route path="my-tasks" element={<MyTasks />} />
-                <Route
-                  path="mc"
-                  element={
-                    <PrivateRoute>
-                      <Navigate to="/mc/chat" replace />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="mc/chat"
-                  element={
-                    <PrivateRoute>
-                      <Chat />
-                    </PrivateRoute>
-                  }
-                />
-                <Route
-                  path="mc/sm"
-                  element={
-                    <PrivateRoute>
-                      <Chat initialTab="system" />
-                    </PrivateRoute>
-                  }
-                />
-              </Route>
-            </Routes>
-          </Suspense>
-        </Router>
-      </ConfigProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <MessageAreaProvider>
+          <ConfigProvider locale={zhCN}>
+            <Router>
+              <Suspense fallback={<LoadingComponent />}>
+                <Routes>
+                  <Route path="login" element={<Login />} />
+                  <Route path="register" element={<Register />} />
+                  <Route path="/" element={<MainLayout />}>
+                    <Route index element={<Home />} />
+                    <Route path="tasks" element={<TaskCenter />} />
+                    <Route
+                      path="profile"
+                      element={
+                        <PrivateRoute>
+                          <Profile />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="account"
+                      element={
+                        <PrivateRoute>
+                          <AccountSettings />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route path="my-tasks" element={<MyTasks />} />
+                    <Route
+                      path="mc"
+                      element={
+                        <PrivateRoute>
+                          <Navigate to="/mc/chat" replace />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="mc/chat"
+                      element={
+                        <PrivateRoute>
+                          <Chat />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="mc/sm"
+                      element={
+                        <PrivateRoute>
+                          <Chat initialTab="system" />
+                        </PrivateRoute>
+                      }
+                    />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </Router>
+          </ConfigProvider>
+        </MessageAreaProvider>
+      </ErrorBoundary>
+    </QueryClientProvider>
   );
 }
 
