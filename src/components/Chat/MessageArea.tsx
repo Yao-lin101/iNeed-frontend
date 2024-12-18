@@ -142,7 +142,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       className="flex flex-col h-full"
       style={{ height }}
     >
-      <div className="flex-none p-4 border-b text-center">
+      <div className="flex-none py-2 px-4 border-b text-center">
         <h2 className="text-base font-medium text-gray-700 m-0">
           {recipientName || '聊天'}
         </h2>

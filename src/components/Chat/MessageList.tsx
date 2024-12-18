@@ -22,6 +22,18 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstLoadRef = useRef(true);
   const prevMessagesLengthRef = useRef(messages.length);
+  const messageListRef = useRef<HTMLDivElement>(null);
+
+  // 检查是否接近底部
+  const isNearBottom = () => {
+    const container = messageListRef.current;
+    if (!container) return false;
+    
+    // 定义"接近底部"的阈值（像素）
+    const threshold = 100;
+    const distanceToBottom = container.scrollHeight - (container.scrollTop + container.clientHeight);
+    return distanceToBottom <= threshold;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: isFirstLoadRef.current ? 'auto' : 'smooth' });
@@ -32,7 +44,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
     const isNewMessageFromSelf = messages.length > prevMessagesLengthRef.current && 
       messages[messages.length - 1]?.sender.uid === user?.uid;
 
-    if ((!loading && messages.length > 0 && isFirstLoadRef.current) || isNewMessageFromSelf) {
+    // 在以下情况滚动到底部：
+    // 1. 初次加载
+    // 2. 发送自己的消息
+    // 3. 接收新消息且当前视图接近底部
+    if ((!loading && messages.length > 0 && isFirstLoadRef.current) || 
+        isNewMessageFromSelf || 
+        (messages.length > prevMessagesLengthRef.current && isNearBottom())) {
       scrollToBottom();
       isFirstLoadRef.current = false;
     }
@@ -56,7 +74,10 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4 message-list bg-[#eefbef]">
+    <div 
+      ref={messageListRef}
+      className="h-full overflow-y-auto p-4 message-list"
+    >
       <div className="space-y-4">
         {messages.map((message, index) => {
           const currentUserUid = user?.uid || '';
