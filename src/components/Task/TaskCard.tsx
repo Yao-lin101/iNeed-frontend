@@ -208,11 +208,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
         text: `${days}天后截止`
       };
     }
-    
-    return {
-      type: 'normal',
-      text: `${days}天后截止`
-    };
   };
 
   const remainingTime = useMemo(() => getRemainingTime(), [task.deadline, task.status]);
