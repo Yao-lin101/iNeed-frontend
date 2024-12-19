@@ -40,15 +40,8 @@ const MessageArea: React.FC<MessageAreaProps> = ({
 
   // 当会话ID变化时
   useEffect(() => {
-    console.log('[MessageArea] Conversation change effect:', {
-      prevId: prevConversationIdRef.current,
-      newId: conversationId,
-      messagesLength: messages.length
-    });
-
     // 当 conversationId 变化时设置 activeConversation
     if (prevConversationIdRef.current !== conversationId) {
-      console.log('[MessageArea] Setting active conversation:', conversationId);
       setActiveConversation(conversationId);
       prevConversationIdRef.current = conversationId;
     }
@@ -64,7 +57,6 @@ const MessageArea: React.FC<MessageAreaProps> = ({
         disconnect(conversationId);
       }
       if (isUnmounting) {
-        console.log('[MessageArea] Unmounting, clearing active conversation');
         setActiveConversation(null);
       }
     };
@@ -116,31 +108,41 @@ const MessageArea: React.FC<MessageAreaProps> = ({
 
   // 处理消息加载完成后的操作
   useEffect(() => {
-    console.log('[MessageArea] Messages loaded effect:', {
-      conversationId,
-      messagesLength: messages.length,
-      loading
-    });
+    const shouldProcess = !loading && messages.length > 0;
 
-    if (!loading && messages.length > 0) {
+    if (shouldProcess) {
+      // 使用 Promise.all 同时处理标记已读和滚动
+      const tasks: Promise<void>[] = [];
+
       // 标记已读
       if (conversationId) {
-        chatService.markAsRead(conversationId)
-          .then(() => {
-            refetchConversations();
-          })
-          .catch(error => {
-            console.error('标记已读失败:', error);
-          });
+        tasks.push(
+          chatService.markAsRead(conversationId)
+            .then(() => {
+              refetchConversations();
+            })
+            .catch(error => {
+              console.error('标记已读失败:', error);
+            })
+        );
       }
 
       // 滚动到底部
-      const messageList = document.querySelector('.message-list');
-      if (messageList && messageList.scrollTop === 0) {
-        requestAnimationFrame(() => {
-          messageList.scrollTop = messageList.scrollHeight;
-        });
-      }
+      tasks.push(
+        new Promise<void>(resolve => {
+          const messageList = document.querySelector('.message-list');
+          if (messageList && messageList.scrollTop === 0) {
+            requestAnimationFrame(() => {
+              messageList.scrollTop = messageList.scrollHeight;
+              resolve();
+            });
+          } else {
+            resolve();
+          }
+        })
+      );
+
+      Promise.all(tasks).catch(console.error);
     }
   }, [conversationId, messages, loading, refetchConversations]);
 
