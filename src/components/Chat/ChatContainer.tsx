@@ -11,7 +11,7 @@ import SystemNotificationList from './SystemNotificationList';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
 import { MessageAreaProvider } from '@/contexts/MessageAreaContext';
-import { useUnreadMessages } from '@/hooks/useUnreadMessages';
+import { useUnreadStore } from '@/store/useUnreadStore';
 
 interface ChatContainerProps {
   initialConversationId?: number;
@@ -27,7 +27,7 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
   const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
   const navigate = useNavigate();
   const location = useLocation();
-  const { unreadMessagesCount, unreadNotifications } = useUnreadMessages();
+  const { unreadMessages: unreadMessagesCount, unreadNotifications } = useUnreadStore();
 
   // 同步路由和标签状态
   useEffect(() => {

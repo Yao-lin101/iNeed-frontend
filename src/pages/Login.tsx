@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { useUnreadStore } from '@/store/useUnreadStore';
 
 interface LoginFormData {
   email: string;
@@ -12,11 +13,13 @@ interface LoginFormData {
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isLoading } = useAuthStore();
+  const { syncUnreadCounts } = useUnreadStore();
   const [form] = Form.useForm();
 
   const onFinish = async (values: LoginFormData) => {
     try {
       await login(values.email, values.password);
+      await syncUnreadCounts();
       message.success('登录成功');
       navigate('/');
     } catch (error) {

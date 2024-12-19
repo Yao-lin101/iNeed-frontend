@@ -40,8 +40,15 @@ const MessageArea: React.FC<MessageAreaProps> = ({
 
   // 当会话ID变化时
   useEffect(() => {
+    console.log('[MessageArea] Conversation change effect:', {
+      prevId: prevConversationIdRef.current,
+      newId: conversationId,
+      messagesLength: messages.length
+    });
+
     // 当 conversationId 变化时设置 activeConversation
     if (prevConversationIdRef.current !== conversationId) {
+      console.log('[MessageArea] Setting active conversation:', conversationId);
       setActiveConversation(conversationId);
       prevConversationIdRef.current = conversationId;
     }
@@ -57,6 +64,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
         disconnect(conversationId);
       }
       if (isUnmounting) {
+        console.log('[MessageArea] Unmounting, clearing active conversation');
         setActiveConversation(null);
       }
     };
@@ -106,27 +114,27 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     }
   };
 
-
-  // 单独处理标记已读
+  // 处理消息加载完成后的操作
   useEffect(() => {
-    if (conversationId && messages.length > 0) {
-      chatService.markAsRead(conversationId).catch(error => {
-        console.error('标记已读失败:', error);
-      });
-    }
-  }, [conversationId, messages]);
+    console.log('[MessageArea] Messages loaded effect:', {
+      conversationId,
+      messagesLength: messages.length,
+      loading
+    });
 
-  // 处理新消息
-  useWebSocketMessage({
-    handleChatMessage: useCallback((_context: MessageContext) => {
-      if (!conversationId) return;
-    }, [conversationId])
-  });
-
-  // 修改消息加载完成的监听
-  useEffect(() => {
     if (!loading && messages.length > 0) {
-      // 只在初始加载时滚动到底部
+      // 标记已读
+      if (conversationId) {
+        chatService.markAsRead(conversationId)
+          .then(() => {
+            refetchConversations();
+          })
+          .catch(error => {
+            console.error('标记已读失败:', error);
+          });
+      }
+
+      // 滚动到底部
       const messageList = document.querySelector('.message-list');
       if (messageList && messageList.scrollTop === 0) {
         requestAnimationFrame(() => {
@@ -134,7 +142,14 @@ const MessageArea: React.FC<MessageAreaProps> = ({
         });
       }
     }
-  }, [loading]);
+  }, [conversationId, messages, loading, refetchConversations]);
+
+  // 处理新消息
+  useWebSocketMessage({
+    handleChatMessage: useCallback((_context: MessageContext) => {
+      if (!conversationId) return;
+    }, [conversationId])
+  });
 
   return (
     <div 

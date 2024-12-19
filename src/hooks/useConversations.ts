@@ -3,14 +3,14 @@ import { message } from 'antd';
 import { Conversation } from '@/types/chat';
 import { request } from '@/utils/request';
 import { useWebSocketMessage, MessageContext, MessagesReadData, ConversationUpdatedData } from './useWebSocketMessage';
-import { useUnreadMessages } from './useUnreadMessages';
+import { useUnreadStore } from '@/store/useUnreadStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const isFetchingRef = useRef(false);
-  const { updateTotalUnread } = useUnreadMessages();
+  const { setUnreadMessages } = useUnreadStore();
   const { user } = useAuthStore();
 
   // 获取会话列表
@@ -19,9 +19,18 @@ export function useConversations() {
     isFetchingRef.current = true;
     
     try {
+      setLoading(true);
       const response = await request.get('/chat/conversations/');
       setConversations(response.data.results);
-      updateTotalUnread(response.data.results);
+      
+      // 使用新的 store 方法更新未读数
+      const unreadCount = response.data.results.reduce(
+        (sum: number, conv: Conversation) => sum + (conv.unread_count || 0), 
+        0
+      );
+      setUnreadMessages(unreadCount);
+      
+      return response;
     } catch (error) {
       console.error('Failed to fetch conversations:', error);
       message.error('获取对话失败');
@@ -29,7 +38,7 @@ export function useConversations() {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [updateTotalUnread]);
+  }, [setUnreadMessages]);
 
   // 更新单个会话
   const updateConversation = useCallback((updatedConversation: Conversation) => {
@@ -40,16 +49,18 @@ export function useConversations() {
     );
   }, []);
 
-  // 更新会话的未读计数
+  // 更新未读计数
   const updateUnreadCount = useCallback((conversationId: number, count: number) => {
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === conversationId
-          ? { ...conv, unread_count: count }
-          : conv
-      )
-    );
-  }, []);
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId ? { ...conv, unread_count: count } : conv
+    ));
+    
+    // 重新计算总未读数
+    setUnreadMessages(conversations.reduce(
+      (sum, conv) => sum + ((conv.id === conversationId ? count : conv.unread_count) || 0), 
+      0
+    ));
+  }, [conversations, setUnreadMessages]);
 
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
@@ -81,14 +92,13 @@ export function useConversations() {
       
       // 只有来自 user-websocket 的消息才处理未读计数
       if (source === 'user-websocket') {
-        // 判断是否是活跃会话（确保 activeConversationId 不为 null）
+        // 判断是否是活跃会话
         const isActiveConversation = activeConversationId !== null && message.conversation === activeConversationId;
         
         // 只有在非活跃会话时才增加未读计数
         if (!isActiveConversation) {
           conversation.unread_count = (conversation.unread_count || 0) + 1;
         }
-      } else {
       }
       
       // 移动到顶部
@@ -97,7 +107,7 @@ export function useConversations() {
       
       return updatedConversations;
     });
-  }, [user?.uid, fetchConversations]);
+  }, [user?.uid, fetchConversations, setUnreadMessages]);
 
   // 处理消息已读状态
   const handleMessagesRead = useCallback((data: MessagesReadData) => {

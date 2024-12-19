@@ -6,6 +6,7 @@ import { useTaskStore } from '@/models/TaskModel';
 import dayjs from 'dayjs';
 import '@/styles/components/chat/system-notification.css';
 import { useWebSocketMessage } from '@/hooks/useWebSocketMessage';
+import { useUnreadStore } from '@/store/useUnreadStore';
 
 interface SystemNotificationListProps {
   onNotificationRead?: () => void;
@@ -19,6 +20,7 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const { setUnreadNotifications } = useUnreadStore();
 
   const fetchNotifications = async () => {
     try {
@@ -78,6 +80,13 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
     };
   }, []);
 
+  // 计算未读数量
+  const calculateUnreadCount = useCallback((excludeId?: number) => {
+    return notifications.filter(n => 
+      !n.is_read && (excludeId ? n.id !== excludeId : true)
+    ).length;
+  }, [notifications]);
+
   // 监听新通知事件
   useWebSocketMessage({
     handleNotification: useCallback((data: any) => {
@@ -94,25 +103,19 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
           return [data, ...prev];
         });
         
+        // 更新未读数 - 计算当前未读数量加1
+        setUnreadNotifications(calculateUnreadCount() + 1);
       }
-    }, [])
+    }, [calculateUnreadCount, setUnreadNotifications])
   });
 
   const handleMarkAllRead = async () => {
     try {
       await systemMessageService.markAllAsRead();
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadNotifications(0);
       message.success('已全部标记为已读');
       onNotificationRead?.();
-      window.dispatchEvent(new CustomEvent('ws-message', {
-        detail: {
-          type: 'notification',
-          message: {
-            type: 'notification',
-            unread_count: 0
-          }
-        }
-      }));
     } catch (error) {
       message.error('操作失败');
     }
@@ -120,7 +123,6 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
 
   const handleViewTask = async (taskId: number, notificationId: number) => {
     try {
-      // 先标记通知为已读
       const targetNotification = notifications.find(n => n.id === notificationId);
       if (targetNotification && !targetNotification.is_read) {
         await systemMessageService.markAsRead(notificationId);
@@ -129,10 +131,11 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
             n.id === notificationId ? { ...n, is_read: true } : n
           )
         );
+        const unreadCount = calculateUnreadCount(notificationId);
+        setUnreadNotifications(unreadCount);
         onNotificationRead?.();
       }
 
-      // 设置任务详情模态框的上下文和状态
       setModalContext('notification');
       await loadTaskDetail(taskId);
       setModalVisible(true);
@@ -158,16 +161,8 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
                 )
               );
               onNotificationRead?.();
-              const unreadCount = notifications.filter(n => n.id !== notification.id && !n.is_read).length;
-              window.dispatchEvent(new CustomEvent('ws-message', {
-                detail: {
-                  type: 'notification',
-                  message: {
-                    type: 'notification',
-                    unread_count: unreadCount
-                  }
-                }
-              }));
+              const unreadCount = calculateUnreadCount(notification.id);
+              setUnreadNotifications(unreadCount);
             } catch (error) {
               console.error('标记已读失败:', error);
               message.error('标记已读失败');
