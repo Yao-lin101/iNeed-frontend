@@ -1,8 +1,28 @@
 .message-list {
   background-color: #f3f4f6;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 1rem;
+  scrollbar-gutter: stable;
+}
+
+/* 美化滚动条 */
+.message-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.message-list::-webkit-scrollbar-track {
+  background: #ffffff;
+  border-radius: 4px;
+}
+
+.message-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.message-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* 消息气泡基础样式 */
