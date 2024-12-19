@@ -23,15 +23,21 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
   const isFirstLoadRef = useRef(true);
   const prevMessagesLengthRef = useRef(messages.length);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const prevScrollPositionRef = useRef<{
+    scrollHeight: number;
+    scrollTop: number;
+    clientHeight: number;
+  } | null>(null);
 
-  // 检查是否接近底部
+  // 检查是否接近底部（使用之前保存的滚动位置）
   const isNearBottom = () => {
-    const container = messageListRef.current;
-    if (!container) return false;
+    const prevPosition = prevScrollPositionRef.current;
+    if (!prevPosition) return false;
     
-    // 定义"接近底部"的阈值（像素）
     const threshold = 100;
-    const distanceToBottom = container.scrollHeight - (container.scrollTop + container.clientHeight);
+    const distanceToBottom = prevPosition.scrollHeight - 
+      (prevPosition.scrollTop + prevPosition.clientHeight);
+
     return distanceToBottom <= threshold;
   };
 
@@ -39,6 +45,30 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: isFirstLoadRef.current ? 'auto' : 'smooth' });
   };
 
+  // 实时更新滚动位置
+  useEffect(() => {
+    const container = messageListRef.current;
+    if (!container) return;
+
+    const updateScrollPosition = () => {
+      prevScrollPositionRef.current = {
+        scrollHeight: container.scrollHeight,
+        scrollTop: container.scrollTop,
+        clientHeight: container.clientHeight
+      };
+    };
+
+    // 监听滚动结束事件
+    container.addEventListener('scrollend', updateScrollPosition);
+    // 初始化滚动位置
+    updateScrollPosition();
+
+    return () => {
+      container.removeEventListener('scrollend', updateScrollPosition);
+    };
+  }, []);
+
+  // 消息更新时的处理
   useEffect(() => {
     // 检查是否是初次加载或者是发送消息
     const isNewMessageFromSelf = messages.length > prevMessagesLengthRef.current && 
@@ -102,16 +132,12 @@ const MessageList: React.FC<MessageListProps> = ({ messages, loading }) => {
                   {message.sender.username}
                 </div>
                 <div className={`group flex items-center gap-2 ${isSelf ? 'flex-row-reverse' : ''}`}>
-                  <div
-                    className={`rounded-lg p-3 break-all whitespace-pre-wrap ${
-                      isSelf
-                        ? 'bg-blue-500 text-white rounded-br-none'
-                        : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                    }`}
-                  >
+                  <div className={`message-bubble ${
+                    isSelf ? 'message-bubble-self' : 'message-bubble-other'
+                  }`}>
                     {message.content}
                   </div>
-                  <div className={`opacity-0 transition-opacity group-hover:opacity-100 text-xs text-gray-400 flex-shrink-0`}>
+                  <div className="message-time opacity-0 group-hover:opacity-100">
                     {dayjs(message.created_at).fromNow()}
                   </div>
                 </div>

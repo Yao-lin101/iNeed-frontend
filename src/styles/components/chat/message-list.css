@@ -5,4 +5,45 @@
   padding: 1rem;
 }
 
+/* 消息气泡基础样式 */
+.message-bubble {
+  max-width: 70%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  position: relative;
+  margin: 0.5rem 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 自己发送的消息 */
+.message-bubble-self {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: white;
+  border-top-right-radius: 0.25rem;
+  margin-left: auto;
+}
+
+/* 对方发送的消息 */
+.message-bubble-other {
+  background: #ffffff;
+  color: #1f2937;
+  border-top-left-radius: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  margin-right: auto;
+}
+
+/* 消息时间 */
+.message-time {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+  text-align: center;
+  flex-shrink: 0;
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
 /* 保持其他现有样式... */
