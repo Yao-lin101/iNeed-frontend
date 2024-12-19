@@ -16,11 +16,6 @@ const MainLayout: React.FC = () => {
   const { chatContext: { isInMessageCenter } } = useChatStore();
   useUnreadMessages();
 
-  // 只在 totalUnread 变化时打印日志
-  useEffect(() => {
-    console.log('[MainLayout] Total unread:', totalUnread);
-  }, [totalUnread]);
-
   const navigate = useNavigate();
   const location = useLocation();
 

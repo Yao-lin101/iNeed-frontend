@@ -24,7 +24,7 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
 }) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState(initialTab);
-  const { conversations, loading, refetch: refetchConversations, updateUnreadCount } = useConversations();
+  const { conversations, loading, refetch: refetchConversations, updateUnreadCount, updateLocalUnreadCount } = useConversations();
   const navigate = useNavigate();
   const location = useLocation();
   const { unreadMessages: unreadMessagesCount, unreadNotifications } = useUnreadStore();
@@ -142,6 +142,7 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
                     onSelect={handleConversationSelect}
                     onDelete={refetchConversations}
                     updateUnreadCount={updateUnreadCount}
+                    updateLocalUnreadCount={updateLocalUnreadCount}
                   />
                 </div>
                 <div className="h-3 bg-gray-100"></div>

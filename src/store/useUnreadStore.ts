@@ -21,23 +21,23 @@ export const useUnreadStore = create<UnreadState>((set) => ({
   unreadNotifications: 0,
 
   setUnreadMessages: (count: number) => 
-    set(state => ({ 
-      unreadMessages: count,
-      totalUnread: count + state.unreadNotifications 
-    })),
+    set(state => {
+      return { 
+        unreadMessages: count,
+        totalUnread: count + state.unreadNotifications 
+      };
+    }),
 
   setUnreadNotifications: (count: number) => 
-    set(state => ({ 
-      unreadNotifications: count,
-      totalUnread: state.unreadMessages + count 
-    })),
+    set(state => {
+      return { 
+        unreadNotifications: count,
+        totalUnread: state.unreadMessages + count 
+      };
+    }),
 
   incrementUnreadMessages: () => 
     set(state => {
-      console.log('[useUnreadStore] Incrementing unread messages:', {
-        before: state.unreadMessages,
-        after: state.unreadMessages + 1
-      });
       return { 
         unreadMessages: state.unreadMessages + 1,
         totalUnread: state.totalUnread + 1 
@@ -45,17 +45,15 @@ export const useUnreadStore = create<UnreadState>((set) => ({
     }),
 
   decrementUnreadMessages: (count: number) => 
-    set(state => ({ 
-      unreadMessages: Math.max(0, state.unreadMessages - count),
-      totalUnread: Math.max(0, state.totalUnread - count)
-    })),
+    set(state => {
+      return { 
+        unreadMessages: Math.max(0, state.unreadMessages - count),
+        totalUnread: Math.max(0, state.totalUnread - count)
+      };
+    }),
 
   incrementUnreadNotifications: () => 
     set(state => {
-      console.log('[useUnreadStore] Incrementing unread notifications:', {
-        before: state.unreadNotifications,
-        after: state.unreadNotifications + 1
-      });
       return { 
         unreadNotifications: state.unreadNotifications + 1,
         totalUnread: state.totalUnread + 1 
@@ -64,7 +62,6 @@ export const useUnreadStore = create<UnreadState>((set) => ({
 
   syncUnreadCounts: async () => {
     try {
-      console.log('[useUnreadStore] Starting sync unread counts');
       const [conversationsResponse, notificationsResponse] = await Promise.all([
         chatService.getConversations(),
         systemMessageService.getUnreadCount()
@@ -74,12 +71,6 @@ export const useUnreadStore = create<UnreadState>((set) => ({
         (sum: number, conv: Conversation) => sum + (conv.unread_count || 0), 
         0
       );
-
-      console.log('[useUnreadStore] Syncing counts:', {
-        unreadMessages,
-        unreadNotifications: notificationsResponse.count,
-        totalUnread: unreadMessages + notificationsResponse.count
-      });
 
       set({
         unreadMessages,

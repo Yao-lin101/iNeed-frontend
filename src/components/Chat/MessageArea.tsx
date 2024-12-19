@@ -111,23 +111,19 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     const shouldProcess = !loading && messages.length > 0;
 
     if (shouldProcess) {
-      // 使用 Promise.all 同时处理标记已读和滚动
-      const tasks: Promise<void>[] = [];
-
       // 标记已读
       if (conversationId) {
-        tasks.push(
-          chatService.markAsRead(conversationId)
-            .then(() => {
-              refetchConversations();
-            })
-            .catch(error => {
-              console.error('标记已读失败:', error);
-            })
-        );
+        chatService.markAsRead(conversationId)
+          .then(() => {
+            refetchConversations();
+          })
+          .catch(error => {
+            console.error('[MessageArea] Mark as read failed:', error);
+          });
       }
 
       // 滚动到底部
+      const tasks: Promise<void>[] = [];
       tasks.push(
         new Promise<void>(resolve => {
           const messageList = document.querySelector('.message-list');

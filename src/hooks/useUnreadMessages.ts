@@ -15,7 +15,6 @@ export function useUnreadMessages() {
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {
     const { message, activeConversationId } = context;
-    console.log('[useUnreadMessages] Received chat message:', message);
     
     if (!message || !message.sender) return;
     if (message.sender.uid === user?.uid) return;
@@ -25,7 +24,6 @@ export function useUnreadMessages() {
       message.conversation === activeConversationId;
     
     if (!isActiveConversation) {
-      console.log('[useUnreadMessages] Incrementing unread messages');
       incrementUnreadMessages();
     }
   }, [user?.uid, incrementUnreadMessages]);
@@ -39,10 +37,7 @@ export function useUnreadMessages() {
 
   // 处理系统通知
   const handleNotification = useCallback((data: any) => {
-    console.log('[useUnreadMessages] Received notification:', data);
-    
     if (!data || !data.type) return;
-    console.log('[useUnreadMessages] Incrementing unread notifications');
     incrementUnreadNotifications();
   }, [incrementUnreadNotifications]);
 

@@ -32,7 +32,7 @@ export function useConversations() {
       
       return response;
     } catch (error) {
-      console.error('Failed to fetch conversations:', error);
+      console.error('[useConversations] Failed to fetch:', error);
       message.error('获取对话失败');
     } finally {
       setLoading(false);
@@ -49,13 +49,21 @@ export function useConversations() {
     );
   }, []);
 
-  // 更新未读计数
+  // 只更新本地会话的未读状态
+  const updateLocalUnreadCount = useCallback((conversationId: number, count: number) => {
+    setConversations(prev => prev.map(conv => 
+      conv.id === conversationId ? { ...conv, unread_count: count } : conv
+    ));
+  }, []);
+
+  // 更新全局未读数（包括本地状态）
   const updateUnreadCount = useCallback((conversationId: number, count: number) => {
+    // 更新本地状态
     setConversations(prev => prev.map(conv => 
       conv.id === conversationId ? { ...conv, unread_count: count } : conv
     ));
     
-    // 重新计算总未读数
+    // 更新全局未读数
     setUnreadMessages(conversations.reduce(
       (sum, conv) => sum + ((conv.id === conversationId ? count : conv.unread_count) || 0), 
       0
@@ -141,6 +149,7 @@ export function useConversations() {
     loading,
     refetch: fetchConversations,
     updateUnreadCount,
+    updateLocalUnreadCount,
     handleMessagesRead,
   };
 } 
