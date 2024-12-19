@@ -77,7 +77,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   return (
     <List
-      className="conversation-list h-full overflow-y-auto"
+      className="conversation-list h-full overflow-y-scroll"
       loading={loading}
       dataSource={conversations}
       locale={{ emptyText: '暂无消息' }}
@@ -96,7 +96,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         return (
           <List.Item
             ref={el => listItemRefs.current[conversation.id] = el}
-            className={`conversation-item ${isSelected ? 'selected' : ''} ${unreadCount > 0 ? 'unread' : ''}`}
+            className={`conversation-item border-b border-gray-100 ${isSelected ? 'selected' : ''} ${unreadCount > 0 ? 'unread' : ''}`}
             onClick={() => handleSelect(conversation.id)}
           >
             <div 

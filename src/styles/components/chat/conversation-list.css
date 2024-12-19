@@ -1,7 +1,20 @@
 @import '../../animations.css';
 
+:root {
+  --border-color: #f0f0f0;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7f9;
+  --bg-secondary-hover: #f0f2f5;
+  --bg-highlight: #e6f4ff;
+  --bg-highlight-hover: #e6f4ff;
+  --primary-color: #1677ff;
+}
+
 .conversation-list {
-  @apply h-full overflow-y-auto;
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  background-color: var(--bg-primary);
 }
 
 /* 会话列表项样式 */
@@ -12,6 +25,10 @@
   border-bottom: 1px solid var(--border-color);
   transition: all 0.2s ease-in-out;
   height: 64px;
+}
+
+.conversation-list .conversation-item:first-child {
+  border-top: 1px solid var(--border-color);
 }
 
 .conversation-list .conversation-item:hover {
@@ -59,4 +76,23 @@
 
 .conversation-item:hover .delete-button {
   transform: translateX(0);
+}
+
+/* 美化滚动条 */
+.conversation-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.conversation-list::-webkit-scrollbar-track {
+  background: #ffffff;
+  border-radius: 4px;
+}
+
+.conversation-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.conversation-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 } 
