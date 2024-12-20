@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Upload, message, Button } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import type { UploadFile } from 'antd/es/upload/interface';
+import type { RcFile, UploadFile } from 'antd/es/upload/interface';
 import type { TaskSubmitData } from '../../services/taskService';
 
 const { TextArea } = Input;
@@ -26,6 +26,13 @@ const TaskSubmitModal: React.FC<TaskSubmitModalProps> = ({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      
+      // 在提交前验证文件大小
+      if (fileList[0]?.originFileObj && fileList[0].originFileObj.size > 5 * 1024 * 1024) {
+        message.error('文件必须小于 5MB，较大文件请使用网盘或其他工具');
+        return;
+      }
+      
       setSubmitting(true);
       await onSubmit({
         completion_note: values.completion_note,
@@ -39,6 +46,16 @@ const TaskSubmitModal: React.FC<TaskSubmitModalProps> = ({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const beforeUpload = (file: RcFile) => {
+    // 检查文件大小（5MB）
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+      message.error('文件必须小于 5MB，较大文件请使用网盘或其他工具');
+      return false;
+    }
+    return false; // 仍然阻止自动上传
   };
 
   return (
@@ -69,11 +86,12 @@ const TaskSubmitModal: React.FC<TaskSubmitModalProps> = ({
         <Form.Item
           name="attachments"
           label="相关材料"
+          extra="文件大小不超过 5MB，较大文件请使用网盘或其他工具"
         >
           <Upload
             fileList={fileList}
             onChange={({ fileList }) => setFileList(fileList)}
-            beforeUpload={() => false}
+            beforeUpload={beforeUpload}
             maxCount={1}
           >
             <Button icon={<UploadOutlined />}>选择文件</Button>

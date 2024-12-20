@@ -106,15 +106,41 @@ const MessageArea: React.FC<MessageAreaProps> = ({
     }
   };
 
-
-  // 单独处理标记已读
+  // 处理消息加载完成后的操作
   useEffect(() => {
-    if (conversationId && messages.length > 0) {
-      chatService.markAsRead(conversationId).catch(error => {
-        console.error('标记已读失败:', error);
-      });
+    const shouldProcess = !loading && messages.length > 0;
+
+    if (shouldProcess) {
+      // 标记已读
+      if (conversationId) {
+        chatService.markAsRead(conversationId)
+          .then(() => {
+            refetchConversations();
+          })
+          .catch(error => {
+            console.error('[MessageArea] Mark as read failed:', error);
+          });
+      }
+
+      // 滚动到底部
+      const tasks: Promise<void>[] = [];
+      tasks.push(
+        new Promise<void>(resolve => {
+          const messageList = document.querySelector('.message-list');
+          if (messageList && messageList.scrollTop === 0) {
+            requestAnimationFrame(() => {
+              messageList.scrollTop = messageList.scrollHeight;
+              resolve();
+            });
+          } else {
+            resolve();
+          }
+        })
+      );
+
+      Promise.all(tasks).catch(console.error);
     }
-  }, [conversationId, messages]);
+  }, [conversationId, messages, loading, refetchConversations]);
 
   // 处理新消息
   useWebSocketMessage({
@@ -122,19 +148,6 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       if (!conversationId) return;
     }, [conversationId])
   });
-
-  // 修改消息加载完成的监听
-  useEffect(() => {
-    if (!loading && messages.length > 0) {
-      // 只在初始加载时滚动到底部
-      const messageList = document.querySelector('.message-list');
-      if (messageList && messageList.scrollTop === 0) {
-        requestAnimationFrame(() => {
-          messageList.scrollTop = messageList.scrollHeight;
-        });
-      }
-    }
-  }, [loading]);
 
   return (
     <div 

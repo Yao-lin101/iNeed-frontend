@@ -3,14 +3,19 @@ import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
 import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { useUnreadMessages } from '../hooks/useUnreadMessages';
+import { useUnreadStore } from '@/store/useUnreadStore';
 import type { MenuProps } from 'antd';
+import { useChatStore } from '@/store/useChatStore';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 const { Header, Content, Footer } = Layout;
 
 const MainLayout: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
-  const { totalUnread } = useUnreadMessages();
+  const { totalUnread } = useUnreadStore();
+  const { chatContext: { isInMessageCenter } } = useChatStore();
+  useUnreadMessages();
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -108,7 +113,7 @@ const MainLayout: React.FC = () => {
                 className="text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 <Badge 
-                  count={totalUnread} 
+                  count={isInMessageCenter ? 0 : totalUnread} 
                   offset={[0, 0]}
                   className="unread-badge"
                 >

@@ -20,6 +20,7 @@ interface ConversationListProps {
   onSelect: (id: number | null) => void | Promise<void>;
   onDelete?: (id: number) => void;
   updateUnreadCount?: (conversationId: number, count: number) => void;
+  updateLocalUnreadCount?: (conversationId: number, count: number) => void;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
@@ -28,17 +29,17 @@ const ConversationList: React.FC<ConversationListProps> = ({
   selectedId,
   onSelect,
   onDelete,
-  updateUnreadCount,
+  updateLocalUnreadCount,
 }) => {
   const listItemRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const animationTimeoutsRef = useRef<{ [key: number]: number }>({});
 
   // 处理会话选择
   const handleSelect = (conversationId: number) => {
-    // 清除本地未读计数
+    // 只更新本地未读状态
     const conversation = conversations.find(conv => conv.id === conversationId);
     if (conversation?.unread_count) {
-      updateUnreadCount?.(conversationId, 0);
+      updateLocalUnreadCount?.(conversationId, 0);
     }
     onSelect(conversationId);
   };
@@ -76,7 +77,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   return (
     <List
-      className="conversation-list h-full overflow-y-auto"
+      className="conversation-list h-full overflow-y-scroll"
       loading={loading}
       dataSource={conversations}
       locale={{ emptyText: '暂无消息' }}
@@ -95,7 +96,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
         return (
           <List.Item
             ref={el => listItemRefs.current[conversation.id] = el}
-            className={`conversation-item ${isSelected ? 'selected' : ''} ${unreadCount > 0 ? 'unread' : ''}`}
+            className={`conversation-item border-b border-gray-100 ${isSelected ? 'selected' : ''} ${unreadCount > 0 ? 'unread' : ''}`}
             onClick={() => handleSelect(conversation.id)}
           >
             <div 
