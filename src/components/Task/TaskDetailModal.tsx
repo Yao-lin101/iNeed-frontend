@@ -64,7 +64,7 @@ const TaskDetailModal: React.FC = () => {
   // 计算报酬等级
   const rewardLevel = useMemo(() => task ? getRewardLevel(task.reward) : 1, [task?.reward]);
 
-  // 获取状态的��文描述
+  // 获取状态的中文描述
   const getStatusText = (status: string) => {
     const textMap: Record<string, string> = {
       pending: '待接取',

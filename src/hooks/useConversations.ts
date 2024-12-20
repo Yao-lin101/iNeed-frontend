@@ -59,7 +59,7 @@ export function useConversations() {
     ));
   }, []);
 
-  // 更新全局未读数（包括本��状态）
+  // 更新全局未读数（包括本地状态）
   const updateUnreadCount = useCallback((conversationId: number, count: number) => {
     // 更新本地状态
     setConversations(prev => {
