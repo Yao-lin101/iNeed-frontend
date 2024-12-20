@@ -67,18 +67,23 @@ export const useUnreadStore = create<UnreadState>((set) => ({
         systemMessageService.getUnreadCount()
       ]);
 
-      const unreadMessages = conversationsResponse.results.reduce(
+      const unreadMessages = (conversationsResponse?.results || []).reduce(
         (sum: number, conv: Conversation) => sum + (conv.unread_count || 0), 
         0
       );
 
       set({
         unreadMessages,
-        unreadNotifications: notificationsResponse.count,
-        totalUnread: unreadMessages + notificationsResponse.count
+        unreadNotifications: notificationsResponse?.count || 0,
+        totalUnread: unreadMessages + (notificationsResponse?.count || 0)
       });
     } catch (error) {
       console.error('[useUnreadStore] Failed to sync unread counts:', error);
+      set({
+        unreadMessages: 0,
+        unreadNotifications: 0,
+        totalUnread: 0
+      });
     }
   },
 })); 
