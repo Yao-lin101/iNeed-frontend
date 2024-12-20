@@ -21,10 +21,10 @@ export function useConversations() {
     try {
       setLoading(true);
       const response = await request.get('/chat/conversations/');
-      setConversations(response.data.results);
+      setConversations(response.data?.results || []);
       
       // 使用新的 store 方法更新未读数
-      const unreadCount = response.data.results.reduce(
+      const unreadCount = (response.data?.results || []).reduce(
         (sum: number, conv: Conversation) => sum + (conv.unread_count || 0), 
         0
       );
@@ -34,6 +34,9 @@ export function useConversations() {
     } catch (error) {
       console.error('[useConversations] Failed to fetch:', error);
       message.error('获取对话失败');
+      // 设置空数组作为默认值
+      setConversations([]);
+      setUnreadMessages(0);
     } finally {
       setLoading(false);
       isFetchingRef.current = false;
@@ -56,19 +59,26 @@ export function useConversations() {
     ));
   }, []);
 
-  // 更新全局未读数（包括本地状态）
+  // 更新全局未读数（包括本��状态）
   const updateUnreadCount = useCallback((conversationId: number, count: number) => {
     // 更新本地状态
-    setConversations(prev => prev.map(conv => 
-      conv.id === conversationId ? { ...conv, unread_count: count } : conv
-    ));
-    
-    // 更新全局未读数
-    setUnreadMessages(conversations.reduce(
-      (sum, conv) => sum + ((conv.id === conversationId ? count : conv.unread_count) || 0), 
-      0
-    ));
-  }, [conversations, setUnreadMessages]);
+    setConversations(prev => {
+      const updatedConversations = prev.map(conv => 
+        conv.id === conversationId ? { ...conv, unread_count: count } : conv
+      );
+      
+      // 计算新的总未读数
+      const totalUnread = updatedConversations.reduce(
+        (sum, conv) => sum + (conv.unread_count || 0),
+        0
+      );
+      
+      // 更新全局未读数
+      setUnreadMessages(totalUnread);
+      
+      return updatedConversations;
+    });
+  }, [setUnreadMessages]);
 
   // 处理聊天消息
   const handleChatMessage = useCallback((context: MessageContext) => {

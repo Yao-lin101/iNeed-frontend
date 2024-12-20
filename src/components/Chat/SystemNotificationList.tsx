@@ -90,8 +90,6 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
   // 监听新通知事件
   useWebSocketMessage({
     handleNotification: useCallback((data: any) => {
-      console.log('SystemNotificationList - Received notification data:', data);
-
       // 检查是否是有效的通知数据
       if (data && data.id && data.type && data.title) {
         setNotifications(prev => {
