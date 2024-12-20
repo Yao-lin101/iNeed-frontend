@@ -43,7 +43,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      console.log('Attempting login for:', email);
       const response = await authService.login({ username: email, password });
       
       localStorage.setItem('token', response.token);
@@ -51,7 +50,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       
       // 立即加载用户信息
       const user = await authService.getProfile();
-      console.log('User profile loaded:', user);
       
       set({ user, isAuthenticated: true, isLoading: false, token: response.token });
     } catch (error: any) {
@@ -72,7 +70,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   register: async (username: string, email: string, password: string, password2: string, verification_code: string) => {
     set({ isLoading: true, error: null });
     try {
-      console.log('Attempting registration for:', email);
       const response = await authService.register({ 
         username, 
         email, 
@@ -86,7 +83,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       
       // 立即加载用户信息
       const user = await authService.getProfile();
-      console.log('User profile loaded:', user);
       
       set({ user, isAuthenticated: true, isLoading: false, token: response.token });
     } catch (error: any) {
@@ -107,7 +103,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     set({ isLoading: true, error: null });
     try {
-      console.log('Attempting logout');
       await authService.logout();
       localStorage.removeItem('token');
       localStorage.removeItem('uid');
@@ -132,7 +127,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     const uid = localStorage.getItem('uid');
     
     if (!token || !uid) {
-      console.log('No token or UID found, clearing auth state');
       localStorage.removeItem('token');
       localStorage.removeItem('uid');
       set({ user: null, isAuthenticated: false, token: null });

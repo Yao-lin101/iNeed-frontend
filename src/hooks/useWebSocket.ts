@@ -67,10 +67,6 @@ export function useWebSocket(path: string | null) {
     }
 
     if (!path || !isAuthenticated) {
-      console.log('连接条件不满足:', { 
-        path, 
-        isAuthenticated
-      });
       return;
     }
 
