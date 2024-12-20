@@ -20,7 +20,7 @@ export function useConversations() {
     
     try {
       setLoading(true);
-      const response = await request.get('/api/chat/conversations/');
+      const response = await request.get('/chat/conversations/');
       setConversations(response.data?.results || []);
       
       // 使用新的 store 方法更新未读数
