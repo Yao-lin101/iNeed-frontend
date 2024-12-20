@@ -2,8 +2,14 @@ import axios from 'axios';
 import { message } from 'antd';
 import { getToken } from './auth';
 
+// 在开发环境中，baseURL 为空，让 Vite 的代理处理 /api 前缀
+// 在生产环境中，使用完整的 API URL
+const baseURL = import.meta.env.DEV 
+  ? ''  // 开发环境：使用 Vite 的代理
+  : import.meta.env.VITE_API_BASE_URL;  // 生产环境：使用完整的 URL
+
 const request = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL || '') + '/api',
+  baseURL,
   timeout: 10000,
 });
 
@@ -13,6 +19,10 @@ request.interceptors.request.use(
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Token ${token}`;
+    }
+    // 所有请求都需要添加 /api 前缀
+    if (!config.url?.startsWith('/api')) {
+      config.url = `/api${config.url}`;
     }
     return config;
   },
