@@ -15,9 +15,10 @@ export const getMediaUrl = (url: string | null | undefined): string | undefined 
     url = `/media/${url}`;
   }
   
-  // 确保使用 HTTPS
-  const baseUrl = API_BASE_URL.replace('http://', 'https://');
-  return `${baseUrl}${url}`;
+  // 开发环境使用原始 URL，生产环境使用 HTTPS
+  return import.meta.env.DEV 
+    ? `${API_BASE_URL}${url}`
+    : `${API_BASE_URL.replace('http://', 'https://')}${url}`;
 };
 
 /**
