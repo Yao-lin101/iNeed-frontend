@@ -214,6 +214,10 @@ body[data-page="message-center"] {
   .tap-highlight-transparent {
     -webkit-tap-highlight-color: transparent;
   }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
 /* 响应式字体大小 */
