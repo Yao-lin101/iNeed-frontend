@@ -218,6 +218,15 @@ body[data-page="message-center"] {
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
+
+  /* 移动端安全区域工具类 */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-bottom-with-toolbar {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 60px);
+  }
 }
 
 /* 响应式字体大小 */
@@ -288,4 +297,21 @@ body[data-page="message-center"] {
       }
     }
   }
+}
+
+/* 移动端 Menu 样式覆盖 */
+.mobile-menu.ant-menu-horizontal {
+  line-height: 46px;
+}
+
+.mobile-menu.ant-menu-horizontal > .ant-menu-item,
+.mobile-menu.ant-menu-horizontal > .ant-menu-submenu {
+  flex: 1;
+  text-align: center;
+  margin-inline: 0;
+  min-width: auto !important;
+}
+
+.mobile-menu .ant-menu-item-icon {
+  margin-right: 4px;
 }

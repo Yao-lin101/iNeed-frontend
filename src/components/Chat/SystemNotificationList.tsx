@@ -10,6 +10,7 @@ import { useUnreadStore } from '@/store/useUnreadStore';
 
 interface SystemNotificationListProps {
   onNotificationRead?: () => void;
+  isMobile?: boolean;
 }
 
 const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
@@ -50,7 +51,7 @@ const SystemNotificationList: React.FC<SystemNotificationListProps> = ({
       const { type, data } = customEvent.detail;
       
       if (type === 'notification' && data.unread_count !== undefined) {
-        // 如果是标记已读的消息，只更新本地状态
+        // 如果是标记已读的消息，只更新本地状���
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       } else if (type === 'new_notification' && data.id) {
         // 如果是新通知，添加到列表开头

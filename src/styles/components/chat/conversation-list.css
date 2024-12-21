@@ -19,7 +19,8 @@
 
 /* 会话列表项样式 */
 .conversation-list .conversation-item {
-  @apply cursor-pointer relative;
+  cursor: pointer;
+  position: relative;
   background-color: var(--bg-primary);
   padding: 0;
   border-bottom: 1px solid var(--border-color);
@@ -68,7 +69,13 @@
 
 /* 删除按钮滑入效果 */
 .delete-button {
-  @apply absolute top-0 bottom-0 left-0 flex items-center justify-center;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 2rem;
   transform: translateX(-100%);
   transition: transform 0.2s ease-in-out;

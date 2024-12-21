@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Input, Button, Spin } from 'antd';
-import { SendOutlined } from '@ant-design/icons';
+import { SendOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import MessageList from './MessageList';
 import { useMessages } from '../../hooks/useMessages';
 import { useConversations } from '@/hooks/useConversations';
@@ -10,15 +10,19 @@ import type { InputRef } from 'antd/lib/input';
 import { useMessageArea } from '@/contexts/MessageAreaContext';
 
 interface MessageAreaProps {
-  conversationId: number | null;
-  height?: string;
+  conversationId: number;
   recipientName?: string;
+  height?: string;
+  onBack?: () => void;
+  isMobile?: boolean;
 }
 
-const MessageArea: React.FC<MessageAreaProps> = ({ 
+const MessageArea: React.FC<MessageAreaProps> = ({
   conversationId,
+  recipientName,
   height = '100%',
-  recipientName
+  onBack,
+  isMobile = false
 }) => {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<InputRef>(null);
@@ -152,17 +156,24 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   return (
     <div 
       ref={messageAreaRef} 
-      className="flex flex-col h-full"
+      className={`flex flex-col h-full ${isMobile ? 'message-area-mobile pb-20' : ''}`}
       style={{ height }}
     >
-      <div className="flex-none py-2 px-4 border-b text-center">
+      <div className="flex-none py-2 px-4 border-b flex items-center">
+        {isMobile && onBack && (
+          <button
+            onClick={onBack}
+            className="mr-3 p-1 hover:bg-gray-100 rounded-lg"
+          >
+            <ArrowLeftOutlined />
+          </button>
+        )}
         <h2 className="text-base font-medium text-gray-700 m-0">
           {recipientName || '聊天'}
         </h2>
       </div>
 
       <div className="flex-1 overflow-hidden">
-        {/* 加载更多提示 */}
         {loadingMore && (
           <div className="flex justify-center items-center py-2">
             <Spin size="small" />
