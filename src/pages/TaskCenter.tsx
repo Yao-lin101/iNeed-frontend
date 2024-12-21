@@ -31,7 +31,7 @@ const TaskCenter: React.FC = () => {
     loadTasks(currentPage, searchValue);
   }, [currentPage, searchValue]);
 
-  // 处理搜索
+  // 处理搜��
   const handleSearch = (value: string) => {
     setSearchValue(value);
     setCurrentPage(1); // 重置页码
@@ -80,7 +80,7 @@ const TaskCenter: React.FC = () => {
 
     return (
       <>
-        <Row gutter={[12, 12]}>
+        <Row gutter={[12, 12]} className="flex-none">
           {tasks.map((task) => (
             <Col 
               xs={24} 
@@ -90,6 +90,7 @@ const TaskCenter: React.FC = () => {
               xl={6}
               xxl={6}
               key={task.id}
+              className="!flex-none"
             >
               <TaskCard
                 task={task}

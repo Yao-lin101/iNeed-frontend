@@ -112,7 +112,7 @@ const MyTasks: React.FC = () => {
 
     return (
       <>
-        <Row gutter={[12, 12]}>
+        <Row gutter={[12, 12]} className="flex-none">
           {tasks.map((task) => (
             <Col 
               xs={24} 
@@ -122,6 +122,7 @@ const MyTasks: React.FC = () => {
               xl={6}
               xxl={6}
               key={task.id}
+              className="!flex-none"
             >
               <TaskCard
                 task={task}
