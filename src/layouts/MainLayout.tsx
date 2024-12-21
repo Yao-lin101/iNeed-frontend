@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Badge } from 'antd';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUnreadStore } from '@/store/useUnreadStore';
 import { useChatStore } from '@/store/useChatStore';
@@ -18,7 +18,6 @@ const MainLayout: React.FC = () => {
   useUnreadMessages();
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
@@ -129,15 +128,12 @@ const MainLayout: React.FC = () => {
               )}
             </SidebarBody>
           </div>
-
-          <Layout className="flex-1 h-screen overflow-hidden">
-            <Content className={location.pathname.startsWith('/mc') ? 'h-full' : 'overflow-y-auto'}>
-              <div className={location.pathname.startsWith('/mc') ? 'h-full' : 'bg-white h-full'}>
-                <Outlet />
-              </div>
-            </Content>
+          <Content className='overflow-y-auto'>
+            <div className='bg-white h-full'>
+              <Outlet />
+            </div>
+          </Content>
           </Layout>
-        </Layout>
       </Sidebar>
     </Layout>
   );
