@@ -31,7 +31,7 @@ const TaskCenter: React.FC = () => {
     loadTasks(currentPage, searchValue);
   }, [currentPage, searchValue]);
 
-  // 处理搜��
+  // 处理搜索
   const handleSearch = (value: string) => {
     setSearchValue(value);
     setCurrentPage(1); // 重置页码
@@ -80,9 +80,17 @@ const TaskCenter: React.FC = () => {
 
     return (
       <>
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]}>
           {tasks.map((task) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
+            <Col 
+              xs={24} 
+              sm={12} 
+              md={8} 
+              lg={6} 
+              xl={6}
+              xxl={6}
+              key={task.id}
+            >
               <TaskCard
                 task={task}
                 onContact={handleContact}
@@ -90,7 +98,7 @@ const TaskCenter: React.FC = () => {
             </Col>
           ))}
         </Row>
-        <div className="mt-6 flex justify-center">
+        <div className="mt-2 flex justify-center">
           <Pagination
             current={currentPage}
             total={total}
@@ -103,7 +111,7 @@ const TaskCenter: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
+    <div className="h-full p-4 bg-gray-50">
       <div className="flex justify-center items-center gap-4 mb-6">
         <div className="w-full max-w-3xl">
           <Search
@@ -125,9 +133,7 @@ const TaskCenter: React.FC = () => {
         </Button>
       </div>
 
-      <div className="max-w-7xl mx-auto">
-        {renderTaskCards()}
-      </div>
+      {renderTaskCards()}
 
       <TaskDetailModal />
       <TaskFormModal

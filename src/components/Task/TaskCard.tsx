@@ -190,7 +190,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     opacity: isSelected ? 0 : 1,
     transform: isSelected ? 'scale(0.9)' : 'scale(1)',
     pointerEvents: isSelected ? 'none' as const : 'auto' as const,
-    height: '280px',
   };
 
   // 计算剩余时间
@@ -312,10 +311,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
             size={64}
             src={getMediaUrl(userToShow.avatar)}
             icon={<UserOutlined />}
-            className="mb-2 hover:scale-105 transition-transform"
+            className="mb-1 hover:scale-105 transition-transform"
           />
           {isNeon ? (
-            <span className="font-medium gradient-text">
+            <span className="font-medium gradient-text text-sm">
               {getRoleText()}：{userToShow.username}
             </span>
           ) : (
@@ -331,11 +330,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
                 e.stopPropagation();
                 handleContact();
               }}
-              className="neon-contact-button"
+              className="neon-contact-button flex items-center gap-1 px-3 py-1"
             >
               <div className="neon-contact-button-content">
                 <MessageOutlined className="text-[var(--gradient-from)]" />
-                <span className="neon-contact-button-text gradient-text">
+                <span className="gradient-text text-sm whitespace-nowrap">
                   {contactButton.text}
                 </span>
               </div>
@@ -384,85 +383,81 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     <>
       <div
         ref={cardRef}
-        className="perspective-1000 relative"
+        className={classNames(
+          "h-[280px] w-[210px] mx-auto relative",
+          rewardLevel === 5 && "z-10 hover:z-20"
+        )}
         style={cardStyle}
         data-level={rewardLevel}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onMouseMove={handleMouseMove}
       >
-        {rewardLevel === 5 && (
-          <div className="card-glow neon-glow" />
-        )}
-
-        <div className="card-container">
-          {rewardLevel === 5 ? (
-            <div className="task-card-level-5">
-              <NeonGradientCard className="h-[280px] cursor-pointer" {...neonProps}>
-                {/* 背面内容 */}
-                <div 
-                  className="task-card-level-5-back perspective-mask"
-                  style={{
-                    opacity: isFlipped ? 1 : 0,
-                    mask: isFlipped || !lastMousePosition.x ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
-                      `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
-                    WebkitMask: isFlipped || !lastMousePosition.x ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
-                      `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
-                    pointerEvents: isFlipped ? 'auto' : 'none',
-                    zIndex: 2
-                  }}
-                  onClick={handleClick}
-                >
-                  {renderBackContent(true)}
-                </div>
-
-                {/* 正面内容 */}
-                <div 
-                  className="task-card-level-5-front perspective-mask"
-                  style={{
-                    opacity: 1,
-                    mask: isFlipped ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
-                      'unset',
-                    WebkitMask: isFlipped ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
-                      'unset',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }}
-                >
-                  {renderCardContent()}
-                </div>
-              </NeonGradientCard>
-            </div>
-          ) : (
-            // 其他等级的卡片保持原有的翻转动画
-            <div className={`w-full h-full transition-transform duration-500 transform-style-3d ${
-              isFlipped ? 'rotate-y-180' : ''
-            }`}>
-              {/* 卡片正面 */}
-              <div className="absolute w-full h-full backface-hidden" onClick={handleClick}>
-                <Card
-                  className={`h-[280px] reward-level-${rewardLevel}`}
-                  bordered
-                >
-                  {renderCardContent()}
-                </Card>
-              </div>
-
-              {/* 卡片背面 */}
-              <Card
-                className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
-                bordered
+        {rewardLevel === 5 ? (
+          <div className="h-full">
+            <NeonGradientCard className="cursor-pointer h-full" {...neonProps}>
+              {/* 背面内容 */}
+              <div 
+                className="task-card-level-5-back perspective-mask h-full"
+                style={{
+                  opacity: isFlipped ? 1 : 0,
+                  mask: isFlipped || !lastMousePosition.x ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
+                    `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
+                  WebkitMask: isFlipped || !lastMousePosition.x ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
+                    `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
+                  pointerEvents: isFlipped ? 'auto' : 'none',
+                  zIndex: 2
+                }}
                 onClick={handleClick}
               >
-                {renderBackContent(false)}
+                {renderBackContent(true)}
+              </div>
+
+              {/* 正面内容 */}
+              <div 
+                className="task-card-level-5-front perspective-mask h-full"
+                style={{
+                  opacity: 1,
+                  mask: isFlipped ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
+                    'unset',
+                  WebkitMask: isFlipped ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
+                    'unset',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }}
+              >
+                {renderCardContent()}
+              </div>
+            </NeonGradientCard>
+          </div>
+        ) : (
+          <div className={`w-full h-full transition-transform duration-500 transform-style-3d ${
+            isFlipped ? 'rotate-y-180' : ''
+          }`}>
+            {/* 卡片正面 */}
+            <div className="absolute w-full h-full backface-hidden" onClick={handleClick}>
+              <Card
+                className={`h-full reward-level-${rewardLevel}`}
+                bordered
+              >
+                {renderCardContent()}
               </Card>
             </div>
-          )}
-        </div>
+
+            {/* 卡片背面 */}
+            <Card
+              className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
+              bordered
+              onClick={handleClick}
+            >
+              {renderBackContent(false)}
+            </Card>
+          </div>
+        )}
       </div>
 
       <ChatModal

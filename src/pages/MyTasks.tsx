@@ -112,9 +112,17 @@ const MyTasks: React.FC = () => {
 
     return (
       <>
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]}>
           {tasks.map((task) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
+            <Col 
+              xs={24} 
+              sm={12} 
+              md={8} 
+              lg={6} 
+              xl={6}
+              xxl={6}
+              key={task.id}
+            >
               <TaskCard
                 task={task}
                 onContact={handleContact}
@@ -122,7 +130,7 @@ const MyTasks: React.FC = () => {
             </Col>
           ))}
         </Row>
-        <div className="mt-6 flex justify-center">
+        <div className="mt-2 flex justify-center">
           <Pagination
             current={currentPage}
             total={total}
@@ -136,7 +144,7 @@ const MyTasks: React.FC = () => {
 
   // 抽取搜索和筛选组件
   const renderSearchAndFilter = (showPublishButton = false) => (
-    <div className="mb-6 space-y-4">
+    <div className="mb-4 space-y-2">
       <div className="flex justify-between items-center">
         <Search
           placeholder="搜索任务标题或描述"
@@ -172,7 +180,7 @@ const MyTasks: React.FC = () => {
   );
 
   return (
-    <div className="h-full p-6 bg-gray-50">
+    <div className="h-full p-4 bg-gray-50">
       <Tabs
         activeKey={activeTab}
         onChange={(key) => {
@@ -183,19 +191,15 @@ const MyTasks: React.FC = () => {
         className="task-tabs"
       >
         <TabPane tab="我发布的任务" key="created">
-          <div className="space-y-6">
+          <div className="space-y-4">
             {renderSearchAndFilter(true)}
-            <div className="max-w-7xl mx-auto">
-              {renderTaskCards()}
-            </div>
+            {renderTaskCards()}
           </div>
         </TabPane>
         <TabPane tab="我接取的任务" key="assigned">
-          <div className="space-y-6">
+          <div className="space-y-4">
             {renderSearchAndFilter()}
-            <div className="max-w-7xl mx-auto">
-              {renderTaskCards()}
-            </div>
+            {renderTaskCards()}
           </div>
         </TabPane>
       </Tabs>
