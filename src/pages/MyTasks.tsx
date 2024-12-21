@@ -172,7 +172,7 @@ const MyTasks: React.FC = () => {
   );
 
   return (
-    <div className="min-h-[calc(100vh-64px)]">
+    <div className="h-full p-6 bg-gray-50">
       <Tabs
         activeKey={activeTab}
         onChange={(key) => {
@@ -183,15 +183,19 @@ const MyTasks: React.FC = () => {
         className="task-tabs"
       >
         <TabPane tab="我发布的任务" key="created">
-          {renderSearchAndFilter(true)}
-          <div className="task-list-container">
-            {renderTaskCards()}
+          <div className="space-y-6">
+            {renderSearchAndFilter(true)}
+            <div className="max-w-7xl mx-auto">
+              {renderTaskCards()}
+            </div>
           </div>
         </TabPane>
         <TabPane tab="我接取的任务" key="assigned">
-          {renderSearchAndFilter()}
-          <div className="task-list-container">
-            {renderTaskCards()}
+          <div className="space-y-6">
+            {renderSearchAndFilter()}
+            <div className="max-w-7xl mx-auto">
+              {renderTaskCards()}
+            </div>
           </div>
         </TabPane>
       </Tabs>

@@ -31,7 +31,7 @@ const TaskCenter: React.FC = () => {
     loadTasks(currentPage, searchValue);
   }, [currentPage, searchValue]);
 
-  // 处理搜索
+  // 处理搜��
   const handleSearch = (value: string) => {
     setSearchValue(value);
     setCurrentPage(1); // 重置页码
@@ -103,9 +103,9 @@ const TaskCenter: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)]">
+    <div className="min-h-screen p-6 bg-gray-50">
       <div className="flex justify-center items-center gap-4 mb-6">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-3xl">
           <Search
             placeholder="搜索任务标题或描述"
             allowClear
@@ -119,13 +119,15 @@ const TaskCenter: React.FC = () => {
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setIsFormModalOpen(true)}
-          className="publish-task-btn flex-shrink-0"
+          className="publish-task-btn flex-shrink-0 h-10"
         >
           发布任务
         </Button>
       </div>
 
-      {renderTaskCards()}
+      <div className="max-w-7xl mx-auto">
+        {renderTaskCards()}
+      </div>
 
       <TaskDetailModal />
       <TaskFormModal

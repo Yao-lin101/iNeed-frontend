@@ -17,8 +17,8 @@ const Chat: React.FC<ChatProps> = ({ initialTab = 'myMessages' }) => {
   }, []);
 
   return (
-    <div className="h-[calc(100vh-64px)] flex justify-center bg-gray-100">
-      <div className="w-[1100px] min-w-[1100px]">
+    <div className="h-full flex justify-center">
+      <div className="w-full max-w-7xl">
         <ChatContainer 
           initialTab={initialTab}
         />

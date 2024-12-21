@@ -8,7 +8,7 @@ import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
 import { IconHome, IconListCheck, IconUserCircle, IconSettings, IconLogout, IconMessage } from '@tabler/icons-react';
 
-const { Content, Footer } = Layout;
+const { Content } = Layout;
 
 const MainLayout: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -83,63 +83,62 @@ const MainLayout: React.FC = () => {
     ),
   };
 
-  // 判断是否显示页脚
-  const shouldShowFooter = !location.pathname.startsWith('/mc');
-
   return (
-    <Layout className="min-h-screen flex flex-row">
+    <Layout className="h-screen overflow-hidden">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
-        <SidebarBody className="justify-between h-full py-4">
-          <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            <SidebarLink link={profileLink} />
-            
-            <div className="h-[1px] bg-neutral-200 dark:bg-neutral-700 my-2" />
+        <Layout className="flex flex-row">
+          {/* 桌面端侧边栏 */}
+          <div className="hidden md:block">
+            <SidebarBody className="justify-between h-screen py-4">
+              <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+                <SidebarLink link={profileLink} />
+                
+                <div className="h-[1px] bg-neutral-200 dark:bg-neutral-700 my-2" />
 
-            <div className="flex flex-col space-y-2">
-              {/* 主导航组 */}
-              <div className="flex flex-col space-y-1">
-                {navLinks.map((link, idx) => (
-                  <SidebarLink key={idx} link={link} />
-                ))}
+                <div className="flex flex-col space-y-2">
+                  {/* 主导航组 */}
+                  <div className="flex flex-col space-y-1">
+                    {navLinks.map((link, idx) => (
+                      <SidebarLink key={idx} link={link} />
+                    ))}
+                  </div>
+                  
+                  {/* 消息中心组 */}
+                  <div className="flex flex-col space-y-1">
+                    <SidebarLink link={userLinks[0]} />
+                  </div>
+                </div>
               </div>
               
-              {/* 消息中心组 */}
-              <div className="flex flex-col space-y-1">
-                <SidebarLink link={userLinks[0]} />
+              {isAuthenticated ? (
+                <div className="flex flex-col space-y-1 mt-auto pt-6 border-t border-neutral-200 dark:border-neutral-700">
+                  {userLinks.slice(1).map((link, idx) => (
+                    <SidebarLink key={idx} link={link} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <SidebarLink
+                    link={{
+                      label: "登录",
+                      href: "/login",
+                      icon: <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+                    }}
+                  />
+                </div>
+              )}
+            </SidebarBody>
+          </div>
+
+          <Layout className="flex-1 h-screen overflow-hidden">
+            <Content className={location.pathname.startsWith('/mc') ? 'h-full' : 'overflow-y-auto'}>
+              <div className={location.pathname.startsWith('/mc') ? 'h-full' : 'bg-white h-full'}>
+                <Outlet />
               </div>
-            </div>
-          </div>
-          
-          {isAuthenticated ? (
-            <div className="flex flex-col space-y-1 mt-auto pt-6 border-t border-neutral-200 dark:border-neutral-700">
-              {userLinks.slice(1).map((link, idx) => (
-                <SidebarLink key={idx} link={link} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <SidebarLink
-                link={{
-                  label: "登录",
-                  href: "/login",
-                  icon: <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
-                }}
-              />
-            </div>
-          )}
-        </SidebarBody>
+            </Content>
+          </Layout>
+        </Layout>
       </Sidebar>
-      
-      <Layout className="flex-1">
-        <Content className={location.pathname.startsWith('/mc') ? 'h-full' : 'overflow-y-auto'}>
-          <div className={location.pathname.startsWith('/mc') ? 'h-full' : 'bg-white min-h-[280px]'}>
-            <Outlet />
-          </div>
-        </Content>
-        {shouldShowFooter && (
-          <Footer className="text-center">iNeed ©2024</Footer>
-        )}
-      </Layout>
     </Layout>
   );
 };
