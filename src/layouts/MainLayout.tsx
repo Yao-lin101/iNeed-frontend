@@ -1,149 +1,145 @@
-import React, { useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Badge } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined, MessageOutlined } from '@ant-design/icons';
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Layout, Badge } from 'antd';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useUnreadStore } from '@/store/useUnreadStore';
-import type { MenuProps } from 'antd';
 import { useChatStore } from '@/store/useChatStore';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
+import { Sidebar, SidebarBody, SidebarLink } from '@/components/ui/sidebar';
+import { IconHome, IconListCheck, IconUserCircle, IconSettings, IconLogout, IconMessage } from '@tabler/icons-react';
 
-const { Header, Content, Footer } = Layout;
+const { Content, Footer } = Layout;
 
 const MainLayout: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
   const { totalUnread } = useUnreadStore();
   const { chatContext: { isInMessageCenter } } = useChatStore();
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   useUnreadMessages();
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  // 设置页面类型
-  useEffect(() => {
-    if (location.pathname.startsWith('/mc')) {
-      document.body.setAttribute('data-page', 'message-center');
-    } else {
-      document.body.removeAttribute('data-page');
-    }
-    
-    // 清理函数
-    return () => {
-      document.body.removeAttribute('data-page');
-    };
-  }, [location.pathname]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  const handleMessageCenterClick = () => {
-    navigate('/mc/chat');
-  };
+  // 侧边栏导航链接
+  const navLinks = [
+    {
+      label: "首页",
+      href: "/",
+      icon: <IconHome className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+    },
+    {
+      label: "任务中心",
+      href: "/tasks",
+      icon: <IconListCheck className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+    },
+    {
+      label: "我的任务",
+      href: "/my-tasks",
+      icon: <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+    },
+  ];
 
-  const userMenuItems: MenuProps['items'] = [
+  // 用户相关链接
+  const userLinks = [
     {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: <Link to="/profile">个人资料</Link>,
+      label: "消息中心",
+      href: "/mc/chat",
+      icon: (
+        <Badge count={isInMessageCenter ? 0 : totalUnread} offset={[0, 0]}>
+          <IconMessage className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        </Badge>
+      ),
     },
     {
-      key: 'account',
-      icon: <SettingOutlined />,
-      label: <Link to="/account">账号管理</Link>,
+      label: "账号设置",
+      href: "/account",
+      icon: <IconSettings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
     },
     {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: "退出登录",
+      href: "#",
+      icon: <IconLogout className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
       onClick: handleLogout,
     },
   ];
 
-  // 获取当前选中的菜单项
-  const getSelectedKeys = () => {
-    const pathname = location.pathname;
-    // 在消息中心时返回空数组，而不是空字符串
-    if (pathname.startsWith('/mc')) return [];
-    
-    if (pathname === '/') return ['home'];
-    if (pathname.startsWith('/tasks')) return ['tasks'];
-    if (pathname.startsWith('/my-tasks')) return ['my-tasks'];
-    return [];
+  // 头像导航项
+  const profileLink = {
+    label: user?.username || "未登录",
+    href: "/profile",
+    icon: user?.avatar ? (
+      <img 
+        src={user.avatar} 
+        alt="avatar" 
+        className="rounded-full object-cover flex-shrink-0 h-5 w-5"
+      />
+    ) : (
+      <IconUserCircle className="h-5 w-5 text-neutral-700 dark:text-neutral-200" />
+    ),
   };
-
-  const navItems: MenuProps['items'] = [
-    {
-      key: 'home',
-      label: <Link to="/">首页</Link>,
-    },
-    {
-      key: 'tasks',
-      label: <Link to="/tasks">任务中心</Link>,
-    },
-    {
-      key: 'my-tasks',
-      label: <Link to="/my-tasks">我的任务</Link>,
-    },
-  ];
 
   // 判断是否显示页脚
   const shouldShowFooter = !location.pathname.startsWith('/mc');
 
   return (
-    <Layout className="min-h-screen">
-      <Header className="flex items-center justify-between bg-white">
-        <div className="flex items-center flex-1">
-          <Link to="/" className="text-xl font-bold mr-8 flex-none">
-            iNeed
-          </Link>
-          <Menu 
-            mode="horizontal" 
-            selectedKeys={getSelectedKeys()}
-            items={navItems} 
-            className="flex-1 min-w-[300px]"
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <>
-              <div 
-                onClick={handleMessageCenterClick} 
-                className="text-gray-600 hover:text-gray-900 cursor-pointer"
-              >
-                <Badge 
-                  count={isInMessageCenter ? 0 : totalUnread} 
-                  offset={[0, 0]}
-                  className="unread-badge"
-                >
-                  <MessageOutlined style={{ fontSize: '20px' }} />
-                </Badge>
+    <Layout className="min-h-screen flex flex-row">
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
+        <SidebarBody className="justify-between h-full py-4">
+          <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+            <SidebarLink link={profileLink} />
+            
+            <div className="h-[1px] bg-neutral-200 dark:bg-neutral-700 my-2" />
+
+            <div className="flex flex-col space-y-2">
+              {/* 主导航组 */}
+              <div className="flex flex-col space-y-1">
+                {navLinks.map((link, idx) => (
+                  <SidebarLink key={idx} link={link} />
+                ))}
               </div>
-              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-                <div className="cursor-pointer">
-                  <Avatar src={user?.avatar} icon={<UserOutlined />} />
-                </div>
-              </Dropdown>
-            </>
+              
+              {/* 消息中心组 */}
+              <div className="flex flex-col space-y-1">
+                <SidebarLink link={userLinks[0]} />
+              </div>
+            </div>
+          </div>
+          
+          {isAuthenticated ? (
+            <div className="flex flex-col space-y-1 mt-auto pt-6 border-t border-neutral-200 dark:border-neutral-700">
+              {userLinks.slice(1).map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+            </div>
           ) : (
-            <div>
-              <Link to="/login" className="mr-4">
-                登录
-              </Link>
-              <Link to="/register">注册</Link>
+            <div className="flex flex-col gap-2">
+              <SidebarLink
+                link={{
+                  label: "登录",
+                  href: "/login",
+                  icon: <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+                }}
+              />
             </div>
           )}
-        </div>
-      </Header>
-      <Content className={location.pathname.startsWith('/mc') ? 'h-full' : 'p-6 overflow-y-auto'}>
-        <div className={location.pathname.startsWith('/mc') ? 'h-full' : 'bg-white p-6 min-h-[280px]'}>
-          <Outlet />
-        </div>
-      </Content>
-      {shouldShowFooter && (
-        <Footer className="text-center">iNeed ©2024</Footer>
-      )}
+        </SidebarBody>
+      </Sidebar>
+      
+      <Layout className="flex-1">
+        <Content className={location.pathname.startsWith('/mc') ? 'h-full' : 'overflow-y-auto'}>
+          <div className={location.pathname.startsWith('/mc') ? 'h-full' : 'bg-white min-h-[280px]'}>
+            <Outlet />
+          </div>
+        </Content>
+        {shouldShowFooter && (
+          <Footer className="text-center">iNeed ©2024</Footer>
+        )}
+      </Layout>
     </Layout>
   );
 };
