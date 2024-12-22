@@ -46,6 +46,25 @@ const getRewardLevel = (reward: number) => {
   return 5;
 };
 
+// 添加一个格式化金额的函数
+const formatReward = (reward: number | string) => {
+  // 确保转换为数字
+  const numReward = Number(reward);
+  
+  // 检查是否是有效数字
+  if (isNaN(numReward)) {
+    return reward;
+  }
+
+  // 如果是整数，直接返回
+  if (Number.isInteger(numReward)) {
+    return numReward;
+  }
+
+  // 如果有小数，保留两位
+  return numReward.toFixed(2);
+};
+
 const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { user } = useAuthStore();
@@ -234,24 +253,22 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
 
   // 渲染卡片内容
   const renderCardContent = () => (
-    <div className="flex flex-col items-center justify-center flex-grow">
-      {rewardLevel === 5 ? (
-        // 最高等级使用渐变字
-        <span className="pointer-events-none z-10 text-4xl font-bold mb-4 gradient-text">
-          ¥{task.reward}
-        </span>
-      ) : (
-        <span className={`text-4xl font-bold mb-4 reward-text-${rewardLevel}`}>
-          ¥{task.reward}
-        </span>
-      )}
-      <p className={classNames(
-        "text-sm line-clamp-3 text-center max-w-[90%]",
-        rewardLevel === 5 ? "text-white/80" : "text-gray-500"
-      )}>
-        {task.description}
-      </p>
-      <div className="w-full mt-4 flex flex-col items-center border-t pt-3">
+    <div className="flex flex-col h-full">
+      {/* 顶部金额区域 */}
+      <div className={classNames("flex items-center justify-center","h-[80px]")}>
+        {rewardLevel === 5 ? (
+          <span className="pointer-events-none z-10 text-4xl font-bold gradient-text">
+            ¥{formatReward(task.reward)}
+          </span>
+        ) : (
+          <span className={`pointer-events-none z-10 text-4xl font-bold reward-text-${rewardLevel}`}>
+            ¥{formatReward(task.reward)}
+          </span>
+        )}
+      </div>
+
+      {/* 中间标签区域 */}
+      <div className="flex-1 flex flex-col items-center justify-center">
         {remainingTime && (
           <span className={classNames(
             'countdown-tag',
@@ -265,13 +282,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
                 {remainingTime.text}
               </span>
             ) : (
-              <span>{remainingTime.text}</span>
+              <span className="font-medium">{remainingTime.text}</span>
             )}
           </span>
         )}
         <span className={classNames(
           'task-tag',
-          'mb-2',
+          'block',
           getStatusClassName(task.status),
           rewardLevel === 5 && 'gradient-bg border border-white/30'
         )}>
@@ -280,16 +297,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
               {getStatusText(task.status)}
             </span>
           ) : (
-            <span>{getStatusText(task.status)}</span>
+            <span className="font-medium">{getStatusText(task.status)}</span>
           )}
         </span>
+      </div>
+
+      {/* 底部标题区域 */}
+      <div className="h-[60px] w-full flex items-center justify-center border-t">
         {rewardLevel === 5 ? (
-          <h3 className="text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2 gradient-text">
+          <h3 className="text-lg font-medium text-center line-clamp-2 px-2 gradient-text">
             {task.title}
           </h3>
         ) : (
           <h3 className={classNames(
-            "text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2",
+            "text-lg font-medium text-center line-clamp-2 px-2",
             `reward-text-${rewardLevel}`
           )}>
             {task.title}
@@ -299,7 +320,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     </div>
   );
 
-  // 渲染卡片背面内容
+  // 渲染卡背面内容
   const renderBackContent = (isNeon: boolean = false) => (
     <div className={classNames(
       "flex flex-col items-center justify-between h-full",
@@ -384,7 +405,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
       <div
         ref={cardRef}
         className={classNames(
-          "h-[280px] w-[210px] mx-auto relative",
+          "h-[240px] md:h-[280px] w-[160px] md:w-[210px] mx-auto relative",
           rewardLevel === 5 && "z-10 hover:z-20"
         )}
         style={cardStyle}
@@ -441,20 +462,26 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
             {/* 卡片正面 */}
             <div className="absolute w-full h-full backface-hidden" onClick={handleClick}>
               <Card
-                className={`h-full reward-level-${rewardLevel}`}
+                className={`h-full reward-level-${rewardLevel} cursor-pointer`}
                 bordered
               >
-                {renderCardContent()}
+                <div className="h-full">
+                  <div className="task-card-front h-full">
+                    {renderCardContent()}
+                  </div>
+                </div>
               </Card>
             </div>
 
             {/* 卡片背面 */}
             <Card
-              className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
+              className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel} cursor-pointer`}
               bordered
               onClick={handleClick}
             >
-              {renderBackContent(false)}
+              <div className="task-card-back perspective-mask h-full">
+                {renderBackContent(false)}
+              </div>
             </Card>
           </div>
         )}
