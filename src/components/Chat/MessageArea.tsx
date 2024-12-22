@@ -76,7 +76,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
           message: content
         });
 
-        // 检查是否有活跃的���接
+        // 检查是否有活跃的连接
         if (!conversationId || !isConnected(conversationId)) {
           connect();
           // 等待连接建立
