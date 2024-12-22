@@ -30,4 +30,11 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        chunkFileNames: 'assets/[name]-[hash].js', // 设置文件命名规则
+      },
+    },
+  },
 })

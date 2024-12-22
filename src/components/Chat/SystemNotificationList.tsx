@@ -10,6 +10,7 @@ import { useUnreadStore } from '@/store/useUnreadStore';
 
 interface SystemNotificationListProps {
   onNotificationRead?: () => void;
+  isMobile?: boolean;
 }
 
 const SystemNotificationList: React.FC<SystemNotificationListProps> = ({

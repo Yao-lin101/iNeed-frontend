@@ -174,3 +174,144 @@ body[data-page="message-center"] {
     @apply bg-background text-foreground;
   }
 }
+
+/* 基础响应式设置 */
+@layer base {
+  html {
+    @apply text-base;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply m-0 p-0 min-h-screen;
+    text-size-adjust: 100%;
+  }
+}
+
+/* 响应式容器 */
+.responsive-container {
+  @apply w-full mx-auto px-4;
+  max-width: min(100%, 1200px);
+}
+
+/* 移动端适配工具类 */
+@layer utilities {
+  /* 隐藏滚动条但保持功能 */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  /* 移动端安全区域 */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 移动端点击区域优化 */
+  .tap-highlight-transparent {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* 移动端安全区域工具类 */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-bottom-with-toolbar {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 60px);
+  }
+}
+
+/* 响应式字体大小 */
+@layer utilities {
+  .text-responsive {
+    @apply text-sm md:text-base;
+  }
+  
+  .title-responsive {
+    @apply text-lg md:text-xl lg:text-2xl;
+  }
+  
+  .subtitle-responsive {
+    @apply text-base md:text-lg lg:text-xl;
+  }
+}
+
+/* 响应式间距 */
+@layer utilities {
+  .spacing-responsive {
+    @apply p-4 md:p-6 lg:p-8;
+  }
+  
+  .margin-responsive {
+    @apply my-4 md:my-6 lg:my-8;
+  }
+}
+
+/* 响应式网格布局 */
+.grid-responsive {
+  @apply grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  @apply gap-4 md:gap-6;
+}
+
+/* 响应式弹性布局 */
+.flex-responsive {
+  @apply flex flex-col md:flex-row;
+}
+
+/* 移动端导航固定定位 */
+.mobile-nav-fixed {
+  @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-inset-bottom;
+  z-index: 1000;
+}
+
+/* 响应式模态框 */
+.modal-responsive {
+  @apply w-[95%] md:w-[80%] lg:w-[70%] max-w-4xl mx-auto;
+}
+
+/* 响应式图片 */
+.image-responsive {
+  @apply w-full h-auto object-cover;
+  aspect-ratio: 16/9;
+}
+
+/* 添加关键渲染路径的CSS */
+@layer critical {
+  .sidebar {
+    contain: layout style;  /* CSS containment */
+  }
+  
+  .motion-safe {
+    @media (prefers-reduced-motion: no-preference) {
+      .animate-sidebar {
+        transition: width 0.2s ease-out;
+      }
+    }
+  }
+}
+
+/* 移动端 Menu 样式覆盖 */
+.mobile-menu.ant-menu-horizontal {
+  line-height: 46px;
+}
+
+.mobile-menu.ant-menu-horizontal > .ant-menu-item,
+.mobile-menu.ant-menu-horizontal > .ant-menu-submenu {
+  flex: 1;
+  text-align: center;
+  margin-inline: 0;
+  min-width: auto !important;
+}
+
+.mobile-menu .ant-menu-item-icon {
+  margin-right: 4px;
+}

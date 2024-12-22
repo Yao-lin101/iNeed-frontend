@@ -41,8 +41,9 @@ export interface TaskListResponse {
 }
 
 export interface TaskListParams {
-  page?: number;
+  page: number;
   search?: string;
+  page_size?: number;
   status?: string;
   type?: 'created' | 'assigned';
 }

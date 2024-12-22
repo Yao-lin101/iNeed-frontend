@@ -46,6 +46,25 @@ const getRewardLevel = (reward: number) => {
   return 5;
 };
 
+// 添加一个格式化金额的函数
+const formatReward = (reward: number | string) => {
+  // 确保转换为数字
+  const numReward = Number(reward);
+  
+  // 检查是否是有效数字
+  if (isNaN(numReward)) {
+    return reward;
+  }
+
+  // 如果是整数，直接返回
+  if (Number.isInteger(numReward)) {
+    return numReward;
+  }
+
+  // 如果有小数，保留两位
+  return numReward.toFixed(2);
+};
+
 const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { user } = useAuthStore();
@@ -190,7 +209,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     opacity: isSelected ? 0 : 1,
     transform: isSelected ? 'scale(0.9)' : 'scale(1)',
     pointerEvents: isSelected ? 'none' as const : 'auto' as const,
-    height: '280px',
   };
 
   // 计算剩余时间
@@ -235,24 +253,22 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
 
   // 渲染卡片内容
   const renderCardContent = () => (
-    <div className="flex flex-col items-center justify-center flex-grow">
-      {rewardLevel === 5 ? (
-        // 最高等级使用渐变字
-        <span className="pointer-events-none z-10 text-4xl font-bold mb-4 gradient-text">
-          ¥{task.reward}
-        </span>
-      ) : (
-        <span className={`text-4xl font-bold mb-4 reward-text-${rewardLevel}`}>
-          ¥{task.reward}
-        </span>
-      )}
-      <p className={classNames(
-        "text-sm line-clamp-3 text-center max-w-[90%]",
-        rewardLevel === 5 ? "text-white/80" : "text-gray-500"
-      )}>
-        {task.description}
-      </p>
-      <div className="w-full mt-4 flex flex-col items-center border-t pt-3">
+    <div className="flex flex-col h-full">
+      {/* 顶部金额区域 */}
+      <div className={classNames("flex items-center justify-center","h-[80px]")}>
+        {rewardLevel === 5 ? (
+          <span className="pointer-events-none z-10 text-4xl font-bold gradient-text">
+            ¥{formatReward(task.reward)}
+          </span>
+        ) : (
+          <span className={`pointer-events-none z-10 text-4xl font-bold reward-text-${rewardLevel}`}>
+            ¥{formatReward(task.reward)}
+          </span>
+        )}
+      </div>
+
+      {/* 中间标签区域 */}
+      <div className="flex-1 flex flex-col items-center justify-center">
         {remainingTime && (
           <span className={classNames(
             'countdown-tag',
@@ -266,13 +282,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
                 {remainingTime.text}
               </span>
             ) : (
-              <span>{remainingTime.text}</span>
+              <span className="font-medium">{remainingTime.text}</span>
             )}
           </span>
         )}
         <span className={classNames(
           'task-tag',
-          'mb-2',
+          'block',
           getStatusClassName(task.status),
           rewardLevel === 5 && 'gradient-bg border border-white/30'
         )}>
@@ -281,16 +297,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
               {getStatusText(task.status)}
             </span>
           ) : (
-            <span>{getStatusText(task.status)}</span>
+            <span className="font-medium">{getStatusText(task.status)}</span>
           )}
         </span>
+      </div>
+
+      {/* 底部标题区域 */}
+      <div className="h-[60px] w-full flex items-center justify-center border-t">
         {rewardLevel === 5 ? (
-          <h3 className="text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2 gradient-text">
+          <h3 className="text-lg font-medium text-center line-clamp-2 px-2 gradient-text">
             {task.title}
           </h3>
         ) : (
           <h3 className={classNames(
-            "text-lg font-medium text-center line-clamp-2 max-w-[95%] px-2",
+            "text-lg font-medium text-center line-clamp-2 px-2",
             `reward-text-${rewardLevel}`
           )}>
             {task.title}
@@ -300,7 +320,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     </div>
   );
 
-  // 渲染卡片背面内容
+  // 渲染卡背面内容
   const renderBackContent = (isNeon: boolean = false) => (
     <div className={classNames(
       "flex flex-col items-center justify-between h-full",
@@ -312,10 +332,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
             size={64}
             src={getMediaUrl(userToShow.avatar)}
             icon={<UserOutlined />}
-            className="mb-2 hover:scale-105 transition-transform"
+            className="mb-1 hover:scale-105 transition-transform"
           />
           {isNeon ? (
-            <span className="font-medium gradient-text">
+            <span className="font-medium gradient-text text-sm">
               {getRoleText()}：{userToShow.username}
             </span>
           ) : (
@@ -331,11 +351,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
                 e.stopPropagation();
                 handleContact();
               }}
-              className="neon-contact-button"
+              className="neon-contact-button flex items-center gap-1 px-3 py-1"
             >
               <div className="neon-contact-button-content">
                 <MessageOutlined className="text-[var(--gradient-from)]" />
-                <span className="neon-contact-button-text gradient-text">
+                <span className="gradient-text text-sm whitespace-nowrap">
                   {contactButton.text}
                 </span>
               </div>
@@ -384,85 +404,87 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onContact }) => {
     <>
       <div
         ref={cardRef}
-        className="perspective-1000 relative"
+        className={classNames(
+          "h-[240px] md:h-[280px] w-[160px] md:w-[210px] mx-auto relative",
+          rewardLevel === 5 && "z-10 hover:z-20"
+        )}
         style={cardStyle}
         data-level={rewardLevel}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onMouseMove={handleMouseMove}
       >
-        {rewardLevel === 5 && (
-          <div className="card-glow neon-glow" />
-        )}
-
-        <div className="card-container">
-          {rewardLevel === 5 ? (
-            <div className="task-card-level-5">
-              <NeonGradientCard className="h-[280px] cursor-pointer" {...neonProps}>
-                {/* 背面内容 */}
-                <div 
-                  className="task-card-level-5-back perspective-mask"
-                  style={{
-                    opacity: isFlipped ? 1 : 0,
-                    mask: isFlipped || !lastMousePosition.x ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
-                      `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
-                    WebkitMask: isFlipped || !lastMousePosition.x ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
-                      `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
-                    pointerEvents: isFlipped ? 'auto' : 'none',
-                    zIndex: 2
-                  }}
-                  onClick={handleClick}
-                >
-                  {renderBackContent(true)}
-                </div>
-
-                {/* 正面内容 */}
-                <div 
-                  className="task-card-level-5-front perspective-mask"
-                  style={{
-                    opacity: 1,
-                    mask: isFlipped ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
-                      'unset',
-                    WebkitMask: isFlipped ? 
-                      `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
-                      'unset',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }}
-                >
-                  {renderCardContent()}
-                </div>
-              </NeonGradientCard>
-            </div>
-          ) : (
-            // 其他等级的卡片保持原有的翻转动画
-            <div className={`w-full h-full transition-transform duration-500 transform-style-3d ${
-              isFlipped ? 'rotate-y-180' : ''
-            }`}>
-              {/* 卡片正面 */}
-              <div className="absolute w-full h-full backface-hidden" onClick={handleClick}>
-                <Card
-                  className={`h-[280px] reward-level-${rewardLevel}`}
-                  bordered
-                >
-                  {renderCardContent()}
-                </Card>
-              </div>
-
-              {/* 卡片背面 */}
-              <Card
-                className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel}`}
-                bordered
+        {rewardLevel === 5 ? (
+          <div className="h-full">
+            <NeonGradientCard className="cursor-pointer h-full" {...neonProps}>
+              {/* 背面内容 */}
+              <div 
+                className="task-card-level-5-back perspective-mask h-full"
+                style={{
+                  opacity: isFlipped ? 1 : 0,
+                  mask: isFlipped || !lastMousePosition.x ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
+                    `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
+                  WebkitMask: isFlipped || !lastMousePosition.x ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, white 30%, transparent 80%)` : 
+                    `radial-gradient(circle 300px at ${lastMousePosition.x}px ${lastMousePosition.y}px, white 30%, transparent 80%)`,
+                  pointerEvents: isFlipped ? 'auto' : 'none',
+                  zIndex: 2
+                }}
                 onClick={handleClick}
               >
-                {renderBackContent(false)}
+                {renderBackContent(true)}
+              </div>
+
+              {/* 正面内容 */}
+              <div 
+                className="task-card-level-5-front perspective-mask h-full"
+                style={{
+                  opacity: 1,
+                  mask: isFlipped ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
+                    'unset',
+                  WebkitMask: isFlipped ? 
+                    `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, transparent 30%, white 80%)` : 
+                    'unset',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }}
+              >
+                {renderCardContent()}
+              </div>
+            </NeonGradientCard>
+          </div>
+        ) : (
+          <div className={`w-full h-full transition-transform duration-500 transform-style-3d ${
+            isFlipped ? 'rotate-y-180' : ''
+          }`}>
+            {/* 卡片正面 */}
+            <div className="absolute w-full h-full backface-hidden" onClick={handleClick}>
+              <Card
+                className={`h-full reward-level-${rewardLevel} cursor-pointer`}
+                bordered
+              >
+                <div className="h-full">
+                  <div className="task-card-front h-full">
+                    {renderCardContent()}
+                  </div>
+                </div>
               </Card>
             </div>
-          )}
-        </div>
+
+            {/* 卡片背面 */}
+            <Card
+              className={`absolute w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-between reward-level-${rewardLevel} cursor-pointer`}
+              bordered
+              onClick={handleClick}
+            >
+              <div className="task-card-back perspective-mask h-full">
+                {renderBackContent(false)}
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
 
       <ChatModal

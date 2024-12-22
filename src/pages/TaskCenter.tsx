@@ -80,9 +80,18 @@ const TaskCenter: React.FC = () => {
 
     return (
       <>
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]} className="flex-none">
           {tasks.map((task) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
+            <Col 
+              xs={24} 
+              sm={12} 
+              md={8} 
+              lg={6} 
+              xl={6}
+              xxl={6}
+              key={task.id}
+              className="!flex-none"
+            >
               <TaskCard
                 task={task}
                 onContact={handleContact}
@@ -90,12 +99,14 @@ const TaskCenter: React.FC = () => {
             </Col>
           ))}
         </Row>
-        <div className="mt-6 flex justify-center">
+        <div className="mt-2 flex justify-center">
           <Pagination
             current={currentPage}
             total={total}
+            pageSize={20}
             onChange={handlePageChange}
             showSizeChanger={false}
+            showTotal={(total) => `共 ${total} 条`}
           />
         </div>
       </>
@@ -103,9 +114,9 @@ const TaskCenter: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)]">
+    <div className="h-full p-4 bg-gray-50">
       <div className="flex justify-center items-center gap-4 mb-6">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-3xl">
           <Search
             placeholder="搜索任务标题或描述"
             allowClear
@@ -119,7 +130,7 @@ const TaskCenter: React.FC = () => {
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setIsFormModalOpen(true)}
-          className="publish-task-btn flex-shrink-0"
+          className="publish-task-btn flex-shrink-0 h-10"
         >
           发布任务
         </Button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Row, Col, Button, Input, Radio, Empty, Spin, Pagination, message } from 'antd';
+import { Tabs, Row, Col, Button, Input, Radio, Empty, Spin, Pagination, message, Select } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import TaskDetailModal from '@/components/Task/TaskDetailModal';
 import TaskFormModal from '@/components/Task/TaskFormModal';
@@ -34,12 +34,10 @@ const MyTasks: React.FC = () => {
 
   // 设置默认选中的状态并加载任务
   useEffect(() => {
-    if (activeTab === 'created') {
-      setStatus('submitted');
-    } else {
-      setStatus('in_progress');
-    }
-    loadMyTasks(1); // 加载任务列表
+    // 根据不同的标签页设置默认状态
+    const defaultStatus = activeTab === 'created' ? 'submitted' : 'in_progress';
+    setStatus(defaultStatus);
+    loadMyTasks(1);
   }, [activeTab]);
 
   // 获取状态选项
@@ -112,9 +110,18 @@ const MyTasks: React.FC = () => {
 
     return (
       <>
-        <Row gutter={[16, 16]}>
+        <Row gutter={[12, 12]} className="flex-none">
           {tasks.map((task) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={task.id}>
+            <Col 
+              xs={24} 
+              sm={12} 
+              md={8} 
+              lg={6} 
+              xl={6}
+              xxl={6}
+              key={task.id}
+              className="!flex-none"
+            >
               <TaskCard
                 task={task}
                 onContact={handleContact}
@@ -122,12 +129,17 @@ const MyTasks: React.FC = () => {
             </Col>
           ))}
         </Row>
-        <div className="mt-6 flex justify-center">
+        <div className="mt-2 flex justify-center">
           <Pagination
             current={currentPage}
             total={total}
-            onChange={(page) => setCurrentPage(page)}
+            pageSize={20}
+            onChange={(page) => {
+              setCurrentPage(page);
+              loadMyTasks(page);
+            }}
             showSizeChanger={false}
+            showTotal={(total) => `共 ${total} 条`}
           />
         </div>
       </>
@@ -136,8 +148,8 @@ const MyTasks: React.FC = () => {
 
   // 抽取搜索和筛选组件
   const renderSearchAndFilter = (showPublishButton = false) => (
-    <div className="mb-6 space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="mb-4 space-y-4 md:space-y-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
         <Search
           placeholder="搜索任务标题或描述"
           allowClear
@@ -146,7 +158,7 @@ const MyTasks: React.FC = () => {
             setCurrentPage(1);
             loadMyTasks(1);
           }}
-          className="max-w-md task-search"
+          className="w-full md:max-w-md task-search"
           prefix={<SearchOutlined className="text-gray-400" />}
         />
         {showPublishButton && (
@@ -154,25 +166,42 @@ const MyTasks: React.FC = () => {
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setIsFormModalOpen(true)}
-            className="publish-task-btn"
+            className="w-full md:w-auto publish-task-btn"
           >
             发布任务
           </Button>
         )}
       </div>
-      <Radio.Group
-        value={status}
-        onChange={handleStatusChange}
-        optionType="button"
-        buttonStyle="solid"
-        options={getStatusOptions()}
-        className="task-filter-group"
-      />
+
+      {/* 状态选择器 - 移动端使用 Select，桌面端使用 Radio.Group */}
+      <div className="block md:hidden">
+        <Select
+          value={status}
+          onChange={(value) => {
+            setStatus(value);
+            setCurrentPage(1);
+            loadMyTasks(1);
+          }}
+          options={getStatusOptions()}
+          className="w-full"
+          placeholder="选择状态"
+        />
+      </div>
+      <div className="hidden md:block overflow-x-auto">
+        <Radio.Group
+          value={status}
+          onChange={handleStatusChange}
+          optionType="button"
+          buttonStyle="solid"
+          options={getStatusOptions()}
+          className="task-filter-group"
+        />
+      </div>
     </div>
   );
 
   return (
-    <div className="min-h-[calc(100vh-64px)]">
+    <div className="h-full p-4 bg-gray-50">
       <Tabs
         activeKey={activeTab}
         onChange={(key) => {
@@ -183,14 +212,14 @@ const MyTasks: React.FC = () => {
         className="task-tabs"
       >
         <TabPane tab="我发布的任务" key="created">
-          {renderSearchAndFilter(true)}
-          <div className="task-list-container">
+          <div className="space-y-4">
+            {renderSearchAndFilter(true)}
             {renderTaskCards()}
           </div>
         </TabPane>
         <TabPane tab="我接取的任务" key="assigned">
-          {renderSearchAndFilter()}
-          <div className="task-list-container">
+          <div className="space-y-4">
+            {renderSearchAndFilter()}
             {renderTaskCards()}
           </div>
         </TabPane>

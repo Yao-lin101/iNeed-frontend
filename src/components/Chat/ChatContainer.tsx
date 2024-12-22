@@ -16,11 +16,13 @@ import { useUnreadStore } from '@/store/useUnreadStore';
 interface ChatContainerProps {
   initialConversationId?: number;
   initialTab?: 'myMessages' | 'system';
+  isMobile?: boolean;
 }
 
 const ChatContainerInner: React.FC<ChatContainerProps> = ({ 
   initialConversationId,
-  initialTab = 'myMessages'
+  initialTab = 'myMessages',
+  isMobile = false
 }) => {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(initialConversationId || null);
   const [currentTab, setCurrentTab] = useState(initialTab);
@@ -28,6 +30,9 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { unreadMessages: unreadMessagesCount, unreadNotifications } = useUnreadStore();
+
+  // 移动端视图状态
+  const [showMessageArea, setShowMessageArea] = useState(false);
 
   // 同步路由和标签状态
   useEffect(() => {
@@ -52,12 +57,20 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
     }
   };
 
-  // 处理会话选择
+  // 处理会话选择（移动端）
   const handleConversationSelect = (conversationId: number | null) => {
     setSelectedConversation(conversationId);
+    if (isMobile && conversationId) {
+      setShowMessageArea(true);
+    }
   };
 
-  // 当切换到系统通知标签时，清除选中的会话
+  // 处理返回到会话列表（仅移动端）
+  const handleBackToList = () => {
+    setShowMessageArea(false);
+  };
+
+  // 换到系统通知标签时，清除选中的会话
   useEffect(() => {
     if (currentTab === 'system') {
       setSelectedConversation(null);
@@ -104,6 +117,71 @@ const ChatContainerInner: React.FC<ChatContainerProps> = ({
     },
   ];
 
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full bg-white">
+        {/* 移动端标题栏 - 调整 Menu 样式 */}
+        <div className="flex-none border-b border-gray-200">
+          <Menu
+            mode="horizontal"
+            selectedKeys={[currentTab]}
+            items={menuItems}
+            onClick={({ key }) => handleTabChange(key as 'myMessages' | 'system')}
+            className="w-full !border-0 mobile-menu"
+            style={{
+              justifyContent: 'space-around',
+              minWidth: 'auto'
+            }}
+          />
+        </div>
+
+        {/* 移动端内容区域 */}
+        <div className="flex-1 overflow-hidden">
+          {currentTab === 'myMessages' && (
+            <>
+              {/* 会话列表 */}
+              <div className={`h-full ${showMessageArea ? 'hidden' : 'block'}`}>
+                <ConversationList
+                  conversations={conversations}
+                  loading={loading}
+                  selectedId={selectedConversation}
+                  onSelect={handleConversationSelect}
+                  onDelete={refetchConversations}
+                  updateUnreadCount={updateUnreadCount}
+                  updateLocalUnreadCount={updateLocalUnreadCount}
+                />
+              </div>
+
+              {/* 消息区域 */}
+              <div className={`h-full ${showMessageArea ? 'block' : 'hidden'}`}>
+                {selectedConversation ? (
+                  <MessageArea
+                    conversationId={selectedConversation}
+                    recipientName={conversations.find(c => c.id === selectedConversation)?.other_participant?.username}
+                    onBack={handleBackToList}
+                    isMobile={true}
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center bg-gray-50">
+                    <Empty description="选择一个会话开始聊天" />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          
+          {currentTab === 'system' && (
+            <SystemNotificationList 
+              onNotificationRead={refetchConversations}
+              isMobile={true}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 返回原有的桌面端布局
   return (
     <div className="flex h-full">
       <div className="w-[180px] bg-white">
