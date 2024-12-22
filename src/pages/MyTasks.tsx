@@ -133,8 +133,13 @@ const MyTasks: React.FC = () => {
           <Pagination
             current={currentPage}
             total={total}
-            onChange={(page) => setCurrentPage(page)}
+            pageSize={20}
+            onChange={(page) => {
+              setCurrentPage(page);
+              loadMyTasks(page);
+            }}
             showSizeChanger={false}
+            showTotal={(total) => `共 ${total} 条`}
           />
         </div>
       </>

@@ -74,37 +74,44 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   setSearchValue: (value) => set({ searchValue: value }),
 
   loadTasks: async (page = 1, search = '') => {
-    const { setLoading, setTasks, setTotal } = get();
-    setLoading(true);
+    set({ loading: true });
     try {
-      const response = await taskService.getTasks({ page, search });
-      setTasks(response.results);
-      setTotal(response.count);
+      const response = await taskService.getTasks({ 
+        page, 
+        search,
+        page_size: 20  // 确保与前端分页大小一致
+      });
+      set({
+        tasks: response.results,
+        total: response.count,
+        loading: false,
+        currentPage: page
+      });
     } catch (error) {
       console.error('Failed to load tasks:', error);
-      message.error('加载任务列表失败');
-    } finally {
-      setLoading(false);
+      set({ loading: false });
     }
   },
 
-  loadMyTasks: async (page = 1) => {
-    const { setLoading, setTasks, setTotal, searchValue, status, activeTab } = get();
-    setLoading(true);
+  loadMyTasks: async (page: number = 1) => {
+    set({ loading: true });
     try {
       const response = await taskService.getMyTasks({
         page,
-        search: searchValue,
-        status,
-        type: activeTab,
+        status: get().status,
+        search: get().searchValue,
+        type: get().activeTab
       });
-      setTasks(response.results);
-      setTotal(response.count);
+      
+      set({
+        tasks: response.results,
+        total: response.count,
+        loading: false,
+        currentPage: page
+      });
     } catch (error) {
-      console.error('Failed to load my tasks:', error);
-      message.error('加载任务列表失败');
-    } finally {
-      setLoading(false);
+      console.error('Failed to load tasks:', error);
+      set({ loading: false });
     }
   },
 

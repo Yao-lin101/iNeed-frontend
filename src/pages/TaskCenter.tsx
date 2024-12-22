@@ -31,7 +31,7 @@ const TaskCenter: React.FC = () => {
     loadTasks(currentPage, searchValue);
   }, [currentPage, searchValue]);
 
-  // 处理搜��
+  // 处理搜索
   const handleSearch = (value: string) => {
     setSearchValue(value);
     setCurrentPage(1); // 重置页码
@@ -103,8 +103,10 @@ const TaskCenter: React.FC = () => {
           <Pagination
             current={currentPage}
             total={total}
+            pageSize={20}
             onChange={handlePageChange}
             showSizeChanger={false}
+            showTotal={(total) => `共 ${total} 条`}
           />
         </div>
       </>
