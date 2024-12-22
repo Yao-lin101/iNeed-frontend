@@ -76,7 +76,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
           message: content
         });
 
-        // 检查是否有活跃的连接
+        // 检查是否有活跃的���接
         if (!conversationId || !isConnected(conversationId)) {
           connect();
           // 等待连接建立
@@ -156,7 +156,7 @@ const MessageArea: React.FC<MessageAreaProps> = ({
   return (
     <div 
       ref={messageAreaRef} 
-      className={`flex flex-col h-full ${isMobile ? 'message-area-mobile pb-20' : ''}`}
+      className={`flex flex-col h-full ${isMobile ? 'message-area-mobile' : ''}`}
       style={{ height }}
     >
       <div className="flex-none py-2 px-4 border-b flex items-center">
@@ -187,14 +187,15 @@ const MessageArea: React.FC<MessageAreaProps> = ({
       </div>
 
       {/* 输入区域 */}
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
+      <div className={`p-4 border-t ${isMobile ? 'mobile-input-area' : ''}`}>
+        <div className="flex gap-2 relative">
           <Input
             ref={inputRef}
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onPressEnter={handleSend}
             placeholder="输入消息..."
+            className="mobile-chat-input"
           />
           <Button
             type="primary"

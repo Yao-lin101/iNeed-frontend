@@ -10,9 +10,16 @@
     background: white;
   }
 
-  .message-area-mobile .mobile-input-area {
-    /* 添加底部安全区域内边距 */
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom) + 60px) !important; /* 60px 是工具栏的高度 */
+  .mobile-input-area {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .mobile-chat-input:focus {
+    padding-bottom: 0 !important;
+    margin-bottom: env(safe-area-inset-bottom);
   }
 
   .conversation-list-mobile {
@@ -30,5 +37,11 @@
   .message-area-mobile {
     /* 防止 iOS 键盘弹出时页面发生跳动 */
     height: -webkit-fill-available;
+  }
+
+  /* 输入框获得焦点时的处理 */
+  .mobile-chat-input:focus {
+    position: relative;
+    z-index: 1;
   }
 } 
