@@ -56,7 +56,8 @@ export default {
   		},
   		animation: {
   			rainbow: 'rainbow var(--speed, 2s) infinite linear',
-  			'background-position-spin': 'background-position-spin 3000ms infinite alternate'
+  			'background-position-spin': 'background-position-spin 3000ms infinite alternate',
+  			'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear'
   		},
   		keyframes: {
   			rainbow: {
@@ -74,6 +75,11 @@ export default {
   				'100%': {
   					backgroundPosition: 'bottom center'
   				}
+  			},
+  			'border-beam': {
+  				'100%': {
+  					'offset-distance': '100%'
+  				}
   			}
   		},
   		borderRadius: {
@@ -82,13 +88,13 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		screens: {
-  			'xs': '480px',
-  			'sm': '640px',
-  			'md': '768px',
-  			'lg': '1024px',
-  			'xl': '1280px',
-  			'2xl': '1536px',
-  		},
+  			xs: '480px',
+  			sm: '640px',
+  			md: '768px',
+  			lg: '1024px',
+  			xl: '1280px',
+  			'2xl': '1536px'
+  		}
   	}
   },
   plugins: [require("tailwindcss-animate")],
