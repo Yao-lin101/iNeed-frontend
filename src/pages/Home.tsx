@@ -29,7 +29,7 @@ const Home: React.FC = () => {
           />
           <div className="mt-6">
             <FlipText
-              word="并不怎么安全可靠的任务协作平台"
+              word="并不怎么可靠的任务协作平台"
               className="text-xl md:text-2xl text-gray-600"
             />
           </div>
@@ -83,33 +83,36 @@ const Home: React.FC = () => {
 
       {/* Safety Notice */}
       <section className="bg-gradient-to-r from-red-50 to-red-100 py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-center">
-            <BoxReveal>
-              <ScratchToReveal
-                width={800}
-                height={280}
-                className="rounded-lg overflow-hidden"
-                gradientColors={["#ff6b6b", "#ff8787", "#ffa8a8"]}
-              >
-                <div className="flex flex-col items-center justify-center h-full bg-white text-center p-8">
-                  <SafetyOutlined className="text-3xl text-red-500 mb-4" />
-                  <h3 className="text-xl font-semibold text-red-600 mb-6">
+        <div className="max-w-6xl mx-auto px-4 flex justify-center">
+          <ScratchToReveal
+            width={window.innerWidth >= 768 ? 800 : 320}
+            height={window.innerWidth >= 768 ? 280 : 400}
+            className="rounded-lg overflow-hidden"
+            gradientColors={["#ff6b6b", "#ff8787", "#ffa8a8"]}
+          >
+            <div className="flex flex-col items-center justify-center h-full bg-white text-center p-8">
+              <div className="space-y-6 max-w-2xl">
+                <div>
+                  <SafetyOutlined className="text-3xl text-red-500" />
+                  <h3 className="text-2xl font-bold text-red-600 mt-3">
                     安全提醒
                   </h3>
-                  <ul className="space-y-3 text-gray-700 list-none">
-                    <li>本平台暂不支持支付功能</li>
-                    <li>接取任务以及交付时请注意财产安全</li>
-                    <li>希望各位重视自己的信用</li>
-                    <li className="text-xs text-gray-500 mt-4 italic">
-                      免责声明：本平台仅提供信息对接服务，不对用户之间的交易行为承担任何责任。
-                      如发生纠纷，平台会协助提供相关记录，但最终解释权归平台所有。
-                    </li>
-                  </ul>
                 </div>
-              </ScratchToReveal>
-            </BoxReveal>
-          </div>
+                <div className="space-y-4">
+                  <div className="text-lg text-gray-800">
+                    <p>本平台暂不支持支付功能</p>
+                    <p>接取任务以及交付时请注意财产安全</p>
+                    <p>希望各位重视自己的信用</p>
+                  </div>
+                  <div className="text-sm text-gray-500 italic mt-6">
+                    免责声明：本平台仅提供信息对接服务，不对用户之间的交易行为承担任何责任。
+                    <br />
+                    如发生纠纷，平台会协助提供相关记录，但最终解释权归平台所有。
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScratchToReveal>
         </div>
       </section>
     </div>
