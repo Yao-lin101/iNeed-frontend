@@ -1,29 +1,27 @@
-# Build stage
-FROM node:18-alpine as build
+# 构建阶段
+FROM node:18-alpine as builder
 
 WORKDIR /app
 
-# Copy package files
+# 复制 package.json 和 package-lock.json
 COPY package*.json ./
 
-# Install dependencies
+# 安装依赖
 RUN npm install
 
-# Copy source code
+# 复制源代码
 COPY . .
 
-# Build the application
+# 构建应用
 RUN npm run build
 
-# Production stage
+# 生产阶段
 FROM nginx:alpine
 
-# Copy built files from build stage
-COPY --from=build /app/dist /var/www/ineed/dist
+# 从构建阶段复制构建产物
+COPY --from=builder /app/dist /app/dist
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+# 暴露端口
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"] 
