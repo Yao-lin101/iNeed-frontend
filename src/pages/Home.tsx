@@ -115,6 +115,18 @@ const Home: React.FC = () => {
           </ScratchToReveal>
         </div>
       </section>
+
+      {/* ICP 备案信息 */}
+      <footer className="py-4 text-center text-gray-500 text-sm">
+        <a 
+          href="https://beian.miit.gov.cn/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="hover:text-gray-700 transition-colors"
+        >
+          赣ICP备2024052124号
+        </a>
+      </footer>
     </div>
   );
 };
